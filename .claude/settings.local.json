@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude --dangerously-skip-permissions)",
+      "Bash(where bash)",
+      "Bash(dir \"C:\\Program Files\\Git\\bin\\bash.exe\")",
+      "Bash(set CLAUDE_CODE_GIT_BASH_PATH=C:Program FilesGitbinbash.exe)",
+      "Bash(setx:*)"
+    ],
+    "deny": []
+  }
+}
