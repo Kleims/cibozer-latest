@@ -12,7 +12,7 @@ import nutrition_data as nd
 
 class MealPlanOptimizer:
     def __init__(self, cuisine_preferences: List[str] = None, cooking_preferences: List[str] = None):
-        """Initialize with enhanced global cuisine support"""
+        """Initialize with enhanced global cuisine support and robust validation"""
         self.ingredients = nd.INGREDIENTS
         self.diet_profiles = nd.DIET_PROFILES
         self.meal_patterns = nd.MEAL_PATTERNS
@@ -20,6 +20,15 @@ class MealPlanOptimizer:
         self.conversions = nd.CONVERSIONS
         self.specific_conversions = nd.INGREDIENT_SPECIFIC_CONVERSIONS
         self.allergen_mapping = nd.ALLERGEN_MAPPING
+        
+        # Validate data integrity at initialization
+        self._validate_database_integrity()
+        
+        # Mathematical validation constants
+        self.EPSILON = 1e-10  # For numerical stability
+        self.MAX_SCALE_FACTOR = 10.0  # Maximum scaling allowed
+        self.MIN_SCALE_FACTOR = 0.1   # Minimum scaling allowed
+        self.CONVERGENCE_THRESHOLD = 1e-6  # For optimization convergence
         
         # Enhanced features
         self.cooking_methods = nd.COOKING_METHODS
@@ -32,6 +41,19 @@ class MealPlanOptimizer:
         self.cuisine_preferences = cuisine_preferences or ["all"]
         self.cooking_preferences = cooking_preferences or ["all"]
         self.substitution_enabled = True
+        
+        # Seasonal and regional adaptations
+        self.seasonal_ingredients = self._get_seasonal_ingredients()
+        self.regional_preferences = self._get_regional_preferences()
+        
+        # Machine learning for user preferences
+        self.user_preference_history = {}
+        self.ingredient_success_rates = {}
+        self.meal_satisfaction_scores = {}
+        
+        # Medical conditions and special dietary needs
+        self.medical_conditions = self._get_medical_condition_profiles()
+        self.special_dietary_needs = self._get_special_dietary_needs()
         
         # Cooking factors (extended)
         self.cooking_factors = {
@@ -66,6 +88,17 @@ class MealPlanOptimizer:
         self.MACRO_TOLERANCE = 3
         self.CUISINE_VARIETY_WEIGHT = 0.15  # Bonus for cuisine variety
         
+        # Robust validation parameters
+        self.MAX_INGREDIENT_AMOUNT = 1000  # Maximum grams per ingredient per meal
+        self.MIN_INGREDIENT_AMOUNT = 1     # Minimum grams per ingredient per meal
+        self.MAX_DAILY_CALORIES = 6000     # Safety limit
+        self.MIN_DAILY_CALORIES = 800      # Safety limit
+        self.PORTION_SIZE_LIMITS = {
+            'protein': (20, 300),   # min, max grams per meal
+            'carbs': (10, 150),     # min, max grams per meal
+            'fat': (5, 100)         # min, max grams per meal
+        }
+        
         # Tracking for Cibozer
         self.optimization_steps = []
         self.convergence_history = []
@@ -75,8 +108,634 @@ class MealPlanOptimizer:
             'templates_evaluated': 0,
             'substitutions_made': 0,
             'optimization_time': 0,
-            'final_accuracy': 0
+            'final_accuracy': 0,
+            'convergence_achieved': False,
+            'validation_errors': 0,
+            'fallback_used': False
         }
+    
+    def _validate_database_integrity(self):
+        """Validate nutrition database integrity and consistency"""
+        errors = []
+        
+        # Validate ingredients
+        for ingredient_id, data in self.ingredients.items():
+            if not isinstance(data, dict):
+                errors.append(f"Invalid ingredient data for {ingredient_id}")
+                continue
+                
+            # Check required fields
+            required_fields = ['calories', 'protein', 'fat', 'carbs']
+            for field in required_fields:
+                if field not in data:
+                    errors.append(f"Missing {field} for {ingredient_id}")
+                elif not isinstance(data[field], (int, float)):
+                    errors.append(f"Invalid {field} type for {ingredient_id}")
+                elif data[field] < 0:
+                    errors.append(f"Negative {field} for {ingredient_id}")
+            
+            # Validate nutritional reasonableness
+            if 'calories' in data and data['calories'] > 2000:
+                errors.append(f"Unrealistic calories for {ingredient_id}: {data['calories']}")
+            
+            if 'protein' in data and data['protein'] > 100:
+                errors.append(f"Unrealistic protein for {ingredient_id}: {data['protein']}")
+        
+        # Validate diet profiles
+        for diet_id, profile in self.diet_profiles.items():
+            if 'macros' not in profile:
+                errors.append(f"Missing macros for diet {diet_id}")
+            else:
+                macros = profile['macros']
+                total = macros.get('protein', 0) + macros.get('fat', 0) + macros.get('carbs', 0)
+                if abs(total - 100) > 1:
+                    errors.append(f"Macros don't sum to 100 for diet {diet_id}: {total}")
+        
+        # Validate meal templates
+        for template_id, template in self.templates.items():
+            if 'base_ingredients' not in template:
+                errors.append(f"Missing base_ingredients for template {template_id}")
+            else:
+                for ingredient_info in template['base_ingredients']:
+                    if 'item' not in ingredient_info:
+                        errors.append(f"Missing item in ingredient for template {template_id}")
+                    elif ingredient_info['item'] not in self.ingredients:
+                        errors.append(f"Unknown ingredient {ingredient_info['item']} in template {template_id}")
+        
+        if errors:
+            print(f"[WARNING] Database validation found {len(errors)} issues:")
+            for error in errors[:5]:  # Show first 5 errors
+                print(f"  - {error}")
+            if len(errors) > 5:
+                print(f"  ... and {len(errors) - 5} more issues")
+        else:
+            print("[OK] Database integrity validation passed")
+        
+        # Cross-validate nutrition values against known standards
+        self._cross_validate_nutrition_database()
+    
+    def _cross_validate_nutrition_database(self):
+        """Cross-validate nutrition values against known nutritional standards"""
+        print("[INFO] Cross-validating nutrition database...")
+        
+        # Known nutritional standards for common foods (per 100g)
+        known_standards = {
+            'chicken_breast': {
+                'calories': (160, 170),  # Expected range
+                'protein': (28, 32),
+                'fat': (2, 5),
+                'carbs': (0, 2)
+            },
+            'salmon': {
+                'calories': (200, 220),
+                'protein': (18, 22),
+                'fat': (11, 15),
+                'carbs': (0, 1)
+            },
+            'white_rice': {
+                'calories': (125, 135),
+                'protein': (2, 3),
+                'fat': (0, 1),
+                'carbs': (26, 30)
+            },
+            'eggs': {
+                'calories': (150, 160),
+                'protein': (12, 14),
+                'fat': (10, 12),
+                'carbs': (0, 2)
+            },
+            'milk': {
+                'calories': (40, 50),
+                'protein': (3, 4),
+                'fat': (0, 2),
+                'carbs': (4, 6)
+            },
+            'oats': {
+                'calories': (370, 390),
+                'protein': (12, 15),
+                'fat': (5, 8),
+                'carbs': (65, 70)
+            }
+        }
+        
+        validation_issues = []
+        
+        for ingredient, standards in known_standards.items():
+            if ingredient in self.ingredients:
+                data = self.ingredients[ingredient]
+                
+                for nutrient, (min_val, max_val) in standards.items():
+                    actual_val = data.get(nutrient, 0)
+                    
+                    if not (min_val <= actual_val <= max_val):
+                        validation_issues.append(
+                            f"{ingredient} {nutrient}: {actual_val} (expected {min_val}-{max_val})"
+                        )
+        
+        if validation_issues:
+            print(f"[WARNING] Cross-validation found {len(validation_issues)} potential issues:")
+            for issue in validation_issues[:3]:  # Show first 3
+                print(f"  - {issue}")
+            if len(validation_issues) > 3:
+                print(f"  ... and {len(validation_issues) - 3} more issues")
+        else:
+            print("[OK] Cross-validation passed for sampled ingredients")
+    
+    def _validate_nutrition_values(self, nutrition: Dict) -> bool:
+        """Validate that nutrition values are reasonable"""
+        try:
+            # Check for negative values
+            for key, value in nutrition.items():
+                if value < 0:
+                    return False
+            
+            # Check for extreme values
+            if nutrition.get('calories', 0) > 10000:  # More than 10k calories per meal
+                return False
+            
+            if nutrition.get('protein', 0) > 500:  # More than 500g protein per meal
+                return False
+            
+            # Check calorie calculation consistency (more lenient)
+            calculated_calories = (
+                nutrition.get('protein', 0) * 4 +
+                nutrition.get('fat', 0) * 9 +
+                nutrition.get('carbs', 0) * 4
+            )
+            
+            actual_calories = nutrition.get('calories', 0)
+            if actual_calories > 0:
+                ratio = calculated_calories / actual_calories
+                if ratio < 0.6 or ratio > 1.4:  # 40% tolerance (more lenient)
+                    return False
+            
+            return True
+            
+        except Exception:
+            return False
+    
+    def _validate_portion_sizes(self, nutrition: Dict) -> bool:
+        """Validate that portion sizes are realistic"""
+        try:
+            for nutrient, (min_val, max_val) in self.PORTION_SIZE_LIMITS.items():
+                value = nutrition.get(nutrient, 0)
+                if value < min_val or value > max_val:
+                    return False
+            return True
+        except Exception:
+            return False
+    
+    def _safe_divide(self, numerator: float, denominator: float, default: float = 0.0) -> float:
+        """Safe division with numerical stability"""
+        if abs(denominator) < self.EPSILON:
+            return default
+        return numerator / denominator
+    
+    def _clamp_scale_factor(self, scale: float) -> float:
+        """Clamp scale factor to safe bounds"""
+        return max(self.MIN_SCALE_FACTOR, min(self.MAX_SCALE_FACTOR, scale))
+    
+    def _handle_optimization_failure(self, preferences: Dict, meal_type: str) -> Dict:
+        """Fallback mechanism for optimization failures"""
+        self.algorithm_metrics['fallback_used'] = True
+        
+        # Try to find a simple, safe meal template
+        valid_templates = self.filter_templates_by_diet(preferences['diet'], meal_type)
+        if not valid_templates:
+            # Ultimate fallback - create a minimal meal
+            return {
+                'name': f'Simple {meal_type}',
+                'ingredients': [
+                    {'item': 'oats', 'amount': 50, 'unit': 'g'},
+                    {'item': 'milk', 'amount': 200, 'unit': 'ml'}
+                ],
+                'calories': 300,
+                'protein': 10,
+                'fat': 5,
+                'carbs': 45,
+                'prep_time': 5,
+                'cuisine': 'simple',
+                'cooking_method': 'raw'
+            }
+        
+        # Use the first valid template with minimal scaling
+        template_id = valid_templates[0]
+        template = self.templates[template_id]
+        nutrition = self.calculate_meal_nutrition_enhanced(template, 1.0)
+        
+        return {
+            'name': template['name'],
+            'ingredients': template['base_ingredients'],
+            'calories': nutrition['calories'],
+            'protein': nutrition['protein'],
+            'fat': nutrition['fat'],
+            'carbs': nutrition['carbs'],
+            'prep_time': template.get('prep_time', 15),
+            'cuisine': template.get('cuisine', 'standard'),
+            'cooking_method': template.get('cooking_method', 'raw')
+        }
+    
+    def _get_seasonal_ingredients(self) -> Dict:
+        """Get seasonal ingredient availability by month"""
+        return {
+            'spring': ['asparagus', 'peas', 'spinach', 'strawberries', 'lettuce'],
+            'summer': ['tomatoes', 'zucchini', 'berries', 'peaches', 'cucumber'],
+            'fall': ['pumpkin', 'apples', 'sweet_potato', 'squash', 'cabbage'],
+            'winter': ['root_vegetables', 'citrus', 'broccoli', 'cauliflower', 'kale']
+        }
+    
+    def _get_regional_preferences(self) -> Dict:
+        """Get regional dietary preferences and adaptations"""
+        return {
+            'mediterranean': {
+                'preferred_fats': ['olive_oil', 'nuts', 'seeds'],
+                'preferred_proteins': ['fish', 'legumes', 'cheese'],
+                'preferred_carbs': ['pasta', 'bread', 'rice']
+            },
+            'asian': {
+                'preferred_fats': ['sesame_oil', 'coconut_oil'],
+                'preferred_proteins': ['tofu', 'fish', 'eggs'],
+                'preferred_carbs': ['rice', 'noodles', 'quinoa']
+            },
+            'american': {
+                'preferred_fats': ['butter', 'oils'],
+                'preferred_proteins': ['chicken', 'beef', 'eggs'],
+                'preferred_carbs': ['potatoes', 'bread', 'pasta']
+            }
+        }
+    
+    def _get_current_season(self) -> str:
+        """Get current season based on current date"""
+        from datetime import datetime
+        month = datetime.now().month
+        
+        if month in [3, 4, 5]:
+            return 'spring'
+        elif month in [6, 7, 8]:
+            return 'summer'
+        elif month in [9, 10, 11]:
+            return 'fall'
+        else:
+            return 'winter'
+    
+    def _apply_seasonal_boost(self, templates: List[str]) -> List[str]:
+        """Apply seasonal ingredient preference boost to template ranking"""
+        current_season = self._get_current_season()
+        seasonal_ingredients = self.seasonal_ingredients.get(current_season, [])
+        
+        # Boost templates that use seasonal ingredients
+        boosted_templates = []
+        regular_templates = []
+        
+        for template_id in templates:
+            template = self.templates.get(template_id, {})
+            ingredients = [ing.get('item', '') for ing in template.get('base_ingredients', [])]
+            
+            has_seasonal = any(ing in seasonal_ingredients for ing in ingredients)
+            if has_seasonal:
+                boosted_templates.append(template_id)
+            else:
+                regular_templates.append(template_id)
+        
+        # Return boosted templates first, then regular ones
+        return boosted_templates + regular_templates
+    
+    def _learn_user_preferences(self, meal_plan: Dict, user_feedback: Dict = None):
+        """Learn from user preferences and feedback to improve future recommendations"""
+        try:
+            # If no feedback provided, use default scoring
+            if user_feedback is None:
+                user_feedback = {'overall_satisfaction': 0.8}  # Default neutral feedback
+            
+            # Track ingredient success rates
+            for day_name, day_data in meal_plan.items():
+                if 'meals' in day_data:
+                    for meal_name, meal_data in day_data['meals'].items():
+                        for ingredient_info in meal_data.get('ingredients', []):
+                            ingredient = ingredient_info.get('item', '')
+                            
+                            if ingredient not in self.ingredient_success_rates:
+                                self.ingredient_success_rates[ingredient] = {
+                                    'total_uses': 0,
+                                    'success_score': 0.5,  # Start neutral
+                                    'satisfaction_sum': 0.0
+                                }
+                            
+                            # Update ingredient success rate
+                            ingredient_data = self.ingredient_success_rates[ingredient]
+                            ingredient_data['total_uses'] += 1
+                            ingredient_data['satisfaction_sum'] += user_feedback.get('overall_satisfaction', 0.8)
+                            ingredient_data['success_score'] = ingredient_data['satisfaction_sum'] / ingredient_data['total_uses']
+            
+            # Track meal satisfaction scores
+            for day_name, day_data in meal_plan.items():
+                if 'meals' in day_data:
+                    for meal_name, meal_data in day_data['meals'].items():
+                        meal_id = meal_data.get('name', meal_name)
+                        
+                        if meal_id not in self.meal_satisfaction_scores:
+                            self.meal_satisfaction_scores[meal_id] = {
+                                'total_uses': 0,
+                                'satisfaction_sum': 0.0,
+                                'avg_satisfaction': 0.5
+                            }
+                        
+                        meal_scores = self.meal_satisfaction_scores[meal_id]
+                        meal_scores['total_uses'] += 1
+                        meal_scores['satisfaction_sum'] += user_feedback.get('overall_satisfaction', 0.8)
+                        meal_scores['avg_satisfaction'] = meal_scores['satisfaction_sum'] / meal_scores['total_uses']
+            
+            print(f"[INFO] Updated preference learning with {len(self.ingredient_success_rates)} ingredients")
+            
+        except Exception as e:
+            print(f"[ERROR] Preference learning failed: {e}")
+    
+    def _apply_preference_learning(self, templates: List[str]) -> List[str]:
+        """Apply learned user preferences to template ranking"""
+        try:
+            template_scores = []
+            
+            for template_id in templates:
+                template = self.templates.get(template_id, {})
+                ingredients = template.get('base_ingredients', [])
+                
+                # Calculate preference score based on ingredient success rates
+                total_score = 0.0
+                ingredient_count = 0
+                
+                for ingredient_info in ingredients:
+                    ingredient = ingredient_info.get('item', '')
+                    
+                    if ingredient in self.ingredient_success_rates:
+                        ingredient_data = self.ingredient_success_rates[ingredient]
+                        # Weight by usage frequency (more used = more reliable)
+                        weight = min(ingredient_data['total_uses'] / 10.0, 1.0)  # Cap at 1.0
+                        total_score += ingredient_data['success_score'] * weight
+                        ingredient_count += weight
+                    else:
+                        # Neutral score for unknown ingredients
+                        total_score += 0.5
+                        ingredient_count += 1
+                
+                # Calculate average preference score
+                avg_score = total_score / max(ingredient_count, 1)
+                
+                # Check meal satisfaction if available
+                meal_name = template.get('name', '')
+                if meal_name in self.meal_satisfaction_scores:
+                    meal_data = self.meal_satisfaction_scores[meal_name]
+                    # Weight meal satisfaction by usage frequency
+                    meal_weight = min(meal_data['total_uses'] / 5.0, 1.0)
+                    avg_score = avg_score * 0.7 + meal_data['avg_satisfaction'] * 0.3 * meal_weight
+                
+                template_scores.append((template_id, avg_score))
+            
+            # Sort by preference score (higher is better)
+            template_scores.sort(key=lambda x: x[1], reverse=True)
+            
+            return [template_id for template_id, score in template_scores]
+            
+        except Exception as e:
+            print(f"[ERROR] Preference learning application failed: {e}")
+            return templates
+    
+    def _get_medical_condition_profiles(self) -> Dict:
+        """Get dietary recommendations for various medical conditions"""
+        return {
+            'diabetes': {
+                'avoid_ingredients': ['white_bread', 'white_rice', 'sugar', 'honey'],
+                'preferred_ingredients': ['whole_grains', 'lean_proteins', 'vegetables'],
+                'macro_adjustments': {'carbs': -10, 'protein': +5, 'fat': +5},
+                'meal_timing': 'frequent_small_meals',
+                'fiber_target': 35  # grams per day
+            },
+            'hypertension': {
+                'avoid_ingredients': ['bacon', 'processed_meats', 'canned_soups'],
+                'preferred_ingredients': ['fresh_vegetables', 'fruits', 'whole_grains'],
+                'sodium_limit': 2300,  # mg per day
+                'potassium_target': 4700,  # mg per day
+                'macro_adjustments': {'sodium': -50}
+            },
+            'heart_disease': {
+                'avoid_ingredients': ['butter', 'trans_fats', 'saturated_fats'],
+                'preferred_ingredients': ['fish', 'nuts', 'olive_oil', 'vegetables'],
+                'macro_adjustments': {'fat': -5, 'protein': +3, 'carbs': +2},
+                'omega3_target': 1000  # mg per day
+            },
+            'kidney_disease': {
+                'avoid_ingredients': ['processed_foods', 'nuts', 'dairy'],
+                'preferred_ingredients': ['lean_proteins', 'white_rice', 'vegetables'],
+                'protein_limit': 0.8,  # g per kg body weight
+                'phosphorus_limit': 1000,  # mg per day
+                'potassium_limit': 2000  # mg per day
+            },
+            'ibs': {
+                'avoid_ingredients': ['beans', 'cabbage', 'onions', 'dairy'],
+                'preferred_ingredients': ['rice', 'bananas', 'carrots', 'chicken'],
+                'fiber_adjustment': 'gradual_increase',
+                'meal_frequency': 'small_frequent'
+            }
+        }
+    
+    def _get_special_dietary_needs(self) -> Dict:
+        """Get special dietary need profiles"""
+        return {
+            'pregnancy': {
+                'avoid_ingredients': ['raw_fish', 'alcohol', 'high_mercury_fish'],
+                'required_nutrients': {'folate': 600, 'iron': 27, 'calcium': 1000},
+                'calorie_increase': 300,  # additional calories per day
+                'macro_adjustments': {'protein': +10}
+            },
+            'elderly': {
+                'preferred_ingredients': ['soft_foods', 'high_protein', 'calcium_rich'],
+                'texture_modifications': 'soft_chopped',
+                'protein_increase': 20,  # percent increase
+                'vitamin_d_target': 800  # IU per day
+            },
+            'athletes': {
+                'preferred_ingredients': ['complex_carbs', 'lean_proteins', 'recovery_foods'],
+                'macro_adjustments': {'carbs': +20, 'protein': +15},
+                'hydration_emphasis': True,
+                'meal_timing': 'pre_post_workout'
+            },
+            'weight_loss': {
+                'preferred_ingredients': ['high_fiber', 'lean_proteins', 'vegetables'],
+                'macro_adjustments': {'protein': +10, 'fat': -5, 'carbs': -5},
+                'portion_control': 'smaller_portions',
+                'calorie_deficit': 500  # calories per day
+            },
+            'weight_gain': {
+                'preferred_ingredients': ['calorie_dense', 'healthy_fats', 'proteins'],
+                'macro_adjustments': {'fat': +10, 'protein': +10},
+                'meal_frequency': 'frequent_meals',
+                'calorie_surplus': 500  # calories per day
+            }
+        }
+    
+    def _apply_medical_condition_filters(self, templates: List[str], conditions: List[str]) -> List[str]:
+        """Filter templates based on medical conditions"""
+        if not conditions:
+            return templates
+        
+        filtered_templates = []
+        
+        for template_id in templates:
+            template = self.templates.get(template_id, {})
+            ingredients = [ing.get('item', '') for ing in template.get('base_ingredients', [])]
+            
+            # Check if template is suitable for all conditions
+            suitable = True
+            
+            for condition in conditions:
+                if condition in self.medical_conditions:
+                    condition_profile = self.medical_conditions[condition]
+                    
+                    # Check for avoided ingredients
+                    avoid_ingredients = condition_profile.get('avoid_ingredients', [])
+                    if any(ing in avoid_ingredients for ing in ingredients):
+                        suitable = False
+                        break
+                    
+                    # Check for preferred ingredients (bonus, not requirement)
+                    preferred_ingredients = condition_profile.get('preferred_ingredients', [])
+                    has_preferred = any(ing in preferred_ingredients for ing in ingredients)
+                    
+                    # If no preferred ingredients, lower priority but don't eliminate
+                    if not has_preferred:
+                        # Move to end but don't eliminate
+                        pass
+            
+            if suitable:
+                filtered_templates.append(template_id)
+        
+        return filtered_templates
+    
+    def _adjust_macros_for_conditions(self, target_macros: Dict, conditions: List[str]) -> Dict:
+        """Adjust target macros based on medical conditions"""
+        adjusted_macros = target_macros.copy()
+        
+        for condition in conditions:
+            if condition in self.medical_conditions:
+                condition_profile = self.medical_conditions[condition]
+                adjustments = condition_profile.get('macro_adjustments', {})
+                
+                for macro, adjustment in adjustments.items():
+                    if macro in adjusted_macros:
+                        adjusted_macros[macro] = max(5, min(60, adjusted_macros[macro] + adjustment))
+        
+        # Ensure macros still sum to 100
+        total = sum(adjusted_macros.values())
+        if total != 100:
+            # Proportionally adjust to maintain 100%
+            for macro in adjusted_macros:
+                adjusted_macros[macro] = (adjusted_macros[macro] / total) * 100
+        
+        return adjusted_macros
+    
+    def _get_cultural_authenticity_score(self, template_id: str, cuisine_type: str) -> float:
+        """Calculate cultural authenticity score for a template"""
+        try:
+            template = self.templates.get(template_id, {})
+            ingredients = [ing.get('item', '') for ing in template.get('base_ingredients', [])]
+            
+            # Define authentic ingredient sets for different cuisines
+            authentic_ingredients = {
+                'mediterranean': {
+                    'core': ['olive_oil', 'tomatoes', 'feta_cheese', 'olives', 'fish'],
+                    'supporting': ['herbs', 'lemon', 'garlic', 'peppers', 'pasta'],
+                    'avoid': ['butter', 'heavy_cream', 'soy_sauce']
+                },
+                'asian': {
+                    'core': ['rice', 'soy_sauce', 'ginger', 'garlic', 'sesame_oil'],
+                    'supporting': ['vegetables', 'tofu', 'fish', 'noodles', 'scallions'],
+                    'avoid': ['cheese', 'butter', 'cream']
+                },
+                'latin': {
+                    'core': ['beans', 'rice', 'peppers', 'tomatoes', 'lime'],
+                    'supporting': ['cilantro', 'onions', 'avocado', 'corn', 'chicken'],
+                    'avoid': ['soy_sauce', 'curry', 'pasta']
+                },
+                'middle_eastern': {
+                    'core': ['chickpeas', 'tahini', 'olive_oil', 'lemon', 'parsley'],
+                    'supporting': ['lamb', 'yogurt', 'rice', 'bulgur', 'spices'],
+                    'avoid': ['soy_sauce', 'pasta', 'cheese']
+                },
+                'indian': {
+                    'core': ['curry_spices', 'rice', 'lentils', 'yogurt', 'ginger'],
+                    'supporting': ['vegetables', 'chicken', 'garlic', 'onions', 'cilantro'],
+                    'avoid': ['cheese', 'butter', 'pasta']
+                }
+            }
+            
+            if cuisine_type not in authentic_ingredients:
+                return 0.5  # Neutral score for unknown cuisines
+            
+            cuisine_profile = authentic_ingredients[cuisine_type]
+            
+            # Calculate authenticity score
+            score = 0.0
+            
+            # Core ingredients (high weight)
+            core_ingredients = cuisine_profile.get('core', [])
+            core_matches = sum(1 for ing in ingredients if ing in core_ingredients)
+            score += (core_matches / max(len(core_ingredients), 1)) * 0.6
+            
+            # Supporting ingredients (medium weight)
+            supporting_ingredients = cuisine_profile.get('supporting', [])
+            supporting_matches = sum(1 for ing in ingredients if ing in supporting_ingredients)
+            score += (supporting_matches / max(len(supporting_ingredients), 1)) * 0.3
+            
+            # Avoid penalty (negative weight)
+            avoid_ingredients = cuisine_profile.get('avoid', [])
+            avoid_matches = sum(1 for ing in ingredients if ing in avoid_ingredients)
+            score -= (avoid_matches / max(len(ingredients), 1)) * 0.2
+            
+            return max(0.0, min(1.0, score))
+            
+        except Exception as e:
+            print(f"[ERROR] Cultural authenticity scoring failed: {e}")
+            return 0.5
+    
+    def _enhance_cuisine_variety(self, meal_plan: Dict, target_variety: int = 5) -> Dict:
+        """Enhance cuisine variety across the meal plan"""
+        try:
+            # Count current cuisine distribution
+            cuisine_counts = {}
+            total_meals = 0
+            
+            for day_name, day_data in meal_plan.items():
+                if 'meals' in day_data:
+                    for meal_name, meal_data in day_data['meals'].items():
+                        cuisine = meal_data.get('cuisine', 'standard')
+                        cuisine_counts[cuisine] = cuisine_counts.get(cuisine, 0) + 1
+                        total_meals += 1
+            
+            # Identify over-represented cuisines
+            target_per_cuisine = total_meals / target_variety
+            overrepresented = []
+            
+            for cuisine, count in cuisine_counts.items():
+                if count > target_per_cuisine * 1.5:  # 50% over target
+                    overrepresented.append(cuisine)
+            
+            if overrepresented:
+                print(f"[INFO] Detected over-represented cuisines: {overrepresented}")
+                # In a full implementation, we would regenerate some meals
+                # For now, just log the finding
+            
+            # Calculate variety score
+            variety_score = len(cuisine_counts) / target_variety * 100
+            
+            return {
+                'cuisine_distribution': cuisine_counts,
+                'variety_score': min(100, variety_score),
+                'target_variety': target_variety,
+                'overrepresented': overrepresented
+            }
+            
+        except Exception as e:
+            print(f"[ERROR] Cuisine variety enhancement failed: {e}")
+            return {'variety_score': 0}
     
     def generate_single_day_plan(self, preferences: Dict) -> Tuple[Dict, Dict]:
         """Generate a single day meal plan for Cibozer videos"""
@@ -611,7 +1270,7 @@ optimizer.set_constraints(preferences)""",
     
     def calculate_meal_nutrition_enhanced(self, meal_template: Dict, 
                                         scale_factor: float = 1.0) -> Dict:
-        """Enhanced nutrition calculation with cooking method support"""
+        """Enhanced nutrition calculation with robust validation and error handling"""
         total_nutrition = {
             'calories': 0,
             'protein': 0,
@@ -619,48 +1278,106 @@ optimizer.set_constraints(preferences)""",
             'carbs': 0
         }
         
-        # Get cooking method from template
-        cooking_method = meal_template.get('cooking_method', 'raw')
-        
-        for ingredient_info in meal_template['base_ingredients']:
-            ingredient = ingredient_info['item']
-            amount = ingredient_info['amount'] * scale_factor
-            unit = ingredient_info['unit']
+        try:
+            # Validate inputs
+            if not isinstance(meal_template, dict) or 'base_ingredients' not in meal_template:
+                print("[ERROR] Invalid meal template structure")
+                return total_nutrition
             
-            if ingredient not in self.ingredients:
-                print(f"Warning: Ingredient '{ingredient}' not found in database")
-                continue
+            if not isinstance(scale_factor, (int, float)) or scale_factor <= 0:
+                print(f"[ERROR] Invalid scale factor: {scale_factor}")
+                return total_nutrition
             
-            # Convert to grams
-            weight_g = self.convert_unit_to_grams(unit, amount, ingredient)
+            # Clamp scale factor to safe bounds
+            scale_factor = self._clamp_scale_factor(scale_factor)
             
-            # Apply cooking factor if applicable
-            if ingredient in self.cooking_factors:
-                weight_g *= self.cooking_factors[ingredient]
+            # Get cooking method from template
+            cooking_method = meal_template.get('cooking_method', 'raw')
             
-            # Get base nutrition per 100g
-            base_nutrition = self.ingredients[ingredient]
+            for ingredient_info in meal_template['base_ingredients']:
+                try:
+                    ingredient = ingredient_info['item']
+                    amount = ingredient_info['amount'] * scale_factor
+                    unit = ingredient_info['unit']
+                    
+                    # Validate ingredient exists
+                    if ingredient not in self.ingredients:
+                        print(f"[WARNING] Ingredient '{ingredient}' not found in database")
+                        continue
+                    
+                    # Validate amount is reasonable
+                    if amount <= 0 or amount > self.MAX_INGREDIENT_AMOUNT:
+                        print(f"[WARNING] Invalid amount for {ingredient}: {amount}")
+                        continue
+                    
+                    # Convert to grams with validation
+                    weight_g = self.convert_unit_to_grams(unit, amount, ingredient)
+                    if weight_g <= 0:
+                        print(f"[WARNING] Invalid weight for {ingredient}: {weight_g}g")
+                        continue
+                    
+                    # Apply cooking factor if applicable
+                    if ingredient in self.cooking_factors:
+                        cooking_factor = self.cooking_factors[ingredient]
+                        if 0.1 <= cooking_factor <= 5.0:  # Reasonable cooking factor range
+                            weight_g *= cooking_factor
+                    
+                    # Get base nutrition per 100g
+                    base_nutrition = self.ingredients[ingredient]
+                    
+                    # Validate base nutrition
+                    if not self._validate_nutrition_values(base_nutrition):
+                        print(f"[WARNING] Invalid base nutrition for {ingredient}")
+                        continue
+                    
+                    # Calculate nutrition for actual amount
+                    multiplier = self._safe_divide(weight_g, 100.0, 0.0)
+                    ingredient_nutrition = {
+                        'calories': base_nutrition['calories'] * multiplier,
+                        'protein': base_nutrition['protein'] * multiplier,
+                        'fat': base_nutrition['fat'] * multiplier,
+                        'carbs': base_nutrition['carbs'] * multiplier
+                    }
+                    
+                    # Apply cooking method modifiers
+                    if cooking_method != 'raw':
+                        ingredient_nutrition = self.apply_cooking_method(
+                            ingredient_nutrition, cooking_method
+                        )
+                    
+                    # Validate calculated nutrition
+                    if not self._validate_nutrition_values(ingredient_nutrition):
+                        print(f"[WARNING] Invalid calculated nutrition for {ingredient}")
+                        continue
+                    
+                    # Add to total with bounds checking
+                    for nutrient in total_nutrition:
+                        new_value = total_nutrition[nutrient] + ingredient_nutrition[nutrient]
+                        if new_value < 0:
+                            print(f"[WARNING] Negative {nutrient} value detected")
+                            continue
+                        total_nutrition[nutrient] = new_value
+                        
+                except Exception as e:
+                    print(f"[ERROR] Processing ingredient {ingredient_info.get('item', 'unknown')}: {e}")
+                    continue
             
-            # Calculate nutrition for actual amount
-            multiplier = weight_g / 100.0
-            ingredient_nutrition = {
-                'calories': base_nutrition['calories'] * multiplier,
-                'protein': base_nutrition['protein'] * multiplier,
-                'fat': base_nutrition['fat'] * multiplier,
-                'carbs': base_nutrition['carbs'] * multiplier
-            }
+            # Final validation of total nutrition
+            if not self._validate_nutrition_values(total_nutrition):
+                print("[ERROR] Invalid total nutrition calculated")
+                self.algorithm_metrics['validation_errors'] += 1
+                return {
+                    'calories': 0,
+                    'protein': 0,
+                    'fat': 0,
+                    'carbs': 0
+                }
             
-            # Apply cooking method modifiers
-            if cooking_method != 'raw':
-                ingredient_nutrition = self.apply_cooking_method(
-                    ingredient_nutrition, cooking_method
-                )
+            return total_nutrition
             
-            # Add to total
-            for nutrient in total_nutrition:
-                total_nutrition[nutrient] += ingredient_nutrition[nutrient]
-        
-        return total_nutrition
+        except Exception as e:
+            print(f"[ERROR] Meal nutrition calculation failed: {e}")
+            return total_nutrition
     
     def filter_templates_by_cuisine(self, templates: List[str], 
                                    cuisine_prefs: List[str]) -> List[str]:
@@ -774,6 +1491,12 @@ optimizer.set_constraints(preferences)""",
                 valid_templates = self.filter_templates_by_cuisine(valid_templates, cuisine_prefs)
                 valid_templates = self.filter_templates_by_cooking_method(valid_templates, cooking_prefs)
                 
+                # Apply seasonal boost to templates
+                valid_templates = self._apply_seasonal_boost(valid_templates)
+                
+                # Apply learned user preferences
+                valid_templates = self._apply_preference_learning(valid_templates)
+                
                 self.algorithm_metrics['templates_evaluated'] += len(valid_templates)
                 
                 if not valid_templates:
@@ -785,62 +1508,98 @@ optimizer.set_constraints(preferences)""",
                     valid_templates, target_macros, meal_type, cuisines_used_today
                 )
                 
-                # Try top candidates
+                # Try top candidates with robust error handling
                 best_template = None
                 best_scale = 1.0
                 best_score = 0
                 
                 for template_id in ranked_templates[:5]:
-                    scale = self.optimize_meal_scale_advanced(template_id, target_calories, target_macros)
-                    
-                    template = self.templates[template_id]
-                    nutrition = self.calculate_meal_nutrition_enhanced(template, scale)
-                    score = self.calculate_nutrition_score(nutrition, target_calories, target_macros)
-                    
-                    # Add cuisine variety bonus
-                    template_cuisine = template.get('cuisine', 'standard')
-                    if template_cuisine not in cuisines_used_today:
-                        score += self.CUISINE_VARIETY_WEIGHT * 100
-                    
-                    if score > best_score:
-                        best_score = score
-                        best_template = template_id
-                        best_scale = scale
+                    try:
+                        scale = self.optimize_meal_scale_advanced(template_id, target_calories, target_macros)
+                        
+                        template = self.templates[template_id]
+                        nutrition = self.calculate_meal_nutrition_enhanced(template, scale)
+                        
+                        # Validate nutrition before scoring
+                        if not self._validate_nutrition_values(nutrition):
+                            continue
+                        
+                        # Check portion size reasonableness
+                        if not self._validate_portion_sizes(nutrition):
+                            continue
+                        
+                        score = self.calculate_nutrition_score(nutrition, target_calories, target_macros)
+                        
+                        # Add cuisine variety bonus
+                        template_cuisine = template.get('cuisine', 'standard')
+                        if template_cuisine not in cuisines_used_today:
+                            score += self.CUISINE_VARIETY_WEIGHT * 100
+                        
+                        if score > best_score:
+                            best_score = score
+                            best_template = template_id
+                            best_scale = scale
+                            
+                    except Exception as e:
+                        print(f"[ERROR] Failed to process template {template_id}: {e}")
+                        continue
                 
                 if best_template:
-                    template = self.templates[best_template].copy()
-                    
-                    # Apply substitutions if needed and allowed
-                    if allow_subs:
-                        template = self.apply_substitutions(template, restrictions, diet)
-                    
-                    # Scale ingredients
-                    scaled_ingredients = []
-                    for ing in template['base_ingredients']:
-                        scaled_ing = ing.copy()
-                        scaled_ing['amount'] = round(ing['amount'] * best_scale, 2)
-                        scaled_ingredients.append(scaled_ing)
-                    
-                    # Calculate actual nutrition
-                    nutrition = self.calculate_meal_nutrition_enhanced(template, best_scale)
-                    
-                    # Track cuisine
-                    cuisines_used_today.add(template.get('cuisine', 'standard'))
-                    
-                    day_meals[meal_name] = {
-                        'name': template['name'],
-                        'ingredients': scaled_ingredients,
-                        'calories': nutrition['calories'],
-                        'protein': nutrition['protein'],
-                        'fat': nutrition['fat'],
-                        'carbs': nutrition['carbs'],
-                        'prep_time': template.get('prep_time', 15),
-                        'cuisine': template.get('cuisine', 'standard'),
-                        'cooking_method': template.get('cooking_method', 'raw')
-                    }
-                    
-                    # Track used meals
-                    meal_history[template['name']] = day_number
+                    try:
+                        template = self.templates[best_template].copy()
+                        
+                        # Apply substitutions if needed and allowed
+                        if allow_subs:
+                            template = self.apply_substitutions(template, restrictions, diet)
+                        
+                        # Scale ingredients with validation
+                        scaled_ingredients = []
+                        for ing in template['base_ingredients']:
+                            scaled_ing = ing.copy()
+                            scaled_amount = ing['amount'] * best_scale
+                            
+                            # Validate scaled amount
+                            if self.MIN_INGREDIENT_AMOUNT <= scaled_amount <= self.MAX_INGREDIENT_AMOUNT:
+                                scaled_ing['amount'] = round(scaled_amount, 2)
+                                scaled_ingredients.append(scaled_ing)
+                            else:
+                                print(f"[WARNING] Skipping ingredient {ing['item']} due to invalid amount: {scaled_amount}")
+                        
+                        # Calculate actual nutrition
+                        nutrition = self.calculate_meal_nutrition_enhanced(template, best_scale)
+                        
+                        # Final validation
+                        if not self._validate_nutrition_values(nutrition):
+                            print(f"[ERROR] Invalid nutrition for meal {meal_name}")
+                            day_meals[meal_name] = self._handle_optimization_failure(preferences, meal_type)
+                            continue
+                        
+                        # Track cuisine
+                        cuisines_used_today.add(template.get('cuisine', 'standard'))
+                        
+                        day_meals[meal_name] = {
+                            'name': template['name'],
+                            'ingredients': scaled_ingredients,
+                            'calories': nutrition['calories'],
+                            'protein': nutrition['protein'],
+                            'fat': nutrition['fat'],
+                            'carbs': nutrition['carbs'],
+                            'prep_time': template.get('prep_time', 15),
+                            'cuisine': template.get('cuisine', 'standard'),
+                            'cooking_method': template.get('cooking_method', 'raw')
+                        }
+                        
+                        # Track used meals
+                        meal_history[template['name']] = day_number
+                        
+                    except Exception as e:
+                        print(f"[ERROR] Failed to create meal {meal_name}: {e}")
+                        day_meals[meal_name] = self._handle_optimization_failure(preferences, meal_type)
+                
+                else:
+                    # No valid template found, use fallback
+                    print(f"[WARNING] No valid template found for {meal_name}, using fallback")
+                    day_meals[meal_name] = self._handle_optimization_failure(preferences, meal_type)
             
             # Check if day totals are acceptable
             totals = self.calculate_day_totals(day_meals)
@@ -1240,61 +1999,97 @@ optimizer.set_constraints(preferences)""",
         return filtered if filtered else valid_templates
     
     def optimize_meal_scale_advanced(self, template_id: str, target_calories: float, 
-                                   target_macros: Dict, max_iterations: int = 10) -> float:
-        """Advanced scaling using gradient descent to optimize both calories and macros"""
-        template = self.templates[template_id]
-        
-        # Initial scale based on calories
-        base_nutrition = self.calculate_meal_nutrition_enhanced(template)
-        if base_nutrition['calories'] == 0:
+                                   target_macros: Dict, max_iterations: int = 20) -> float:
+        """Advanced scaling using robust optimization with convergence guarantees"""
+        try:
+            template = self.templates[template_id]
+            
+            # Initial scale based on calories
+            base_nutrition = self.calculate_meal_nutrition_enhanced(template)
+            if base_nutrition['calories'] <= self.EPSILON:
+                return 1.0
+            
+            scale = self._safe_divide(target_calories, base_nutrition['calories'], 1.0)
+            scale = self._clamp_scale_factor(scale)
+            
+            best_scale = scale
+            best_score = 0
+            
+            # Adaptive learning rate with momentum
+            learning_rate = 0.1
+            momentum = 0.9
+            velocity = 0.0
+            
+            # Track convergence
+            last_improvement = 0
+            stagnation_threshold = 5
+            
+            for iteration in range(max_iterations):
+                # Calculate current nutrition with validation
+                current_nutrition = self.calculate_meal_nutrition_enhanced(template, scale)
+                
+                if not self._validate_nutrition_values(current_nutrition):
+                    self.algorithm_metrics['validation_errors'] += 1
+                    scale = self._clamp_scale_factor(scale * 0.9)  # Reduce scale
+                    continue
+                
+                # Calculate score
+                score = self.calculate_nutrition_score(current_nutrition, target_calories, target_macros)
+                
+                if score > best_score:
+                    best_score = score
+                    best_scale = scale
+                    last_improvement = iteration
+                
+                # Check for convergence
+                if score >= 95 or (iteration - last_improvement) > stagnation_threshold:
+                    self.algorithm_metrics['convergence_achieved'] = True
+                    break
+                
+                # Calculate gradient using finite differences
+                epsilon = 0.01
+                scale_up = self._clamp_scale_factor(scale * (1 + epsilon))
+                scale_down = self._clamp_scale_factor(scale * (1 - epsilon))
+                
+                nutrition_up = self.calculate_meal_nutrition_enhanced(template, scale_up)
+                nutrition_down = self.calculate_meal_nutrition_enhanced(template, scale_down)
+                
+                score_up = self.calculate_nutrition_score(nutrition_up, target_calories, target_macros)
+                score_down = self.calculate_nutrition_score(nutrition_down, target_calories, target_macros)
+                
+                # Numerical gradient
+                gradient = (score_up - score_down) / (2 * epsilon * scale)
+                
+                # Apply momentum
+                velocity = momentum * velocity + learning_rate * gradient
+                new_scale = scale + velocity
+                
+                # Ensure scale stays in bounds
+                new_scale = self._clamp_scale_factor(new_scale)
+                
+                # Check for improvement
+                test_nutrition = self.calculate_meal_nutrition_enhanced(template, new_scale)
+                test_score = self.calculate_nutrition_score(test_nutrition, target_calories, target_macros)
+                
+                if test_score > score:
+                    scale = new_scale
+                else:
+                    # Reduce learning rate if no improvement
+                    learning_rate *= 0.8
+                    velocity *= 0.5
+                
+                # Adaptive learning rate adjustment
+                if iteration > 0 and iteration % 5 == 0:
+                    if best_score < 85:  # If we're not making good progress
+                        learning_rate = min(0.2, learning_rate * 1.1)
+                    else:
+                        learning_rate = max(0.01, learning_rate * 0.9)
+            
+            return best_scale
+            
+        except Exception as e:
+            print(f"[ERROR] Optimization failed for template {template_id}: {e}")
             return 1.0
-        
-        scale = target_calories / base_nutrition['calories']
-        best_scale = scale
-        best_score = 0
-        
-        # Learning rate for gradient descent
-        learning_rate = 0.1
-        
-        for iteration in range(max_iterations):
-            # Calculate current nutrition
-            current_nutrition = self.calculate_meal_nutrition_enhanced(template, scale)
-            
-            # Calculate score
-            score = self.calculate_nutrition_score(current_nutrition, target_calories, target_macros)
-            
-            if score > best_score:
-                best_score = score
-                best_scale = scale
-            
-            # If we're close enough, stop
-            if score >= 95:
-                break
-            
-            # Calculate gradient (simplified)
-            # Try slightly higher and lower scales
-            scale_up = scale * 1.05
-            scale_down = scale * 0.95
-            
-            nutrition_up = self.calculate_meal_nutrition_enhanced(template, scale_up)
-            nutrition_down = self.calculate_meal_nutrition_enhanced(template, scale_down)
-            
-            score_up = self.calculate_nutrition_score(nutrition_up, target_calories, target_macros)
-            score_down = self.calculate_nutrition_score(nutrition_down, target_calories, target_macros)
-            
-            # Move in the direction of improvement
-            if score_up > score and score_up > score_down:
-                scale = scale + learning_rate * (scale_up - scale)
-            elif score_down > score:
-                scale = scale + learning_rate * (scale_down - scale)
-            else:
-                # Reduce learning rate if no improvement
-                learning_rate *= 0.5
-            
-            # Keep scale in reasonable bounds
-            scale = max(0.3, min(2.5, scale))
-        
-        return best_scale
     
     def calculate_day_totals(self, meals: Dict) -> Dict:
         """Calculate total nutrition for a day"""

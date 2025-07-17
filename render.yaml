@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: cibozer
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: SECRET_KEY
+        value: cibozer-render-deployment
+      - key: DEBUG
+        value: False

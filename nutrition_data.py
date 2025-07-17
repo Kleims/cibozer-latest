@@ -297,6 +297,24 @@ INGREDIENTS = {
     "soy_sauce": {"calories": 53, "protein": 8.1, "fat": 0.6, "carbs": 4.9, "tags": ["vegan", "vegetarian"], "category": "sauce"},
     "hot_sauce": {"calories": 11, "protein": 0.2, "fat": 0.3, "carbs": 1.3, "tags": ["vegan", "vegetarian", "paleo", "keto"], "category": "sauce"},
     "fish_sauce": {"calories": 35, "protein": 6.0, "fat": 0.0, "carbs": 3.0, "tags": ["pescatarian", "asian"], "category": "sauce"},
+    
+    # Missing ingredients for templates
+    "blueberries": {"calories": 57, "protein": 0.7, "fat": 0.3, "carbs": 14.5, "tags": ["vegan", "vegetarian", "paleo"], "category": "fruit"},
+    "honey": {"calories": 304, "protein": 0.3, "fat": 0, "carbs": 82.4, "tags": ["vegetarian", "paleo"], "category": "sweetener"},
+    "nutritional_yeast": {"calories": 325, "protein": 45, "fat": 7, "carbs": 36, "tags": ["vegan", "vegetarian"], "category": "supplement"},
+    "lettuce": {"calories": 15, "protein": 1.4, "fat": 0.2, "carbs": 2.9, "tags": ["vegan", "vegetarian", "paleo"], "category": "vegetable"},
+    "tomato": {"calories": 18, "protein": 0.9, "fat": 0.2, "carbs": 3.9, "tags": ["vegan", "vegetarian", "paleo"], "category": "vegetable"},
+    "cucumber": {"calories": 16, "protein": 0.7, "fat": 0.1, "carbs": 4.0, "tags": ["vegan", "vegetarian", "paleo"], "category": "vegetable"},
+    "kale": {"calories": 49, "protein": 4.3, "fat": 0.9, "carbs": 8.8, "tags": ["vegan", "vegetarian", "paleo"], "category": "vegetable"},
+    "avocado": {"calories": 160, "protein": 2.0, "fat": 14.7, "carbs": 8.5, "tags": ["vegan", "vegetarian", "paleo", "keto"], "category": "fruit"},
+    "apple": {"calories": 52, "protein": 0.3, "fat": 0.2, "carbs": 13.8, "tags": ["vegan", "vegetarian", "paleo"], "category": "fruit"},
+    "sweet_potato": {"calories": 86, "protein": 1.6, "fat": 0.1, "carbs": 20.1, "tags": ["vegan", "vegetarian", "paleo"], "category": "vegetable"},
+    "asparagus": {"calories": 20, "protein": 2.2, "fat": 0.1, "carbs": 3.9, "tags": ["vegan", "vegetarian", "paleo"], "category": "vegetable"},
+    "lemon": {"calories": 29, "protein": 1.1, "fat": 0.3, "carbs": 9.3, "tags": ["vegan", "vegetarian", "paleo"], "category": "fruit"},
+    "broccoli": {"calories": 34, "protein": 2.8, "fat": 0.4, "carbs": 7.0, "tags": ["vegan", "vegetarian", "paleo"], "category": "vegetable"},
+    "bell_pepper": {"calories": 31, "protein": 1.0, "fat": 0.3, "carbs": 7.3, "tags": ["vegan", "vegetarian", "paleo"], "category": "vegetable"},
+    "spinach": {"calories": 23, "protein": 2.9, "fat": 0.4, "carbs": 3.6, "tags": ["vegan", "vegetarian", "paleo"], "category": "vegetable"},
+    "mushrooms": {"calories": 22, "protein": 3.1, "fat": 0.3, "carbs": 3.3, "tags": ["vegan", "vegetarian", "paleo"], "category": "vegetable"},
     "tamari": {"calories": 60, "protein": 10.5, "fat": 0.1, "carbs": 5.6, "tags": ["vegan", "vegetarian"], "category": "sauce"},
     "coconut_aminos": {"calories": 90, "protein": 1, "fat": 0, "carbs": 16, "tags": ["vegan", "paleo"], "category": "sauce"},
     "worcestershire": {"calories": 78, "protein": 0, "fat": 0, "carbs": 19.5, "tags": ["pescatarian"], "category": "sauce"},
@@ -813,7 +831,8 @@ DIET_PROFILES = {
         "meal_tags": ["standard", "vegetarian"],
         "description": "Balanced macronutrient distribution for general health",
         "daily_fiber_min": 25,
-        "daily_sugar_max": 50
+        "daily_sugar_max": 50,
+        "icon": "utensils"
     },
     "keto": {
         "name": "Ketogenic",
@@ -823,7 +842,8 @@ DIET_PROFILES = {
         "meal_tags": ["keto", "carnivore"],
         "description": "Very low carb, high fat for ketosis",
         "daily_fiber_min": 15,
-        "net_carbs_max": 20
+        "net_carbs_max": 20,
+        "icon": "dumbbell"
     },
     "paleo": {
         "name": "Paleo",
@@ -832,7 +852,8 @@ DIET_PROFILES = {
         "banned": ["bread", "pasta", "rice", "oats", "milk", "cheese", "yogurt", "beans", "lentils", "peanut_butter", "tofu", "tempeh", "soy_sauce", "corn", "wheat", "barley"],
         "meal_tags": ["paleo", "carnivore"],
         "description": "Hunter-gatherer inspired whole foods",
-        "daily_fiber_min": 30
+        "daily_fiber_min": 30,
+        "icon": "fish"
     },
     "mediterranean": {
         "name": "Mediterranean",
@@ -843,7 +864,8 @@ DIET_PROFILES = {
         "meal_tags": ["mediterranean", "pescatarian"],
         "description": "Heart-healthy with emphasis on olive oil and fish",
         "daily_fiber_min": 30,
-        "weekly_fish_min": 2
+        "weekly_fish_min": 2,
+        "icon": "heart"
     },
     "vegan": {
         "name": "Vegan",
@@ -853,7 +875,8 @@ DIET_PROFILES = {
         "meal_tags": ["vegan"],
         "description": "100% plant-based, no animal products",
         "daily_fiber_min": 35,
-        "b12_supplement_needed": True
+        "b12_supplement_needed": True,
+        "icon": "leaf"
     },
     "vegetarian": {
         "name": "Vegetarian",
@@ -862,7 +885,8 @@ DIET_PROFILES = {
         "banned": ["chicken", "beef", "pork", "fish", "salmon", "tuna", "shrimp", "turkey", "bacon", "gelatin", "bone_broth"],
         "meal_tags": ["vegetarian", "vegan"],
         "description": "No meat or fish, allows dairy and eggs",
-        "daily_fiber_min": 30
+        "daily_fiber_min": 30,
+        "icon": "seedling"
     },
     "carnivore": {
         "name": "Carnivore",
@@ -872,7 +896,8 @@ DIET_PROFILES = {
         "preferred": ["beef", "pork", "chicken", "fish", "eggs", "butter", "cheese"],
         "meal_tags": ["carnivore"],
         "description": "Animal products only, zero plant foods",
-        "daily_fiber_min": 0
+        "daily_fiber_min": 0,
+        "icon": "drumstick-bite"
     },
     "pescatarian": {
         "name": "Pescatarian",
@@ -883,7 +908,8 @@ DIET_PROFILES = {
         "meal_tags": ["pescatarian", "mediterranean"],
         "description": "Vegetarian plus fish and seafood",
         "daily_fiber_min": 30,
-        "weekly_fish_min": 3
+        "weekly_fish_min": 3,
+        "icon": "fish"
     },
     "high_protein": {
         "name": "High Protein",
@@ -892,7 +918,8 @@ DIET_PROFILES = {
         "meal_tags": ["standard", "carnivore"],
         "description": "Optimized for muscle building and satiety",
         "daily_fiber_min": 25,
-        "daily_protein_min": 150
+        "daily_protein_min": 150,
+        "icon": "fire"
     }
 }
 
@@ -1583,6 +1610,276 @@ COOKING_METHODS = {
     "simmered": {"calorie_mult": 0.95, "protein_mult": 0.95, "fat_mult": 0.95},
     "mixed": {"calorie_mult": 1.0, "protein_mult": 1.0, "fat_mult": 1.0},
     "none": {"calorie_mult": 1.0, "protein_mult": 1.0, "fat_mult": 1.0}
+}
+
+# Missing data structures needed by the meal optimizer
+DIET_PROFILES = {
+    "standard": {
+        "name": "Standard Omnivore",
+        "macros": {"protein": 25, "fat": 30, "carbs": 45},
+        "meal_tags": ["standard", "omnivore"],
+        "banned": [],
+        "description": "Balanced diet with all food groups"
+    },
+    "high_protein": {
+        "name": "High Protein",
+        "macros": {"protein": 40, "fat": 30, "carbs": 30},
+        "meal_tags": ["high_protein", "standard"],
+        "banned": [],
+        "description": "Protein-focused for muscle building"
+    },
+    "vegetarian": {
+        "name": "Vegetarian",
+        "macros": {"protein": 20, "fat": 30, "carbs": 50},
+        "meal_tags": ["vegetarian", "standard"],
+        "banned": ["beef", "chicken", "pork", "fish", "seafood"],
+        "description": "Plant-based with dairy and eggs"
+    },
+    "vegan": {
+        "name": "Vegan",
+        "macros": {"protein": 18, "fat": 30, "carbs": 52},
+        "meal_tags": ["vegan", "plant_based"],
+        "banned": ["beef", "chicken", "pork", "fish", "seafood", "dairy", "eggs"],
+        "description": "Completely plant-based"
+    },
+    "keto": {
+        "name": "Ketogenic",
+        "macros": {"protein": 25, "fat": 70, "carbs": 5},
+        "meal_tags": ["keto", "low_carb"],
+        "banned": ["grains", "sugar", "high_carb_fruits"],
+        "description": "Very low carb, high fat"
+    },
+    "paleo": {
+        "name": "Paleo",
+        "macros": {"protein": 30, "fat": 40, "carbs": 30},
+        "meal_tags": ["paleo", "whole_foods"],
+        "banned": ["grains", "legumes", "dairy", "processed_foods"],
+        "description": "Whole foods, no processed items"
+    },
+    "mediterranean": {
+        "name": "Mediterranean",
+        "macros": {"protein": 20, "fat": 35, "carbs": 45},
+        "meal_tags": ["mediterranean", "healthy_fats"],
+        "banned": [],
+        "description": "Mediterranean-style eating"
+    },
+    "low_carb": {
+        "name": "Low Carb",
+        "macros": {"protein": 30, "fat": 50, "carbs": 20},
+        "meal_tags": ["low_carb", "standard"],
+        "banned": ["grains", "sugar", "high_carb_fruits"],
+        "description": "Reduced carbohydrate intake"
+    }
+}
+
+MEAL_PATTERNS = {
+    "standard": {
+        "name": "3 Meals Standard",
+        "meals": [
+            {"name": "breakfast", "calories_pct": 25},
+            {"name": "lunch", "calories_pct": 40},
+            {"name": "dinner", "calories_pct": 35}
+        ]
+    },
+    "3_plus_2": {
+        "name": "3 Meals + 2 Snacks",
+        "meals": [
+            {"name": "breakfast", "calories_pct": 20},
+            {"name": "mid_morning", "calories_pct": 10},
+            {"name": "lunch", "calories_pct": 30},
+            {"name": "snack", "calories_pct": 10},
+            {"name": "dinner", "calories_pct": 30}
+        ]
+    },
+    "5_small": {
+        "name": "5 Small Meals",
+        "meals": [
+            {"name": "breakfast", "calories_pct": 20},
+            {"name": "snack", "calories_pct": 20},
+            {"name": "lunch", "calories_pct": 20},
+            {"name": "snack", "calories_pct": 20},
+            {"name": "dinner", "calories_pct": 20}
+        ]
+    },
+    "2_meals": {
+        "name": "2 Meals (16:8 IF)",
+        "meals": [
+            {"name": "lunch", "calories_pct": 45},
+            {"name": "dinner", "calories_pct": 55}
+        ]
+    },
+    "omad": {
+        "name": "One Meal A Day",
+        "meals": [
+            {"name": "dinner", "calories_pct": 100}
+        ]
+    }
+}
+
+MEAL_TEMPLATES = {
+    "oatmeal_breakfast": {
+        "name": "Oatmeal with Berries",
+        "meal_type": "breakfast",
+        "cuisine": "standard",
+        "cooking_method": "cooked",
+        "prep_time": 10,
+        "tags": ["vegetarian", "vegan", "healthy"],
+        "base_ingredients": [
+            {"item": "oats", "amount": 50, "unit": "g"},
+            {"item": "milk", "amount": 200, "unit": "ml"},
+            {"item": "blueberries", "amount": 50, "unit": "g"},
+            {"item": "honey", "amount": 10, "unit": "g"}
+        ]
+    },
+    "scrambled_eggs": {
+        "name": "Scrambled Eggs with Toast",
+        "meal_type": "breakfast",
+        "cuisine": "standard",
+        "cooking_method": "pan_fried",
+        "prep_time": 8,
+        "tags": ["vegetarian", "protein"],
+        "base_ingredients": [
+            {"item": "eggs", "amount": 100, "unit": "g"},
+            {"item": "whole_wheat_bread", "amount": 50, "unit": "g"},
+            {"item": "butter", "amount": 10, "unit": "g"},
+            {"item": "milk", "amount": 30, "unit": "ml"}
+        ]
+    },
+    "tofu_scramble": {
+        "name": "Tofu Scramble",
+        "meal_type": "breakfast",
+        "cuisine": "standard",
+        "cooking_method": "pan_fried",
+        "prep_time": 12,
+        "tags": ["vegan", "vegetarian", "protein"],
+        "base_ingredients": [
+            {"item": "tofu", "amount": 100, "unit": "g"},
+            {"item": "spinach", "amount": 50, "unit": "g"},
+            {"item": "mushrooms", "amount": 50, "unit": "g"},
+            {"item": "nutritional_yeast", "amount": 5, "unit": "g"},
+            {"item": "olive_oil", "amount": 10, "unit": "ml"}
+        ]
+    },
+    "chicken_salad": {
+        "name": "Chicken Salad",
+        "meal_type": "lunch",
+        "cuisine": "standard",
+        "cooking_method": "grilled",
+        "prep_time": 15,
+        "tags": ["protein", "low_carb"],
+        "base_ingredients": [
+            {"item": "chicken_breast", "amount": 120, "unit": "g"},
+            {"item": "lettuce", "amount": 100, "unit": "g"},
+            {"item": "tomato", "amount": 50, "unit": "g"},
+            {"item": "cucumber", "amount": 50, "unit": "g"},
+            {"item": "olive_oil", "amount": 15, "unit": "ml"},
+            {"item": "balsamic_vinegar", "amount": 10, "unit": "ml"}
+        ]
+    },
+    "quinoa_bowl": {
+        "name": "Quinoa Power Bowl",
+        "meal_type": "lunch",
+        "cuisine": "healthy",
+        "cooking_method": "steamed",
+        "prep_time": 20,
+        "tags": ["vegan", "vegetarian", "protein", "healthy"],
+        "base_ingredients": [
+            {"item": "chickpeas", "amount": 80, "unit": "g"},
+            {"item": "quinoa", "amount": 60, "unit": "g"},
+            {"item": "kale", "amount": 60, "unit": "g"},
+            {"item": "tahini", "amount": 15, "unit": "g"},
+            {"item": "avocado", "amount": 50, "unit": "g"}
+        ]
+    },
+    "apple_nuts_snack": {
+        "name": "Apple with Nuts",
+        "meal_type": "snack",
+        "cuisine": "standard",
+        "cooking_method": "raw",
+        "prep_time": 2,
+        "tags": ["vegetarian", "vegan", "healthy"],
+        "base_ingredients": [
+            {"item": "apple", "amount": 150, "unit": "g"},
+            {"item": "almond_butter", "amount": 15, "unit": "g"}
+        ]
+    },
+    "cheese_crackers": {
+        "name": "Cheese and Crackers",
+        "meal_type": "snack",
+        "cuisine": "standard",
+        "cooking_method": "raw",
+        "prep_time": 3,
+        "tags": ["vegetarian", "keto"],
+        "base_ingredients": [
+            {"item": "cheddar_cheese", "amount": 30, "unit": "g"},
+            {"item": "macadamia_nuts", "amount": 20, "unit": "g"}
+        ]
+    },
+    "salmon_dinner": {
+        "name": "Baked Salmon with Vegetables",
+        "meal_type": "dinner",
+        "cuisine": "healthy",
+        "cooking_method": "baked",
+        "prep_time": 25,
+        "tags": ["pescatarian", "protein", "healthy"],
+        "base_ingredients": [
+            {"item": "salmon", "amount": 150, "unit": "g"},
+            {"item": "sweet_potato", "amount": 100, "unit": "g"},
+            {"item": "asparagus", "amount": 100, "unit": "g"},
+            {"item": "olive_oil", "amount": 10, "unit": "ml"},
+            {"item": "lemon", "amount": 20, "unit": "g"}
+        ]
+    },
+    "stir_fry": {
+        "name": "Vegetable Stir Fry",
+        "meal_type": "dinner",
+        "cuisine": "asian",
+        "cooking_method": "stir_fried",
+        "prep_time": 15,
+        "tags": ["vegan", "vegetarian", "asian"],
+        "base_ingredients": [
+            {"item": "tofu", "amount": 100, "unit": "g"},
+            {"item": "broccoli", "amount": 100, "unit": "g"},
+            {"item": "bell_pepper", "amount": 80, "unit": "g"},
+            {"item": "soy_sauce", "amount": 15, "unit": "ml"},
+            {"item": "sesame_oil", "amount": 10, "unit": "ml"}
+        ]
+    }
+}
+
+ALLERGEN_MAPPING = {
+    "nuts": ["almonds", "walnuts", "cashews", "pecans", "macadamia_nuts", "pistachios", "brazil_nuts", "hazelnuts", "pine_nuts", "peanuts"],
+    "dairy": ["milk", "cheese", "yogurt", "butter", "cream", "cottage_cheese"],
+    "gluten": ["wheat", "bread", "pasta", "flour", "barley", "rye"],
+    "shellfish": ["shrimp", "crab", "lobster", "clams", "mussels", "oysters"],
+    "eggs": ["eggs", "egg_whites"],
+    "soy": ["tofu", "tempeh", "soy_sauce", "edamame"],
+    "sesame": ["sesame_seeds", "sesame_oil", "tahini"],
+    "fish": ["salmon", "tuna", "cod", "tilapia", "mackerel"]
+}
+
+NUTRIENT_RETENTION = {
+    "raw": {"vitamins": 1.0, "minerals": 1.0},
+    "steamed": {"vitamins": 0.9, "minerals": 0.95},
+    "boiled": {"vitamins": 0.7, "minerals": 0.8},
+    "baked": {"vitamins": 0.85, "minerals": 0.9},
+    "grilled": {"vitamins": 0.8, "minerals": 0.9},
+    "fried": {"vitamins": 0.6, "minerals": 0.8}
+}
+
+CUISINE_DIET_COMPATIBILITY = {
+    "mediterranean": ["vegetarian", "pescatarian", "standard"],
+    "asian": ["vegetarian", "vegan", "standard"],
+    "mexican": ["vegetarian", "vegan", "standard"],
+    "indian": ["vegetarian", "vegan", "standard"],
+    "american": ["standard", "keto", "paleo"]
+}
+
+REGIONAL_MEASUREMENTS = {
+    "US": ["cups", "tablespoons", "teaspoons", "ounces", "pounds"],
+    "Metric": ["grams", "kilograms", "milliliters", "liters"],
+    "UK": ["stones", "pounds", "ounces", "pints", "fluid_ounces"],
+    "Australia": ["grams", "kilograms", "milliliters", "liters", "cups"]
 }
 
 # Update the __all__ export to include these new constants
