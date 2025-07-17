@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">AI-Powered Meal Planning</h1>
+                <p class="lead mb-4">
+                    Create personalized meal plans and generate professional videos with our advanced AI algorithm. 
+                    Perfect for content creators, nutritionists, and health enthusiasts.
+                </p>
+                <div class="d-flex flex-column flex-sm-row gap-3">
+                    <a href="{{ url_for('create_meal_plan') }}" class="btn btn-light btn-lg px-4">
+                        <i class="fas fa-plus me-2"></i>Create Meal Plan
+                    </a>
+                    <a href="{{ url_for('about') }}" class="btn btn-outline-light btn-lg px-4">
+                        <i class="fas fa-info-circle me-2"></i>Learn More
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-image text-center">
+                    <i class="fas fa-utensils hero-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold mb-3">Why Choose Cibozer?</h2>
+                <p class="lead text-muted">Advanced AI meets nutrition science</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-brain fa-3x text-primary"></i>
+                    </div>
+                    <h4>AI-Powered Algorithm</h4>
+                    <p class="text-muted">
+                        Our enhanced algorithm achieves 95%+ accuracy with robust mathematical validation 
+                        and convergence guarantees.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-video fa-3x text-success"></i>
+                    </div>
+                    <h4>Video Generation</h4>
+                    <p class="text-muted">
+                        Automatically create professional meal plan videos for YouTube, TikTok, 
+                        and social media platforms.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-chart-line fa-3x text-warning"></i>
+                    </div>
+                    <h4>Nutrition Analytics</h4>
+                    <p class="text-muted">
+                        Comprehensive nutrition tracking, macro analysis, and dietary optimization 
+                        with medical condition support.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Diet Types Section -->
+<section class="diet-types-section py-5 bg-light">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold mb-3">Supported Diet Types</h2>
+                <p class="lead text-muted">Versatile support for all dietary preferences</p>
+            </div>
+        </div>
+        
+        <div class="row g-3">
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-leaf"></i> Vegan
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-seedling"></i> Vegetarian
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-dumbbell"></i> Keto
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-fish"></i> Paleo
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-heart"></i> Mediterranean
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-fire"></i> High Protein
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-balance-scale"></i> Low Carb
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-utensils"></i> Standard
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section py-5">
+    <div class="container">
+        <div class="row text-center g-4">
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">300+</div>
+                    <div class="stat-label">Ingredients</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">95%</div>
+                    <div class="stat-label">Accuracy</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">0.06s</div>
+                    <div class="stat-label">Generation Time</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">8</div>
+                    <div class="stat-label">Diet Types</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="display-5 fw-bold mb-4">Ready to Get Started?</h2>
+        <p class="lead mb-4">Create your first AI-powered meal plan in seconds</p>
+        <a href="{{ url_for('create_meal_plan') }}" class="btn btn-light btn-lg px-5">
+            <i class="fas fa-rocket me-2"></i>Create Now
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add smooth scrolling and animations
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate stats on scroll
+    const statsSection = document.querySelector('.stats-section');
+    if (statsSection) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateStats();
+                }
+            });
+        });
+        observer.observe(statsSection);
+    }
+});
+
+function animateStats() {
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers.forEach(stat => {
+        const target = stat.textContent;
+        const isPercentage = target.includes('%');
+        const isDecimal = target.includes('.');
+        const isPlus = target.includes('+');
+        
+        let finalValue = parseFloat(target);
+        if (isNaN(finalValue)) finalValue = 0;
+        
+        let current = 0;
+        const increment = finalValue / 50;
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= finalValue) {
+                current = finalValue;
+                clearInterval(timer);
+            }
+            
+            let display = isDecimal ? current.toFixed(2) : Math.floor(current);
+            if (isPercentage) display += '%';
+            if (isPlus) display += '+';
+            if (target.includes('s')) display += 's';
+            
+            stat.textContent = display;
+        }, 20);
+    });
+}
+</script>
+{% endblock %}

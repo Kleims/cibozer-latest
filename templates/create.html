@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+
+{% block title %}Create Meal Plan - Cibozer{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="form-card">
+                <div class="text-center mb-4">
+                    <h2 class="display-6 fw-bold text-gradient">Create Your Meal Plan</h2>
+                    <p class="lead text-muted">Tell us your preferences and we'll create the perfect meal plan for you</p>
+                </div>
+                
+                <form id="mealPlanForm">
+                    <!-- Basic Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="calories" class="form-label">
+                                    <i class="fas fa-fire text-danger me-2"></i>Daily Calories
+                                </label>
+                                <input type="number" class="form-control" id="calories" name="calories" 
+                                       value="2000" min="800" max="5000" required>
+                                <div class="form-text">Between 800-5000 calories per day</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="pattern" class="form-label">
+                                    <i class="fas fa-clock text-primary me-2"></i>Meal Pattern
+                                </label>
+                                <select class="form-select" id="pattern" name="pattern" required>
+                                    {% for pattern_key, pattern_data in meal_patterns_data.items() %}
+                                    <option value="{{ pattern_key }}" {% if pattern_key == 'standard' %}selected{% endif %}>
+                                        {{ pattern_data.name }} ({{ pattern_data.meals|length }} meals)
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diet Type Selection -->
+                    <div class="form-group mb-4">
+                        <label class="form-label">
+                            <i class="fas fa-leaf text-success me-2"></i>Diet Type
+                        </label>
+                        <div class="row g-3">
+                            {% for diet_key, diet_data in diet_profiles.items() %}
+                            <div class="col-md-4 col-sm-6">
+                                <div class="diet-option">
+                                    <input type="radio" class="btn-check" name="diet_type" 
+                                           id="diet_{{ diet_key }}" value="{{ diet_key }}" 
+                                           {% if diet_key == 'standard' %}checked{% endif %}>
+                                    <label class="btn btn-outline-primary w-100 p-3" for="diet_{{ diet_key }}">
+                                        <div class="text-center">
+                                            <i class="fas fa-{{ diet_data.icon|default('utensils') }} fa-2x mb-2"></i>
+                                            <div class="fw-bold">{{ diet_data.name }}</div>
+                                            <small class="text-muted">{{ diet_data.description }}</small>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Dietary Restrictions -->
+                    <div class="form-group mb-4">
+                        <label class="form-label">
+                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>Dietary Restrictions
+                        </label>
+                        <div class="row g-2">
+                            {% set common_restrictions = [
+                                'gluten_free', 'dairy_free', 'nut_free', 'soy_free', 
+                                'egg_free', 'fish_free', 'shellfish_free', 'sesame_free'
+                            ] %}
+                            {% for restriction in common_restrictions %}
+                            <div class="col-md-3 col-sm-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           name="restrictions" value="{{ restriction }}" 
+                                           id="restriction_{{ restriction }}">
+                                    <label class="form-check-label" for="restriction_{{ restriction }}">
+                                        {{ restriction.replace('_', ' ').title() }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Medical Conditions -->
+                    <div class="form-group mb-4">
+                        <label class="form-label">
+                            <i class="fas fa-heartbeat text-danger me-2"></i>Medical Conditions (Optional)
+                        </label>
+                        <div class="row g-2">
+                            {% set medical_conditions = [
+                                'diabetes', 'hypertension', 'heart_disease', 'kidney_disease',
+                                'celiac', 'ibs', 'gerd', 'osteoporosis'
+                            ] %}
+                            {% for condition in medical_conditions %}
+                            <div class="col-md-3 col-sm-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           name="medical_conditions" value="{{ condition }}" 
+                                           id="condition_{{ condition }}">
+                                    <label class="form-check-label" for="condition_{{ condition }}">
+                                        {{ condition.replace('_', ' ').title() }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options -->
+                    <div class="form-group mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label class="form-label mb-0">
+                                <i class="fas fa-cogs text-secondary me-2"></i>Advanced Options
+                            </label>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                    data-bs-toggle="collapse" data-bs-target="#advancedOptions">
+                                <i class="fas fa-chevron-down me-1"></i>Toggle
+                            </button>
+                        </div>
+                        
+                        <div class="collapse mt-3" id="advancedOptions">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="measurement_system" class="form-label">Measurement System</label>
+                                    <select class="form-select" id="measurement_system" name="measurement_system">
+                                        <option value="US" selected>US (cups, oz, lb)</option>
+                                        <option value="metric">Metric (g, kg, ml, l)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="cuisine_preference" class="form-label">Cuisine Preference</label>
+                                    <select class="form-select" id="cuisine_preference" name="cuisine_preference">
+                                        <option value="all" selected>All Cuisines</option>
+                                        <option value="american">American</option>
+                                        <option value="mediterranean">Mediterranean</option>
+                                        <option value="asian">Asian</option>
+                                        <option value="italian">Italian</option>
+                                        <option value="mexican">Mexican</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" 
+                                               id="allow_substitutions" name="allow_substitutions" checked>
+                                        <label class="form-check-label" for="allow_substitutions">
+                                            Allow ingredient substitutions
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg px-5">
+                            <i class="fas fa-magic me-2"></i>Generate Meal Plan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="spinner"></div>
+                <h5 class="mt-3">Generating Your Meal Plan</h5>
+                <p class="text-muted mb-0">Our AI is crafting the perfect meals for you...</p>
+                <div class="progress-custom mt-3">
+                    <div class="progress-bar" style="width: 0%"></div>
+                </div>
+                <small class="text-muted mt-2 d-block">This usually takes 2-5 seconds</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Modal -->
+<div class="modal fade" id="resultsModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle text-success me-2"></i>Your Meal Plan is Ready!
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="mealPlanResults">
+                <!-- Results will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Close
+                </button>
+                <button type="button" class="btn btn-success" id="exportGroceryList">
+                    <i class="fas fa-shopping-cart me-2"></i>Export Grocery List
+                </button>
+                <button type="button" class="btn btn-primary" id="generateVideo">
+                    <i class="fas fa-video me-2"></i>Generate Video
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('mealPlanForm');
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    const resultsModal = new bootstrap.Modal(document.getElementById('resultsModal'));
+    let currentMealPlan = null;
+    
+    // Form submission
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Show loading modal
+        loadingModal.show();
+        animateProgress();
+        
+        try {
+            // Collect form data
+            const formData = new FormData(form);
+            const data = {
+                calories: parseInt(formData.get('calories')),
+                pattern: formData.get('pattern'),
+                diet_type: formData.get('diet_type'),
+                restrictions: formData.getAll('restrictions'),
+                medical_conditions: formData.getAll('medical_conditions'),
+                measurement_system: formData.get('measurement_system') || 'US',
+                cuisine_preference: formData.get('cuisine_preference') || 'all',
+                allow_substitutions: formData.has('allow_substitutions')
+            };
+            
+            // Submit to API
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                currentMealPlan = result.meal_plan;
+                displayResults(result.meal_plan);
+                loadingModal.hide();
+                resultsModal.show();
+            } else {
+                throw new Error(result.error || 'Failed to generate meal plan');
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            loadingModal.hide();
+            showNotification('Error generating meal plan: ' + error.message, 'error');
+        }
+    });
+    
+    // Export grocery list
+    document.getElementById('exportGroceryList').addEventListener('click', async function() {
+        if (!currentMealPlan) return;
+        
+        try {
+            const response = await fetch('/api/export-grocery-list', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ meal_plan: currentMealPlan })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                displayGroceryList(result.grocery_list);
+            } else {
+                throw new Error(result.error || 'Failed to export grocery list');
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Error exporting grocery list: ' + error.message, 'error');
+        }
+    });
+    
+    // Generate video
+    document.getElementById('generateVideo').addEventListener('click', async function() {
+        if (!currentMealPlan) return;
+        
+        try {
+            const response = await fetch('/api/generate-video', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ meal_plan: currentMealPlan })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showNotification(result.message || 'Video generated successfully!', 'success');
+            } else {
+                throw new Error(result.error || 'Failed to generate video');
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Error generating video: ' + error.message, 'error');
+        }
+    });
+    
+    function animateProgress() {
+        const progressBar = document.querySelector('.progress-bar');
+        let width = 0;
+        const interval = setInterval(() => {
+            width += Math.random() * 10;
+            if (width >= 90) {
+                clearInterval(interval);
+                width = 90;
+            }
+            progressBar.style.width = width + '%';
+        }, 200);
+    }
+    
+    function displayResults(mealPlan) {
+        const resultsContainer = document.getElementById('mealPlanResults');
+        const { meals, totals, metrics } = mealPlan;
+        
+        let html = `
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <div class="stat-number">${totals.calories}</div>
+                        <div class="stat-label">Calories</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <div class="stat-number">${totals.protein}g</div>
+                        <div class="stat-label">Protein</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <div class="stat-number">${metrics.accuracy}%</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        for (const [mealName, mealData] of Object.entries(meals)) {
+            html += `
+                <div class="meal-card">
+                    <div class="meal-title">${mealName.replace('_', ' ').toUpperCase()}</div>
+                    <div class="nutrition-info">
+                        <div class="nutrition-item">
+                            <div class="nutrition-value">${mealData.calories}</div>
+                            <div class="nutrition-label">Calories</div>
+                        </div>
+                        <div class="nutrition-item">
+                            <div class="nutrition-value">${mealData.protein}g</div>
+                            <div class="nutrition-label">Protein</div>
+                        </div>
+                        <div class="nutrition-item">
+                            <div class="nutrition-value">${mealData.carbs}g</div>
+                            <div class="nutrition-label">Carbs</div>
+                        </div>
+                        <div class="nutrition-item">
+                            <div class="nutrition-value">${mealData.fat}g</div>
+                            <div class="nutrition-label">Fat</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Ingredients:</h6>
+                            <ul class="ingredients-list">
+                                ${mealData.ingredients.map(ing => `
+                                    <li>
+                                        <span class="ingredient-name">${ing.item.replace('_', ' ')}</span>
+                                        <span class="ingredient-amount">${ing.amount}${ing.unit}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Instructions:</h6>
+                            <ol class="small">
+                                ${mealData.instructions.map(inst => `<li>${inst}</li>`).join('')}
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        resultsContainer.innerHTML = html;
+    }
+    
+    function displayGroceryList(groceryList) {
+        let html = '<h5>Grocery List</h5><ul class="list-group">';
+        groceryList.forEach(item => {
+            html += `<li class="list-group-item d-flex justify-content-between">
+                <span>${item.item}</span>
+                <span class="text-muted">${item.amount} ${item.unit}</span>
+            </li>`;
+        });
+        html += '</ul>';
+        
+        const newWindow = window.open('', '_blank');
+        newWindow.document.write(`
+            <html>
+                <head>
+                    <title>Grocery List - Cibozer</title>
+                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                </head>
+                <body class="container py-4">
+                    ${html}
+                    <button class="btn btn-primary mt-3" onclick="window.print()">Print</button>
+                </body>
+            </html>
+        `);
+    }
+    
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type} show`;
+        notification.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'check-circle'} me-3"></i>
+                <div>
+                    <div class="fw-bold">${type === 'error' ? 'Error' : 'Success'}</div>
+                    <div>${message}</div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+    }
+});
+</script>
+{% endblock %}
