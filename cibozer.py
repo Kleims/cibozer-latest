@@ -42,6 +42,86 @@ class MealPlanParameters:
     macro_goal: str
     meal_structure: str
     
+    def __post_init__(self):
+        """Validate parameters after initialization"""
+        self._validate_calories()
+        self._validate_diet_type()
+        self._validate_macro_goal()
+        self._validate_meal_structure()
+    
+    def _validate_calories(self):
+        """Validate calorie input"""
+        if not isinstance(self.calories, int):
+            try:
+                self.calories = int(self.calories)
+            except (ValueError, TypeError):
+                raise ValueError(f"Calories must be a number, got: {self.calories}")
+        
+        if self.calories < 800:
+            raise ValueError(f"Calories too low ({self.calories}). Minimum is 800 for safety.")
+        
+        if self.calories > 5000:
+            raise ValueError(f"Calories too high ({self.calories}). Maximum is 5000.")
+        
+        # Warning for extreme values
+        if self.calories < 1200:
+            print(f"[WARNING] Very low calorie count ({self.calories}). Consider 1200+ for most adults.")
+        elif self.calories > 3500:
+            print(f"[WARNING] Very high calorie count ({self.calories}). Consider if appropriate.")
+    
+    def _validate_diet_type(self):
+        """Validate diet type"""
+        if not isinstance(self.diet_type, str):
+            raise ValueError(f"Diet type must be a string, got: {type(self.diet_type)}")
+        
+        valid_diets = {
+            "omnivore", "vegetarian", "vegan", "pescatarian", 
+            "keto", "low-carb", "paleo", "gluten-free"
+        }
+        
+        if self.diet_type.lower() not in valid_diets:
+            raise ValueError(f"Invalid diet type: {self.diet_type}. Valid options: {', '.join(valid_diets)}")
+        
+        # Normalize to lowercase
+        self.diet_type = self.diet_type.lower()
+    
+    def _validate_macro_goal(self):
+        """Validate macro goal"""
+        if not isinstance(self.macro_goal, str):
+            raise ValueError(f"Macro goal must be a string, got: {type(self.macro_goal)}")
+        
+        valid_macros = {
+            "high protein", "balanced", "high carb", 
+            "keto ratios", "mediterranean", "low fat"
+        }
+        
+        if self.macro_goal.lower() not in valid_macros:
+            raise ValueError(f"Invalid macro goal: {self.macro_goal}. Valid options: {', '.join(valid_macros)}")
+        
+        # Normalize to lowercase
+        self.macro_goal = self.macro_goal.lower()
+        
+        # Check for compatibility
+        if self.diet_type in ["keto", "low-carb"] and self.macro_goal not in ["keto ratios", "high protein"]:
+            print(f"[WARNING] {self.macro_goal} macro goal may not be optimal for {self.diet_type} diet")
+    
+    def _validate_meal_structure(self):
+        """Validate meal structure"""
+        if not isinstance(self.meal_structure, str):
+            raise ValueError(f"Meal structure must be a string, got: {type(self.meal_structure)}")
+        
+        valid_structures = {"3 meals", "3+2", "5 small", "2 meals", "OMAD"}
+        
+        if self.meal_structure not in valid_structures:
+            raise ValueError(f"Invalid meal structure: {self.meal_structure}. Valid options: {', '.join(valid_structures)}")
+        
+        # Check for compatibility with calories
+        if self.meal_structure == "OMAD" and self.calories > 2500:
+            print(f"[WARNING] OMAD with {self.calories} calories may be difficult to consume in one meal")
+        
+        if self.meal_structure == "5 small" and self.calories < 1500:
+            print(f"[WARNING] 5 small meals with {self.calories} calories may result in very small portions")
+    
     def get_filename_base(self):
         date = datetime.now().strftime("%Y%m%d")
         return f"cibozer_{self.diet_type.lower()}_{self.calories}_{self.macro_goal.lower().replace(' ', '')}_{self.meal_structure.replace(' ', '').replace('+', 'plus')}_{date}"
@@ -1542,18 +1622,34 @@ class CibozerVideoGenerator:
     def generate_video(self, diet_type: str, calories: int, 
                       macro_goal: str, meal_structure: str,
                       output_path: str = "./output"):
-        """Generate both longform and shorts videos"""
+        """Generate both longform and shorts videos with input validation"""
         
-        # Create parameters
-        params = MealPlanParameters(
-            calories=calories,
-            diet_type=diet_type,
-            macro_goal=macro_goal,
-            meal_structure=meal_structure
-        )
+        # Validate output path
+        if not isinstance(output_path, str):
+            raise ValueError(f"Output path must be a string, got: {type(output_path)}")
         
-        # Create output directory
-        os.makedirs(output_path, exist_ok=True)
+        # Validate output path is writable
+        try:
+            os.makedirs(output_path, exist_ok=True)
+        except (OSError, PermissionError) as e:
+            raise ValueError(f"Cannot create output directory '{output_path}': {e}")
+        
+        # Create and validate parameters (validation happens in __post_init__)
+        try:
+            params = MealPlanParameters(
+                calories=calories,
+                diet_type=diet_type,
+                macro_goal=macro_goal,
+                meal_structure=meal_structure
+            )
+        except ValueError as e:
+            print(f"[ERROR] Invalid parameters: {e}")
+            print("\nValid options:")
+            print(f"  Diet types: {', '.join(self.diet_types)}")
+            print(f"  Calorie range: 800-5000 (recommended: 1200-3500)")
+            print(f"  Macro goals: {', '.join(self.macro_goals)}")
+            print(f"  Meal structures: {', '.join(self.meal_structures)}")
+            raise
         
         # Generate videos
         print(f"\nGenerating videos for: {params.get_filename_base()}")
