@@ -12,40 +12,91 @@ import os
 import json
 import time
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import traceback
 import logging
-from logging.handlers import RotatingFileHandler
+import logging.config
 import meal_optimizer as mo
 import tempfile
 import shutil
 from pathlib import Path
 from video_service import VideoService
 from pdf_generator import PDFGenerator
+from utils.security import (
+    secure_path_join, validate_json_filename, validate_video_filename, 
+    validate_pdf_filename, validate_secret_key, SecurityError
+)
 from admin import admin_bp
 from auth import auth_bp
+from payments import payments_bp, check_user_credits, deduct_credit
 from models import db, User, UsageLog, SavedMealPlan, PricingPlan
 from dotenv import load_dotenv
+from app_config import get_app_config, validate_config
+from middleware import (
+    validate_request, MealPlanRequestSchema, VideoGenerationRequestSchema,
+    ExportGroceryListSchema, SaveMealPlanSchema, ExportPDFSchema, 
+    TestVoiceSchema, FrontendLogsSchema, sanitize_input, validate_json_request
+)
+from simple_logger import log_info, log_error, log_request, log_form_data
 
 # Load environment variables
 load_dotenv()
 
-# Initialize Flask app
+# Load and validate centralized configuration
+if not validate_config():
+    raise ValueError("Configuration validation failed. Check your environment variables.")
+
+config = get_app_config()
+
+# Initialize Flask app with centralized config
 app = Flask(__name__)
 
-# Configuration
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
-if not app.config['SECRET_KEY']:
-    raise ValueError("SECRET_KEY environment variable must be set")
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///cibozer.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.debug = os.environ.get('DEBUG', 'False').lower() == 'true'  # Only enable in development
+# Initialize simple logging
+log_info("=== CIBOZER STARTING UP ===")
+
+# Add simple before/after request logging
+@app.before_request
+def log_request_info():
+    try:
+        from flask_login import current_user
+        user = current_user.email if current_user.is_authenticated else "anonymous"
+    except Exception as e:
+        app.logger.debug(f"Could not get current user: {e}")
+        user = "anonymous"
+    
+    log_request(request.method, request.path, user=user)
+    
+    if request.form:
+        log_form_data(dict(request.form))
+
+@app.after_request
+def log_response_info(response):
+    try:
+        from flask_login import current_user
+        user = current_user.email if current_user.is_authenticated else "anonymous"
+    except Exception as e:
+        app.logger.debug(f"Could not get current user: {e}")
+        user = "anonymous"
+    
+    log_request(request.method, request.path, response.status_code, user=user)
+    return response
+app.config.update(config.to_flask_config())
+
+# Configure logging
+logging.config.dictConfig(config.get_logging_config())
+
+# Validate SECRET_KEY strength
+if not config.flask.DEBUG and not validate_secret_key(config.flask.SECRET_KEY):
+    app.logger.warning("[SECURITY] Weak SECRET_KEY detected. Please use a stronger key.")
+    app.logger.info("[SECURITY] Generate a secure key with: python -c 'import secrets; print(secrets.token_urlsafe(32))'")
 
 # Setup comprehensive logging
 if not app.debug:
     if not os.path.exists('logs'):
         os.mkdir('logs')
-    file_handler = RotatingFileHandler('logs/cibozer.log', maxBytes=10240, backupCount=10)
+    # Use regular FileHandler to avoid Windows permission issues with rotation
+    # Consider implementing daily rotation with new files instead
+    file_handler = logging.FileHandler(f'logs/cibozer_{datetime.now().strftime("%Y%m%d")}.log')
     file_handler.setFormatter(logging.Formatter(
         '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
     ))
@@ -72,6 +123,21 @@ csrf = CSRFProtect(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    """Handle unauthorized access with detailed logging"""
+    app.logger.error(f"[UNAUTHORIZED] Attempted to access: {request.endpoint}")
+    app.logger.error(f"[UNAUTHORIZED] Request URL: {request.url}")
+    app.logger.error(f"[UNAUTHORIZED] Request path: {request.path}")
+    app.logger.error(f"[UNAUTHORIZED] Request method: {request.method}")
+    
+    # Store the target URL
+    next_url = request.url
+    app.logger.error(f"[UNAUTHORIZED] Setting next URL to: {next_url}")
+    
+    flash('Please log in to access this page.', 'warning')
+    return redirect(url_for('auth.login', next=next_url))
 login_manager.login_message = 'Please sign in to access this page.'
 
 @login_manager.user_loader
@@ -81,7 +147,7 @@ def load_user(user_id):
 # Global request logging
 @app.before_request
 def log_request_info():
-    app.logger.info(f"🌐 REQUEST: {request.method} {request.url}")
+    app.logger.info(f"[REQ] {request.method} {request.url}")
     app.logger.info(f"   Remote: {request.remote_addr}")
     app.logger.info(f"   Agent: {request.headers.get('User-Agent', 'N/A')[:100]}")
     if request.method in ['POST', 'PUT', 'PATCH']:
@@ -90,12 +156,12 @@ def log_request_info():
                 app.logger.info(f"   JSON Body: {request.get_json()}")
             elif request.form:
                 app.logger.info(f"   Form Data: {dict(request.form)}")
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError) as e:
             app.logger.warning(f"   Could not log request body: {e}")
 
 @app.after_request
 def log_response_info(response):
-    app.logger.info(f"📤 RESPONSE: {response.status_code} for {request.method} {request.path}")
+    app.logger.info(f"[RESP] {response.status_code} for {request.method} {request.path}")
     if response.status_code >= 400:
         app.logger.error(f"   Error Response: {response.get_data(as_text=True)[:500]}")
     
@@ -122,26 +188,34 @@ def log_response_info(response):
 # Global error handlers
 @app.errorhandler(404)
 def not_found_error(error):
-    app.logger.warning(f"🚫 404 ERROR: {request.method} {request.path} not found")
+    app.logger.warning(f"[404] {request.method} {request.path} not found")
     return jsonify({
         "error": "Route not found",
         "path": request.path,
         "method": request.method,
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }), 404
 
 @app.errorhandler(500)
 def internal_error(error):
-    app.logger.error(f"💥 500 ERROR: {str(error)}")
+    app.logger.error(f"[500] Internal server error: {str(error)}")
+    log_error(f"[500] Internal server error: {str(error)}")
+    log_error(f"[500] Request path: {request.path}")
+    log_error(f"[500] Request method: {request.method}")
+    
+    # Check if it's a template error
+    if "Could not build url" in str(error) or "url_for" in str(error):
+        log_error(f"[500] Template/URL error detected: {str(error)}")
+        import traceback
+        log_error(f"[500] Traceback: {traceback.format_exc()}")
+    
     db.session.rollback()
-    return jsonify({
-        "error": "Internal server error",
-        "timestamp": datetime.utcnow().isoformat() + "Z"
-    }), 500
+    return render_template('error.html', error=str(error)), 500
 
 # Register blueprints
 app.register_blueprint(admin_bp)
 app.register_blueprint(auth_bp)
+app.register_blueprint(payments_bp)
 
 # Create database tables
 with app.app_context():
@@ -150,38 +224,57 @@ with app.app_context():
     PricingPlan.seed_default_plans()
     
     # Create admin user if doesn't exist
-    admin_user = User.query.filter_by(email='admin').first()
-    if not admin_user:
-        admin_user = User(
-            email='admin',
-            full_name='Administrator',
-            subscription_tier='premium',
-            credits_balance=999999,  # Unlimited credits
-            is_active=True
-        )
-        admin_user.set_password('admin')
-        db.session.add(admin_user)
-        db.session.commit()
-        app.logger.info("✅ Admin user created: admin/admin")
+    # Only create admin user if credentials are provided in environment
+    admin_email = os.environ.get('ADMIN_EMAIL', 'admin@cibozer.com')
+    admin_password = os.environ.get('ADMIN_PASSWORD')
+    
+    if admin_password:
+        admin_user = User.query.filter_by(email=admin_email).first()
+        if not admin_user:
+            admin_user = User(
+                email=admin_email,
+                full_name='Administrator',
+                subscription_tier='premium',
+                credits_balance=999999,  # Unlimited credits
+                is_active=True
+            )
+            admin_user.set_password(admin_password)
+            db.session.add(admin_user)
+            db.session.commit()
+            app.logger.info(f"Admin user created: {admin_email}")
+    else:
+        app.logger.warning("ADMIN_PASSWORD not set - admin user creation skipped. Run create_admin.py to create admin.")
 
 # Configuration
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+# Additional Flask config from centralized configuration
+app.config['UPLOAD_FOLDER'] = config.UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = config.security.MAX_CONTENT_LENGTH
 
-# SECURITY: Simple rate limiting
+# Clear template cache to ensure we get fresh templates
+app.jinja_env.cache = {}
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching
+
+# SECURITY: Configurable rate limiting
 request_counts = {}
+RATE_LIMIT_REQUESTS = int(config.security.RATE_LIMIT_DEFAULT.split()[0])  # Extract number from "10 per minute"
+RATE_LIMIT_WINDOW = 60  # seconds
 
 def rate_limit_check():
-    """Simple rate limiting - 3 requests per minute per IP"""
+    """Configurable rate limiting based on centralized config"""
+    if not config.security.RATE_LIMIT_ENABLED:
+        return True
+        
     ip = request.remote_addr
     now = time.time()
     
     if ip in request_counts:
-        # Clean old entries
-        request_counts[ip] = [req_time for req_time in request_counts[ip] if now - req_time < 60]
+        # Clean old entries based on configured window
+        request_counts[ip] = [req_time for req_time in request_counts[ip] if now - req_time < RATE_LIMIT_WINDOW]
         
-        # Check limit
-        if len(request_counts[ip]) >= 3:
+        # Check limit based on configuration
+        if len(request_counts[ip]) >= RATE_LIMIT_REQUESTS:
+            app.logger.warning(f"Rate limit exceeded for IP {ip}: {len(request_counts[ip])} requests in last {RATE_LIMIT_WINDOW}s")
             return False
         
         request_counts[ip].append(now)
@@ -191,13 +284,40 @@ def rate_limit_check():
     return True
 
 # Initialize meal optimizer
-optimizer = mo.MealPlanOptimizer()
+try:
+    optimizer = mo.MealPlanOptimizer()
+    app.logger.info("[OK] Meal optimizer initialized successfully")
+except Exception as e:
+    app.logger.error(f"[ERROR] Failed to initialize meal optimizer: {str(e)}")
+    raise RuntimeError(f"Critical: Meal optimizer initialization failed: {str(e)}")
 
-# Initialize video service
-video_service = VideoService(upload_enabled=False)  # Enable uploads when credentials are set
+# Initialize video service (optional - don't crash if fails)
+try:
+    # Check if social media credentials exist
+    import os
+    credentials_exist = os.path.exists('social_credentials.json')
+    from video_service import VideoService
+    video_service = VideoService(upload_enabled=credentials_exist)
+    
+    if credentials_exist:
+        app.logger.info("[OK] Video service initialized with upload capabilities")
+    else:
+        app.logger.info("[OK] Video service initialized (uploads disabled - no credentials)")
+        app.logger.info("[INFO] To enable uploads: copy social_credentials_template.json to social_credentials.json and configure")
+except ImportError as e:
+    app.logger.warning(f"[WARN] Video service module not found: {str(e)}")
+    video_service = None
+except Exception as e:
+    app.logger.warning(f"[WARN] Video service initialization failed: {str(e)}")
+    video_service = None
 
 # Initialize PDF generator
-pdf_generator = PDFGenerator()
+try:
+    pdf_generator = PDFGenerator()
+    app.logger.info("[OK] PDF generator initialized successfully")
+except Exception as e:
+    app.logger.warning(f"[WARN] PDF generator initialization failed: {str(e)}")
+    pdf_generator = None
 
 # Create necessary directories
 os.makedirs('uploads', exist_ok=True)
@@ -289,9 +409,22 @@ def categorize_grocery_items(grocery_dict):
     
     return result
 
+def format_ingredients_for_frontend(ingredients):
+    """Convert ingredient format from optimizer to frontend expected format"""
+    if isinstance(ingredients, list) and len(ingredients) > 0:
+        # Check if already in correct format (list of dicts)
+        if isinstance(ingredients[0], dict) and 'item' in ingredients[0]:
+            # Convert to simple string format expected by frontend
+            return [f"{ing['item'].replace('_', ' ')}: {ing['amount']}{ing.get('unit', 'g')}" for ing in ingredients]
+        # If already in string format, return as is
+        elif isinstance(ingredients[0], str):
+            return ingredients
+    return ingredients
+
 @app.route('/')
 def index():
     """Main landing page"""
+    log_info("INDEX route accessed")
     app.logger.info(f"INDEX route accessed from {request.remote_addr}")
     app.logger.debug(f"Request headers: {dict(request.headers)}")
     
@@ -305,33 +438,164 @@ def index():
         return jsonify({
             "error": "Template rendering failed",
             "details": str(e),
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }), 500
+
+@app.route('/create-new')
+@login_required
+def create_meal_plan_new():
+    """New meal plan creation page to bypass cache"""
+    return render_template('create_new.html')
 
 @app.route('/create')
 @login_required
 def create_meal_plan():
     """Meal plan creation page"""
-    # Get available options from the optimizer
-    diet_types = list(optimizer.diet_profiles.keys())
-    meal_patterns = list(optimizer.meal_patterns.keys())
-    
-    return render_template('create.html', 
-                         diet_types=diet_types,
-                         meal_patterns=meal_patterns,
-                         diet_profiles=optimizer.diet_profiles,
-                         meal_patterns_data=optimizer.meal_patterns)
+    try:
+        app.logger.info(f"[CREATE] Page accessed by user: {current_user.email if current_user.is_authenticated else 'Unknown'}")
+        app.logger.info(f"[CREATE] User credits: {current_user.credits_balance if current_user.is_authenticated else 'N/A'}")
+        log_info("CREATE MEAL PLAN page accessed")
+        
+        # Check if optimizer exists
+        if not hasattr(app, 'optimizer') and 'optimizer' not in globals():
+            log_error("Optimizer not found - reinitializing")
+            global optimizer
+            optimizer = mo.MealPlanOptimizer()
+        
+        # Get available options from the optimizer
+        log_info("Getting diet types from optimizer")
+        diet_types = list(optimizer.diet_profiles.keys())
+        log_info(f"Diet types: {diet_types}")
+        
+        log_info("Getting meal patterns from optimizer")
+        meal_patterns = list(optimizer.meal_patterns.keys())
+        log_info(f"Meal patterns: {meal_patterns}")
+        
+        log_info("Rendering create.html template")
+        log_info(f"Template variables: diet_types={len(diet_types)}, meal_patterns={len(meal_patterns)}")
+        
+        # Log the exact template being rendered
+        template_name = 'create.html'
+        log_info(f"About to render template: {template_name}")
+        
+        try:
+            # Check if template exists
+            import os
+            template_path = os.path.join(app.template_folder, template_name)
+            app.logger.info(f"[CREATE] Template folder: {app.template_folder}")
+            app.logger.info(f"[CREATE] Template path: {template_path}")
+            app.logger.info(f"[CREATE] Template exists: {os.path.exists(template_path)}")
+            
+            result = render_template(template_name, 
+                                   diet_types=diet_types,
+                                   meal_patterns=meal_patterns,
+                                   diet_profiles=optimizer.diet_profiles,
+                                   meal_patterns_data=optimizer.meal_patterns)
+            log_info("Template rendered successfully")
+            return result
+        except Exception as template_error:
+            app.logger.error(f"[CREATE] Template rendering failed: {str(template_error)}")
+            app.logger.error(f"[CREATE] Error type: {type(template_error).__name__}")
+            import traceback
+            app.logger.error(f"[CREATE] Full traceback:\n{traceback.format_exc()}")
+            
+            # Return error page with more details
+            return render_template('error.html', error=f"{type(template_error).__name__}: {str(template_error)}"), 500
+        
+    except Exception as e:
+        log_error(f"Error in create_meal_plan: {str(e)}")
+        log_error(f"Exception type: {type(e)}")
+        import traceback
+        log_error(f"Traceback: {traceback.format_exc()}")
+        
+        # Return a simple error page instead of crashing
+        return render_template('error.html', error=str(e)), 500
 
-@app.route('/api/generate', methods=['POST'])
+@app.route('/api/debug-logs', methods=['POST'])
+def receive_debug_logs():
+    """Receive debug logs from browser"""
+    try:
+        data = request.get_json()
+        logs = data.get('logs', [])
+        
+        # Save to file
+        import json
+        from datetime import datetime
+        
+        log_file = f'debug_logs_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+        with open(log_file, 'w', encoding='utf-8') as f:
+            json.dump(logs, f, indent=2)
+        
+        # Also save to text file for easy reading
+        with open('latest_debug.log', 'w', encoding='utf-8') as f:
+            for log in logs:
+                f.write(f"[{log['timestamp']}] {log['type'].upper()}: {log['message']}\n")
+        
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        app.logger.error(f"Failed to save debug logs: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/debug/template')
+def debug_template():
+    """Debug what template is actually being served"""
+    with open('templates/create.html', 'r', encoding='utf-8') as f:
+        template_content = f.read()
+    
+    # Find the API call lines
+    lines = template_content.split('\n')
+    api_lines = []
+    for i, line in enumerate(lines):
+        if '/api/generate' in line:
+            api_lines.append(f"Line {i+1}: {line.strip()}")
+    
+    return f"<pre>Template API calls found:\n" + "\n".join(api_lines) + "</pre>"
+
+@app.route('/api/generate-debug', methods=['POST'])
+@login_required  
+def debug_generate():
+    """Debug endpoint - REDIRECT to correct endpoint"""
+    app.logger.info("=== 🚨 GENERATE-DEBUG ENDPOINT CALLED ===")
+    app.logger.info("🚨 REDIRECTING to correct endpoint!")
+    
+    # Get the request data and validate it
+    if request.is_json:
+        data = request.get_json()
+        
+        # Transform to expected format
+        validated_data = {
+            'calories': int(data.get('calories', 2000)),
+            'diet': data.get('diet', 'standard'),
+            'days': int(data.get('days', 1)),
+            'meal_structure': data.get('meal_structure', 'standard'),
+            'restrictions': data.get('restrictions', []),
+            'cuisines': data.get('cuisines', ['all']),
+            'cooking_methods': data.get('cooking_methods', ['all']),
+            'measurement_system': data.get('measurement_system', 'metric'),
+            'allow_substitutions': data.get('allow_substitutions', True)
+        }
+        
+        app.logger.info(f"Transformed data: {validated_data}")
+        
+        # Call the correct endpoint function directly
+        return generate_meal_plan(validated_data=validated_data)
+    else:
+        return jsonify({'error': 'Invalid request format'}), 400
+
+@app.route('/api/generate', methods=['POST'], endpoint='generate_meal_plan')
 @login_required
-def generate_meal_plan():
+@validate_request(MealPlanRequestSchema)
+def generate_meal_plan(validated_data=None):
     """API endpoint to generate meal plan"""
     
-    app.logger.info("🍽️ MEAL PLAN GENERATION STARTED")
+    app.logger.info("=== ✅ CORRECT GENERATE ENDPOINT CALLED ===")
+    app.logger.info("✅ SUCCESS: Frontend is calling the correct /api/generate endpoint!")
+    log_info(f"GENERATE_MEAL_PLAN_REQUEST - Data: {validated_data}")
+    app.logger.info("[START] Meal plan generation")
     app.logger.info(f"   User: {current_user.email if current_user else 'Unknown'}")
     
-    # Check if user can generate plan
-    if not current_user.can_generate_plan():
+    # Check if user has credits
+    if not check_user_credits(current_user):
         app.logger.warning(f"   User {current_user.email} has no credits available (balance: {current_user.credits_balance})")
         
         # PRODUCTION: Enforce credit limits properly
@@ -339,7 +603,7 @@ def generate_meal_plan():
             'error': 'No credits available',
             'message': 'You have used all your free credits. Upgrade to Pro for unlimited meal plans!',
             'credits_remaining': current_user.credits_balance,
-            'upgrade_url': url_for('auth.upgrade') if hasattr(url_for, '__call__') else '/auth/upgrade'
+            'upgrade_url': url_for('auth.upgrade')
         }), 403
     
     # SECURITY: Check rate limit first
@@ -348,49 +612,30 @@ def generate_meal_plan():
         return jsonify({'error': 'Rate limit exceeded. Please wait a minute.'}), 429
     
     try:
-        # Get form data
-        data = request.get_json() if request.is_json else request.form
-        app.logger.info(f"   Request data: {dict(data) if data else 'None'}")
+        # Use validated data from middleware
+        diet_type = validated_data.get('diet', 'standard')
+        calories = validated_data.get('calories', 2000)
+        pattern = validated_data.get('meal_structure', 'standard')
+        restrictions = validated_data.get('restrictions', [])
+        days = validated_data.get('days', 7)
+        cuisines = validated_data.get('cuisines', ['all'])
+        cooking_methods = validated_data.get('cooking_methods', ['all'])
+        measurement_system = validated_data.get('measurement_system', 'metric')
+        allow_substitutions = validated_data.get('allow_substitutions', True)
         
-        # Extract parameters
-        diet_type = data.get('diet_type', 'standard')
-        calories = int(data.get('calories', 2000))
-        pattern = data.get('pattern', 'standard')
-        restrictions = data.get('restrictions', [])
-        days = int(data.get('days', 1))  # New: number of days
+        app.logger.info(f"   Validated parameters: diet={diet_type}, calories={calories}, pattern={pattern}, days={days}")
+        app.logger.info(f"   Restrictions: {restrictions}, Cuisines: {cuisines}")
         
-        app.logger.info(f"   Parameters: diet={diet_type}, calories={calories}, pattern={pattern}, days={days}")
-        app.logger.info(f"   Restrictions: {restrictions}")
-        
-        # Validate inputs
-        if diet_type not in optimizer.diet_profiles:
-            app.logger.error(f"   Invalid diet type: {diet_type}")
-            app.logger.error(f"   Available diet types: {list(optimizer.diet_profiles.keys())}")
-            return jsonify({'error': 'Invalid diet type'}), 400
-        
-        if not (800 <= calories <= 5000):
-            app.logger.error(f"   Invalid calories: {calories}")
-            return jsonify({'error': 'Calories must be between 800 and 5000'}), 400
-        
-        if pattern not in optimizer.meal_patterns:
-            app.logger.error(f"   Invalid pattern: {pattern}")
-            app.logger.error(f"   Available patterns: {list(optimizer.meal_patterns.keys())}")
-            return jsonify({'error': 'Invalid meal pattern'}), 400
-            
-        if not (1 <= days <= 7):
-            app.logger.error(f"   Invalid days: {days}")
-            return jsonify({'error': 'Days must be between 1 and 7'}), 400
-        
-        # Create preferences
+        # Create preferences - respect user inputs
         preferences = {
             'diet': diet_type,
             'calories': calories,
             'pattern': pattern,
             'restrictions': restrictions if isinstance(restrictions, list) else [],
-            'cuisines': ['all'],
-            'cooking_methods': ['all'],
-            'measurement_system': 'US',
-            'allow_substitutions': True,
+            'cuisines': cuisines if isinstance(cuisines, list) and cuisines else ['all'],
+            'cooking_methods': cooking_methods if isinstance(cooking_methods, list) and cooking_methods else ['all'],
+            'measurement_system': measurement_system if measurement_system in ['US', 'metric'] else 'US',
+            'allow_substitutions': allow_substitutions,
             'timestamp': datetime.now().isoformat()
         }
         
@@ -402,9 +647,27 @@ def generate_meal_plan():
             # Single day plan
             app.logger.info("   Generating single day plan...")
             try:
-                day_meals, metrics = optimizer.generate_single_day_plan(preferences)
-                app.logger.info(f"   Generated {len(day_meals)} meals")
-                app.logger.info(f"   Meals: {list(day_meals.keys())}")
+                app.logger.info(f"   === CALLING OPTIMIZER ===")
+                app.logger.info(f"   Preferences passed: {preferences}")
+                result = optimizer.generate_single_day_plan(preferences)
+                app.logger.info(f"   Optimizer returned type: {type(result)}")
+                app.logger.info(f"   Optimizer result: {result}")
+                
+                if isinstance(result, tuple) and len(result) == 2:
+                    day_meals, metrics = result
+                    app.logger.info(f"   Unpacked tuple: day_meals type={type(day_meals)}, metrics type={type(metrics)}")
+                else:
+                    app.logger.error(f"   Unexpected result format from optimizer: {result}")
+                    raise Exception("Optimizer returned unexpected format")
+                
+                app.logger.info(f"   Generated {len(day_meals) if day_meals else 0} meals")
+                app.logger.info(f"   Day meals type: {type(day_meals)}")
+                if day_meals:
+                    app.logger.info(f"   Meals: {list(day_meals.keys())}")
+                    for meal_name, meal_data in day_meals.items():
+                        app.logger.info(f"     {meal_name}: {type(meal_data)} with keys {list(meal_data.keys()) if isinstance(meal_data, dict) else 'NOT_DICT'}")
+                else:
+                    app.logger.warning(f"   day_meals is empty or None")
                 
                 totals = optimizer.calculate_day_totals(day_meals)
                 app.logger.info(f"   Totals calculated: {totals}")
@@ -415,10 +678,18 @@ def generate_meal_plan():
                 app.logger.error(f"   Traceback: {traceback.format_exc()}")
                 raise
             
+            # Format meals for frontend
+            formatted_meals = {}
+            for meal_name, meal_data in day_meals.items():
+                formatted_meal = meal_data.copy()
+                if 'ingredients' in formatted_meal:
+                    formatted_meal['ingredients'] = format_ingredients_for_frontend(meal_data['ingredients'])
+                formatted_meals[meal_name] = formatted_meal
+            
             response = {
                 'success': True,
                 'meal_plan': {
-                    'meals': day_meals,
+                    'meals': formatted_meals,
                     'totals': totals,
                     'preferences': preferences,
                     'metrics': {
@@ -430,12 +701,29 @@ def generate_meal_plan():
                 }
             }
             
-            # Log usage for single day
+            # Deduct credit for single day
             if not current_user.is_premium():
-                current_user.use_credits(1)
+                success = deduct_credit(current_user, 1)
+                if not success:
+                    return jsonify({
+                        'error': 'Insufficient credits',
+                        'message': 'You need 1 credit for a meal plan',
+                        'credits_remaining': current_user.credits_balance
+                    }), 403
             
             app.logger.info(f"   Response prepared successfully")
             app.logger.info(f"   Generation time: {round(time.time() - start_time, 2)}s")
+            app.logger.info(f"   === DETAILED RESPONSE DEBUG ===")
+            app.logger.info(f"   response['success']: {response.get('success')}")
+            app.logger.info(f"   response['meal_plan'] exists: {'meal_plan' in response}")
+            if 'meal_plan' in response:
+                mp = response['meal_plan']
+                app.logger.info(f"   meal_plan keys: {list(mp.keys()) if isinstance(mp, dict) else 'NOT_DICT'}")
+                if 'meals' in mp:
+                    app.logger.info(f"   meals keys: {list(mp['meals'].keys()) if isinstance(mp['meals'], dict) else 'NOT_DICT'}")
+                    app.logger.info(f"   meals count: {len(mp['meals']) if mp['meals'] else 0}")
+            app.logger.info(f"   Full response structure: {list(response.keys())}")
+            app.logger.info(f"   === END RESPONSE DEBUG ===")
             
             usage_log = UsageLog(
                 user_id=current_user.id,
@@ -466,7 +754,16 @@ def generate_meal_plan():
             for i in range(days):
                 day_name = day_names[i]
                 day_meals, metrics = optimizer.generate_single_day_plan(preferences)
-                week_plan[day_name] = day_meals
+                
+                # Format meals for frontend
+                formatted_day_meals = {}
+                for meal_name, meal_data in day_meals.items():
+                    formatted_meal = meal_data.copy()
+                    if 'ingredients' in formatted_meal:
+                        formatted_meal['ingredients'] = format_ingredients_for_frontend(meal_data['ingredients'])
+                    formatted_day_meals[meal_name] = formatted_meal
+                
+                week_plan[day_name] = formatted_day_meals
                 week_totals[day_name] = optimizer.calculate_day_totals(day_meals)
                 
                 # Aggregate metrics
@@ -503,16 +800,28 @@ def generate_meal_plan():
                 }
             }
         
-        # Log usage and deduct credits if not premium
+        # Deduct credits for multi-day plans
+        # More fair pricing: 1 credit for 1-3 days, 2 credits for 4-7 days
+        if days <= 3:
+            credits_used = 1
+        else:
+            credits_used = 2
+        
+        # Only deduct if not premium
         if not current_user.is_premium():
-            credits_used = min(days, 3)  # Cap at 3 credits for weekly plans
-            current_user.use_credits(credits_used)
+            success = deduct_credit(current_user, credits_used)
+            if not success:
+                return jsonify({
+                    'error': 'Insufficient credits',
+                    'message': f'You need {credits_used} credits for a {days}-day plan',
+                    'credits_remaining': current_user.credits_balance
+                }), 403
         
         usage_log = UsageLog(
             user_id=current_user.id,
             action_type='generate_plan',
             credits_used=credits_used if not current_user.is_premium() else 0,
-            metadata={
+            extra_data={
                 'diet_type': diet_type,
                 'calories': calories,
                 'days': days,
@@ -522,11 +831,11 @@ def generate_meal_plan():
         db.session.add(usage_log)
         db.session.commit()
         
-        app.logger.info("🎉 MEAL PLAN GENERATION COMPLETED SUCCESSFULLY")
+        app.logger.info("[SUCCESS] Meal plan generation completed")
         return jsonify(response)
         
     except Exception as e:
-        app.logger.error("💥 MEAL PLAN GENERATION FAILED")
+        app.logger.error("[FAILED] Meal plan generation failed")
         app.logger.error(f"   Error: {str(e)}")
         app.logger.error(f"   Exception type: {type(e).__name__}")
         import traceback
@@ -534,22 +843,23 @@ def generate_meal_plan():
         
         return jsonify({
             'error': 'Failed to generate meal plan',
-            'details': str(e),
-            'timestamp': datetime.utcnow().isoformat() + "Z"
+            'details': str(e) if app.debug else 'An error occurred during meal plan generation',
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }), 500
 
 @app.route('/api/generate-video', methods=['POST'])
-def generate_video():
+@validate_request(VideoGenerationRequestSchema)
+def generate_video(validated_data=None):
     """API endpoint to generate video from meal plan"""
     try:
-        data = request.get_json()
-        meal_plan = data.get('meal_plan')
-        platforms = data.get('platforms', ['youtube_shorts'])
-        voice = data.get('voice', 'christopher')
-        auto_upload = data.get('auto_upload', False)
+        # Use validated data from middleware
+        meal_plan = validated_data.get('meal_plan')
+        platforms = validated_data.get('platforms', ['youtube_shorts'])
+        voice = validated_data.get('voice', 'christopher')
+        auto_upload = validated_data.get('auto_upload', False)
         
-        if not meal_plan:
-            return jsonify({'error': 'No meal plan provided'}), 400
+        if not video_service:
+            return jsonify({'error': 'Video service not available'}), 503
         
         # Run async video generation
         loop = asyncio.new_event_loop()
@@ -569,13 +879,23 @@ def generate_video():
                     # Convert to relative URL
                     video_urls[platform] = result['video_path'].replace('\\', '/')
             
-            return jsonify({
+            response_data = {
                 'success': True,
                 'video_urls': video_urls,
                 'upload_results': results['upload'],
                 'summary': results['summary'],
                 'message': f"Generated {results['summary']['successful_generations']} videos"
-            })
+            }
+            
+            # Add upload capability info
+            if not video_service.upload_enabled:
+                response_data['upload_info'] = {
+                    'status': 'disabled',
+                    'reason': 'Social media credentials not configured',
+                    'setup_url': '/api/video/upload-status'
+                }
+            
+            return jsonify(response_data)
             
         finally:
             loop.close()
@@ -589,14 +909,13 @@ def generate_video():
         }), 500
 
 @app.route('/api/export-grocery-list', methods=['POST'])
-def export_grocery_list():
+@validate_request(ExportGroceryListSchema)
+def export_grocery_list(validated_data=None):
     """API endpoint to export grocery list"""
     try:
-        data = request.get_json()
-        meal_plan = data.get('meal_plan')
-        
-        if not meal_plan:
-            return jsonify({'error': 'No meal plan provided'}), 400
+        # Use validated data from middleware
+        meal_plan = validated_data.get('meal_plan')
+        export_format = validated_data.get('format', 'pdf')
         
         # Generate grocery list
         grocery_list = {}
@@ -659,22 +978,75 @@ def about():
     """About page"""
     return render_template('about.html')
 
+@app.route('/test')
+def test_page():
+    """Test page for debugging click issues"""
+    return render_template('test.html')
+
+@app.route('/minimal-test', methods=['GET', 'POST'])
+def minimal_test():
+    """Minimal test page with no JavaScript"""
+    if request.method == 'POST':
+        test_input = request.form.get('test_input', '')
+        flash(f'Form submitted successfully! Input: {test_input}', 'success')
+    return render_template('minimal_test.html')
+
+@app.route('/emergency-test')
+def emergency_test():
+    """Emergency test page with absolute minimal dependencies"""
+    return render_template('emergency_test.html')
+
 @app.route('/api/video/platforms')
 def get_video_platforms():
     """Get available video platforms"""
+    if not video_service:
+        return jsonify({'error': 'Video service not available'}), 503
     return jsonify(video_service.get_platform_info())
 
 @app.route('/api/video/stats')
 def get_video_stats():
     """Get video generation statistics"""
+    if not video_service:
+        return jsonify({'error': 'Video service not available'}), 503
     return jsonify(video_service.get_video_stats())
 
+@app.route('/api/video/upload-status')
+def get_upload_status():
+    """Get video upload capabilities and setup guidance"""
+    if not video_service:
+        return jsonify({'error': 'Video service not available'}), 503
+    
+    credentials_exist = os.path.exists('social_credentials.json')
+    status = {
+        'upload_enabled': video_service.upload_enabled if video_service else False,
+        'credentials_configured': credentials_exist,
+        'setup_instructions': {
+            'step1': 'Copy social_credentials_template.json to social_credentials.json',
+            'step2': 'Configure your social media API credentials',
+            'step3': 'Restart the application to enable uploads',
+            'supported_platforms': ['YouTube', 'Facebook', 'Instagram', 'TikTok']
+        }
+    }
+    
+    if credentials_exist:
+        status['message'] = 'Video uploads are enabled'
+    else:
+        status['message'] = 'Video uploads disabled - credentials not configured'
+    
+    return jsonify(status)
+
 @app.route('/api/video/test-voice', methods=['POST'])
-def test_voice():
+@validate_request(TestVoiceSchema)
+def test_voice(validated_data=None):
     """Test voice generation"""
+    if not video_service:
+        return jsonify({'error': 'Video service not available'}), 503
+        
     try:
-        data = request.get_json()
-        text = data.get('text', 'Hello! This is a test of Edge TTS Christopher voice.')
+        # Use validated data from middleware
+        text = validated_data.get('text', 'Hello! This is a test of Edge TTS Christopher voice.')
+        voice_gender = validated_data.get('voice_gender', 'female')
+        language = validated_data.get('language', 'en-US')
         
         # Run async voice test
         loop = asyncio.new_event_loop()
@@ -705,35 +1077,43 @@ def test_voice():
 def serve_video(filename):
     """Serve generated video files"""
     try:
-        video_path = os.path.join('videos', filename)
+        # Validate and secure the filename
+        safe_filename = validate_video_filename(filename)
+        video_path = secure_path_join('videos', safe_filename)
+        
         if os.path.exists(video_path):
             return send_file(video_path, mimetype='video/mp4')
         else:
             return jsonify({'error': 'Video not found'}), 404
+    except SecurityError as e:
+        return jsonify({'error': 'Invalid filename', 'details': str(e)}), 400
     except Exception as e:
-        return jsonify({'error': 'Failed to serve video', 'details': str(e)}), 500
+        app.logger.error(f"Error serving video: {e}")
+        return jsonify({'error': 'Failed to serve video'}), 500
 
 @app.route('/api/save-meal-plan', methods=['POST'])
-def save_meal_plan():
+@login_required
+@validate_request(SaveMealPlanSchema)
+def save_meal_plan(validated_data=None):
     """Save meal plan to storage"""
     try:
-        data = request.get_json()
-        meal_plan = data.get('meal_plan')
-        name = data.get('name', f'meal_plan_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
-        
-        if not meal_plan:
-            return jsonify({'error': 'No meal plan provided'}), 400
+        # Use validated data from middleware
+        meal_plan = validated_data.get('meal_plan')
+        name = validated_data.get('name', f'meal_plan_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
+        description = validated_data.get('description', '')
         
         # Sanitize filename
         safe_name = "".join(c for c in name if c.isalnum() or c in (' ', '_', '-')).rstrip()
         safe_name = safe_name[:50]  # Limit length
         
-        # Create saved_plans directory if it doesn't exist
-        os.makedirs('saved_plans', exist_ok=True)
+        # Create user-specific saved_plans directory if it doesn't exist
+        user_dir = f'saved_plans/user_{current_user.id}'
+        os.makedirs(user_dir, exist_ok=True)
         
         # Save to JSON file
         filename = f"{safe_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        filepath = os.path.join('saved_plans', filename)
+        filename = validate_json_filename(filename)
+        filepath = secure_path_join(user_dir, filename)
         
         save_data = {
             'name': name,
@@ -749,27 +1129,31 @@ def save_meal_plan():
             'filename': filename,
             'message': f'Meal plan saved as "{name}"'
         })
-        
+    
+    except SecurityError as e:
+        return jsonify({'error': 'Invalid filename', 'details': str(e)}), 400
     except Exception as e:
-        print(f"Error saving meal plan: {e}")
+        app.logger.error(f"Error saving meal plan: {e}")
         return jsonify({
-            'error': 'Failed to save meal plan',
-            'details': str(e)
+            'error': 'Failed to save meal plan'
         }), 500
 
 @app.route('/api/load-meal-plans')
+@login_required
 def load_meal_plans():
     """Load list of saved meal plans"""
     try:
-        saved_plans_dir = 'saved_plans'
-        if not os.path.exists(saved_plans_dir):
+        # Load only the current user's plans
+        user_dir = f'saved_plans/user_{current_user.id}'
+        if not os.path.exists(user_dir):
             return jsonify({'plans': []})
         
         plans = []
-        for filename in os.listdir(saved_plans_dir):
+        for filename in os.listdir(user_dir):
             if filename.endswith('.json'):
-                filepath = os.path.join(saved_plans_dir, filename)
                 try:
+                    safe_filename = validate_json_filename(filename)
+                    filepath = secure_path_join(user_dir, safe_filename)
                     with open(filepath, 'r') as f:
                         data = json.load(f)
                         plans.append({
@@ -780,7 +1164,7 @@ def load_meal_plans():
                             'diet_type': data.get('meal_plan', {}).get('preferences', {}).get('diet', 'Unknown')
                         })
                 except Exception as e:
-                    print(f"Error reading {filename}: {e}")
+                    app.logger.error(f"Error reading {filename}: {e}")
         
         # Sort by creation date (newest first)
         plans.sort(key=lambda x: x['created_at'], reverse=True)
@@ -788,21 +1172,21 @@ def load_meal_plans():
         return jsonify({'plans': plans})
         
     except Exception as e:
-        print(f"Error loading meal plans: {e}")
+        app.logger.error(f"Error loading meal plans: {e}")
         return jsonify({
             'error': 'Failed to load meal plans',
-            'details': str(e)
+            'details': str(e) if app.debug else 'An error occurred'
         }), 500
 
 @app.route('/api/load-meal-plan/<filename>')
+@login_required
 def load_meal_plan(filename):
     """Load a specific meal plan"""
     try:
-        # Sanitize filename
-        if not filename.endswith('.json') or '..' in filename or '/' in filename:
-            return jsonify({'error': 'Invalid filename'}), 400
-        
-        filepath = os.path.join('saved_plans', filename)
+        # Validate and secure the filename
+        safe_filename = validate_json_filename(filename)
+        user_dir = f'saved_plans/user_{current_user.id}'
+        filepath = secure_path_join(user_dir, safe_filename)
         
         if not os.path.exists(filepath):
             return jsonify({'error': 'Meal plan not found'}), 404
@@ -814,23 +1198,24 @@ def load_meal_plan(filename):
             'success': True,
             'data': data
         })
-        
+    
+    except SecurityError as e:
+        return jsonify({'error': 'Invalid filename', 'details': str(e)}), 400
     except Exception as e:
-        print(f"Error loading meal plan: {e}")
+        app.logger.error(f"Error loading meal plan: {e}")
         return jsonify({
-            'error': 'Failed to load meal plan',
-            'details': str(e)
+            'error': 'Failed to load meal plan'
         }), 500
 
 @app.route('/api/delete-meal-plan/<filename>', methods=['DELETE'])
+@login_required
 def delete_meal_plan(filename):
     """Delete a saved meal plan"""
     try:
-        # Sanitize filename
-        if not filename.endswith('.json') or '..' in filename or '/' in filename:
-            return jsonify({'error': 'Invalid filename'}), 400
-        
-        filepath = os.path.join('saved_plans', filename)
+        # Validate and secure the filename
+        safe_filename = validate_json_filename(filename)
+        user_dir = f'saved_plans/user_{current_user.id}'
+        filepath = secure_path_join(user_dir, safe_filename)
         
         if not os.path.exists(filepath):
             return jsonify({'error': 'Meal plan not found'}), 404
@@ -841,29 +1226,33 @@ def delete_meal_plan(filename):
             'success': True,
             'message': 'Meal plan deleted successfully'
         })
-        
+    
+    except SecurityError as e:
+        return jsonify({'error': 'Invalid filename', 'details': str(e)}), 400
     except Exception as e:
-        print(f"Error deleting meal plan: {e}")
+        app.logger.error(f"Error deleting meal plan: {e}")
         return jsonify({
-            'error': 'Failed to delete meal plan',
-            'details': str(e)
+            'error': 'Failed to delete meal plan'
         }), 500
 
 @app.route('/api/export-pdf', methods=['POST'])
-def export_pdf():
+@login_required
+@validate_request(ExportPDFSchema)
+def export_pdf(validated_data=None):
     """Export meal plan as PDF"""
     try:
-        data = request.get_json()
-        meal_plan = data.get('meal_plan')
-        export_type = data.get('type', 'meal_plan')  # 'meal_plan' or 'grocery_list'
+        # Use validated data from middleware
+        meal_plan = validated_data.get('meal_plan')
+        export_format = validated_data.get('format', 'detailed')
+        include_recipes = validated_data.get('include_recipes', True)
         
-        if not meal_plan:
-            return jsonify({'error': 'No meal plan provided'}), 400
+        if not pdf_generator:
+            return jsonify({'error': 'PDF generation service not available'}), 503
         
         # Generate filename
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
-        if export_type == 'grocery_list':
+        if export_format == 'grocery_list':
             # Export grocery list
             grocery_list = []
             days = 1
@@ -898,13 +1287,15 @@ def export_pdf():
             formatted_list.sort(key=lambda x: x['item'])
             
             filename = f'grocery_list_{timestamp}.pdf'
-            filepath = os.path.join('pdfs', filename)
+            safe_filename = validate_pdf_filename(filename)
+            filepath = secure_path_join('pdfs', safe_filename)
             pdf_generator.generate_grocery_list_pdf(formatted_list, filepath, days)
             
         else:
             # Export full meal plan
             filename = f'meal_plan_{timestamp}.pdf'
-            filepath = os.path.join('pdfs', filename)
+            safe_filename = validate_pdf_filename(filename)
+            filepath = secure_path_join('pdfs', safe_filename)
             pdf_generator.generate_meal_plan_pdf(meal_plan, filepath)
         
         # Return file for download
@@ -912,15 +1303,16 @@ def export_pdf():
             filepath,
             mimetype='application/pdf',
             as_attachment=True,
-            download_name=filename
+            download_name=safe_filename
         )
-        
+    
+    except SecurityError as e:
+        return jsonify({'error': 'Invalid filename', 'details': str(e)}), 400
     except Exception as e:
-        print(f"Error exporting PDF: {e}")
+        app.logger.error(f"Error exporting PDF: {e}")
         traceback.print_exc()
         return jsonify({
-            'error': 'Failed to export PDF',
-            'details': str(e)
+            'error': 'Failed to export PDF'
         }), 500
 
 # DEBUG ENDPOINT REMOVED FOR SECURITY
@@ -989,7 +1381,7 @@ def metrics():
         premium_users = User.query.filter(User.subscription_tier.in_(['pro', 'premium'])).count()
         
         # Get usage stats from last 24 hours
-        yesterday = datetime.utcnow() - timedelta(days=1)
+        yesterday = datetime.now(timezone.utc) - timedelta(days=1)
         recent_plans = UsageLog.query.filter(
             UsageLog.timestamp >= yesterday,
             UsageLog.action_type == 'generate_plan'
@@ -1018,8 +1410,100 @@ def not_found(error):
 def internal_error(error):
     return render_template('500.html'), 500
 
+# Frontend logging sync endpoint
+frontend_logs = []
+
+@app.route('/api/logs/sync', methods=['POST'])
+@csrf.exempt
+@validate_request(FrontendLogsSchema)
+def sync_frontend_logs(validated_data=None):
+    """Receive and store frontend logs"""
+    try:
+        # Use validated data from middleware
+        session_id = validated_data.get('session_id')
+        logs = validated_data.get('logs', [])
+        
+        # Store logs with timestamp
+        for log in logs:
+            log['received_at'] = datetime.now(timezone.utc).isoformat()
+            frontend_logs.append(log)
+        
+        # Keep only last 5000 logs in memory
+        if len(frontend_logs) > 5000:
+            frontend_logs[:] = frontend_logs[-5000:]
+        
+        app.logger.info(f"[FRONTEND] Received {len(logs)} logs from session {session_id}")
+        
+        # Log errors to backend logger
+        for log in logs:
+            if log.get('level') == 'ERROR':
+                app.logger.error(f"[FRONTEND ERROR] {log.get('message')} - URL: {log.get('url')}")
+        
+        return jsonify({'success': True, 'received': len(logs)})
+    except Exception as e:
+        app.logger.error(f"Failed to sync frontend logs: {str(e)}")
+        return jsonify({'error': 'Failed to sync logs'}), 500
+
+@app.route('/logs')
+@login_required
+def logs_page():
+    """Log viewer page (admin only)"""
+    if current_user.email not in ['admin', 'dev@cibozer.com'] and not current_user.is_premium():
+        flash('Unauthorized access', 'danger')
+        return redirect(url_for('index'))
+    return render_template('logs.html')
+
+@app.route('/api/logs/view')
+@login_required
+def view_frontend_logs():
+    """View frontend logs (admin only)"""
+    # Check if user is admin or dev
+    if current_user.email not in ['admin', 'dev@cibozer.com'] and not current_user.is_premium():
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    # Filter logs by query parameters
+    level = request.args.get('level')
+    session_id = request.args.get('session_id')
+    limit = int(request.args.get('limit', 100))
+    
+    filtered_logs = frontend_logs
+    
+    if level:
+        filtered_logs = [log for log in filtered_logs if log.get('level') == level]
+    
+    if session_id:
+        filtered_logs = [log for log in filtered_logs if log.get('sessionId') == session_id]
+    
+    # Get most recent logs
+    filtered_logs = filtered_logs[-limit:]
+    
+    return jsonify({
+        'logs': filtered_logs,
+        'total': len(frontend_logs),
+        'filtered': len(filtered_logs)
+    })
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Catch all exceptions and log them"""
+    app.logger.error(f"[EXCEPTION] Unhandled exception: {str(e)}")
+    app.logger.error(f"[EXCEPTION] Type: {type(e).__name__}")
+    app.logger.error(f"[EXCEPTION] Request URL: {request.url}")
+    app.logger.error(f"[EXCEPTION] Request endpoint: {request.endpoint}")
+    app.logger.error(f"[EXCEPTION] Request method: {request.method}")
+    
+    # Check if it's a BuildError (url_for error)
+    if "BuildError" in type(e).__name__:
+        app.logger.error(f"[BUILD ERROR] Failed to build URL for endpoint: {str(e)}")
+        app.logger.error(f"[BUILD ERROR] Available endpoints: {[rule.endpoint for rule in app.url_map.iter_rules()]}")
+    
+    # Rollback any database changes
+    db.session.rollback()
+    
+    return render_template('error.html', error=str(e)), 500
+
 if __name__ == '__main__':
     print("Starting Cibozer Web Application...")
     print("Visit: http://localhost:5001")
     print("TROUBLESHOOT: Running on port 5001 to avoid conflicts")
-    app.run(debug=os.environ.get('DEBUG', 'False').lower() == 'true', host='127.0.0.1', port=5001)
+    app.run(debug=config.flask.DEBUG, host='127.0.0.1', port=5001)

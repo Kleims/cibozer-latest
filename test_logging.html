@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Logging System</title>
+    <script src="/static/js/logger.js"></script>
+</head>
+<body>
+    <h1>Logging Test Page</h1>
+    <button onclick="testLogging()">Test All Log Levels</button>
+    <button onclick="testError()">Test Error</button>
+    <button onclick="testAPI()">Test API Call</button>
+    
+    <div id="results"></div>
+    
+    <script>
+    function testLogging() {
+        console.debug('This is a debug message');
+        console.info('This is an info message');
+        console.log('This is a regular log message');
+        console.warn('This is a warning message');
+        console.error('This is an error message');
+        
+        document.getElementById('results').innerHTML += '<p>Logged all levels - check console and backend</p>';
+    }
+    
+    function testError() {
+        try {
+            throw new Error('This is a test error!');
+        } catch (e) {
+            console.error('Caught error:', e);
+        }
+        
+        document.getElementById('results').innerHTML += '<p>Error logged</p>';
+    }
+    
+    async function testAPI() {
+        try {
+            const response = await fetch('/api/health');
+            const data = await response.json();
+            console.info('API test successful:', data);
+            document.getElementById('results').innerHTML += '<p>API call logged: ' + JSON.stringify(data) + '</p>';
+        } catch (error) {
+            console.error('API test failed:', error);
+            document.getElementById('results').innerHTML += '<p>API error: ' + error.message + '</p>';
+        }
+    }
+    
+    // Auto-test on load
+    window.onload = function() {
+        console.info('Test page loaded');
+        testLogging();
+    };
+    </script>
+</body>
+</html>

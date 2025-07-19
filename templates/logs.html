@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Cibozer - Log Viewer{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Frontend Log Viewer</h1>
+    <div class="alert alert-info">
+        <p>This page shows real-time logs from the frontend. Only accessible to admin/premium users.</p>
+    </div>
+    
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <select id="logLevel" class="form-select">
+                <option value="">All Levels</option>
+                <option value="DEBUG">DEBUG</option>
+                <option value="INFO">INFO</option>
+                <option value="WARN">WARN</option>
+                <option value="ERROR">ERROR</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button class="btn btn-primary" onclick="refreshLogs()">Refresh</button>
+            <button class="btn btn-danger" onclick="clearLogs()">Clear</button>
+        </div>
+        <div class="col-md-6 text-end">
+            <span id="logCount" class="badge bg-secondary">0 logs</span>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-sm table-striped">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Level</th>
+                    <th>Message</th>
+                    <th>URL</th>
+                </tr>
+            </thead>
+            <tbody id="logTableBody">
+                <!-- Logs will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+let currentLogs = [];
+
+async function refreshLogs() {
+    try {
+        const level = document.getElementById('logLevel').value;
+        const url = '/api/logs/view' + (level ? `?level=${level}` : '');
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (response.ok) {
+            currentLogs = data.logs;
+            displayLogs();
+            document.getElementById('logCount').textContent = `${data.filtered} of ${data.total} logs`;
+        } else {
+            alert('Failed to load logs: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error loading logs:', error);
+        alert('Error loading logs: ' + error.message);
+    }
+}
+
+function displayLogs() {
+    const tbody = document.getElementById('logTableBody');
+    tbody.innerHTML = '';
+    
+    currentLogs.forEach(log => {
+        const row = tbody.insertRow();
+        row.className = getLevelClass(log.level);
+        
+        row.insertCell(0).textContent = new Date(log.timestamp).toLocaleString();
+        row.insertCell(1).innerHTML = `<span class="badge ${getLevelBadgeClass(log.level)}">${log.level}</span>`;
+        row.insertCell(2).innerHTML = `<pre style="margin:0;white-space:pre-wrap;word-break:break-word;">${log.message}</pre>`;
+        row.insertCell(3).textContent = log.url || '-';
+    });
+}
+
+function getLevelClass(level) {
+    switch(level) {
+        case 'ERROR': return 'table-danger';
+        case 'WARN': return 'table-warning';
+        default: return '';
+    }
+}
+
+function getLevelBadgeClass(level) {
+    switch(level) {
+        case 'ERROR': return 'bg-danger';
+        case 'WARN': return 'bg-warning';
+        case 'INFO': return 'bg-info';
+        case 'DEBUG': return 'bg-secondary';
+        default: return 'bg-light';
+    }
+}
+
+function clearLogs() {
+    if (confirm('Clear all logs on the frontend?')) {
+        window.CibozerLogger.clearLogs();
+        alert('Frontend logs cleared. Backend logs remain.');
+    }
+}
+
+// Auto-refresh every 5 seconds
+setInterval(refreshLogs, 5000);
+
+// Initial load
+refreshLogs();
+</script>
+{% endblock %}

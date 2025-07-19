@@ -218,38 +218,88 @@
 
 {% block scripts %}
 <script>
-function upgradeToPro() {
-    showPaymentModal('Pro', [
-        'Unlimited meal plans',
-        '1-7 day meal planning',
-        'All diet types & restrictions',
-        'PDF exports',
-        'Advanced grocery lists',
-        'Save unlimited plans',
-        'Priority support'
-    ]);
+async function upgradeToPro() {
+    await initiateCheckout('pro');
 }
 
-function upgradeToPremium() {
-    showPaymentModal('Premium', [
-        'Everything in Pro',
-        'Custom macro targets',
-        'Meal prep instructions',
-        'Recipe scaling',
-        'Family planning (2-6 people)',
-        'API access',
-        'Priority support'
-    ]);
+async function upgradeToPremium() {
+    await initiateCheckout('premium');
 }
 
-function showPaymentModal(plan, features) {
-    document.querySelector('.modal-title').textContent = `Upgrade to ${plan}`;
+async function initiateCheckout(plan) {
+    try {
+        // Show loading state
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        
+        // Create checkout session
+        const response = await fetch('/api/payments/create-checkout-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ plan: plan })
+        });
+        
+        const data = await response.json();
+        
+        if (data.test_mode) {
+            // Test mode - show success message
+            showSuccessMessage(`Test mode: Successfully upgraded to ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan!`);
+            setTimeout(() => {
+                window.location.href = '/auth/account';
+            }, 2000);
+        } else if (data.checkout_url) {
+            // Redirect to Stripe checkout
+            window.location.href = data.checkout_url;
+        } else {
+            throw new Error(data.error || 'Failed to create checkout session');
+        }
+        
+    } catch (error) {
+        console.error('Checkout error:', error);
+        showErrorMessage(error.message || 'Failed to process upgrade. Please try again.');
+        
+        // Reset button
+        if (event.target) {
+            event.target.disabled = false;
+            event.target.innerHTML = originalText;
+        }
+    }
+}
+
+function showSuccessMessage(message) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+    alert.style.zIndex = '9999';
+    alert.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
     
-    const featuresHtml = features.map(feature => `<li>${feature}</li>`).join('');
-    document.getElementById('selectedFeatures').innerHTML = featuresHtml;
+    setTimeout(() => alert.remove(), 5000);
+}
+
+function showErrorMessage(message) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+    alert.style.zIndex = '9999';
+    alert.innerHTML = `
+        <i class="fas fa-exclamation-circle me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
     
-    const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
-    modal.show();
+    setTimeout(() => alert.remove(), 5000);
+}
+
+function getCsrfToken() {
+    const token = document.querySelector('meta[name="csrf-token"]');
+    return token ? token.getAttribute('content') : '';
 }
 </script>
 {% endblock %}

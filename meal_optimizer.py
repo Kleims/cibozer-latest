@@ -277,7 +277,9 @@ class MealPlanOptimizer:
             
             return True
             
-        except Exception:
+        except (KeyError, TypeError, ValueError) as e:
+            if self.logger:
+                self.logger.log_event("MACRO_VALIDATION_ERROR", f"Error validating macros: {str(e)}")
             return False
     
     def _validate_portion_sizes(self, nutrition: Dict) -> bool:
@@ -288,7 +290,9 @@ class MealPlanOptimizer:
                 if value < min_val or value > max_val:
                     return False
             return True
-        except Exception:
+        except (KeyError, TypeError, ValueError) as e:
+            if self.logger:
+                self.logger.log_event("PORTION_VALIDATION_ERROR", f"Error validating portions: {str(e)}")
             return False
     
     def _safe_divide(self, numerator: float, denominator: float, default: float = 0.0) -> float:
@@ -583,7 +587,9 @@ class MealPlanOptimizer:
         if not conditions:
             return templates
         
-        filtered_templates = []
+        # Separate templates by preference level
+        highly_preferred = []
+        suitable_templates = []
         
         for template_id in templates:
             template = self.templates.get(template_id, {})
@@ -591,6 +597,7 @@ class MealPlanOptimizer:
             
             # Check if template is suitable for all conditions
             suitable = True
+            has_any_preferred = False
             
             for condition in conditions:
                 if condition in self.medical_conditions:
@@ -604,17 +611,18 @@ class MealPlanOptimizer:
                     
                     # Check for preferred ingredients (bonus, not requirement)
                     preferred_ingredients = condition_profile.get('preferred_ingredients', [])
-                    has_preferred = any(ing in preferred_ingredients for ing in ingredients)
-                    
-                    # If no preferred ingredients, lower priority but don't eliminate
-                    if not has_preferred:
-                        # Move to end but don't eliminate
-                        pass
+                    if any(ing in preferred_ingredients for ing in ingredients):
+                        has_any_preferred = True
             
             if suitable:
-                filtered_templates.append(template_id)
+                if has_any_preferred:
+                    highly_preferred.append(template_id)
+                else:
+                    suitable_templates.append(template_id)
         
-        return filtered_templates
+        # Return highly preferred templates first, then suitable ones
+        # This ensures templates with preferred ingredients are prioritized
+        return highly_preferred + suitable_templates
     
     def _adjust_macros_for_conditions(self, target_macros: Dict, conditions: List[str]) -> Dict:
         """Adjust target macros based on medical conditions"""
@@ -1089,7 +1097,7 @@ optimizer.set_constraints(preferences)""",
     
     def generate_meal_plan_for_preferences(self, preferences: Dict) -> Dict:
         """Generate a meal plan for given preferences"""
-        print(f"\n📊 Generating meal plan for {preferences['calories']} calories, {preferences['diet']} diet...")
+        print(f"\n[OPTIMIZER] Generating meal plan for {preferences['calories']} calories, {preferences['diet']} diet...")
         
         # Initialize meal history
         meal_history = {}
@@ -1340,7 +1348,7 @@ optimizer.set_constraints(preferences)""",
                     # Get base nutrition per 100g
                     base_nutrition = self.ingredients[ingredient]
                     
-                    # Validate base nutrition (TEMPORARILY DISABLED FOR DEBUGGING)
+                    # Validate base nutrition
                     if not self._validate_nutrition_values(base_nutrition):
                         # Log to file only, not console to reduce spam
                         if self.logger:
@@ -1348,7 +1356,7 @@ optimizer.set_constraints(preferences)""",
                                 'ingredient': ingredient,
                                 'nutrition': base_nutrition
                             })
-                        # continue  # COMMENTED OUT to bypass validation
+                        continue  # Skip invalid ingredients
                     
                     # Calculate nutrition for actual amount
                     multiplier = self._safe_divide(weight_g, 100.0, 0.0)
@@ -1770,7 +1778,7 @@ optimizer.set_constraints(preferences)""",
         week2 = self.generate_week_plan_enhanced(preferences, 2, meal_history)
         
         # Validate both weeks
-        print("\n📊 VALIDATING MEAL PLANS")
+        print("\n[VALIDATION] VALIDATING MEAL PLANS")
         print("-" * 30)
         val1 = self.validate_meal_plan(week1, preferences)
         val2 = self.validate_meal_plan(week2, preferences)
@@ -1806,7 +1814,7 @@ optimizer.set_constraints(preferences)""",
         if meal_history is None:
             meal_history = {}
         
-        print(f"\n🗓️  Generating Week {week_num} with global cuisine variety...")
+        print(f"\n[WEEK] Generating Week {week_num} with global cuisine variety...")
         
         cuisines_used_week = set()
         
@@ -1993,11 +2001,14 @@ optimizer.set_constraints(preferences)""",
             if meal_type and template.get('meal_type') != meal_type:
                 continue
             
-            # Check if any of the template tags match the diet's meal tags
+            # For standard/omnivore diets, include all templates unless banned
+            # For restrictive diets, check tag compatibility
             template_tags = template.get('tags', [])
             diet_tags = diet_profile.get('meal_tags', [diet])
             
-            if any(tag in template_tags for tag in diet_tags):
+            # Standard diet accepts all templates (unless banned)
+            # Other diets need tag matching
+            if diet == 'standard' or any(tag in template_tags for tag in diet_tags):
                 # Check banned ingredients
                 banned = diet_profile.get('banned', [])
                 has_banned = False

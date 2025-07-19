@@ -5,8 +5,9 @@ User authentication and subscription management
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import bcrypt
+import secrets
 
 db = SQLAlchemy()
 
@@ -30,13 +31,17 @@ class User(UserMixin, db.Model):
     credits_balance = db.Column(db.Integer, default=3)  # Free users start with 3 credits
     
     # Tracking
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     last_login = db.Column(db.DateTime)
     email_verified = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
     
     # Trial
     trial_ends_at = db.Column(db.DateTime)
+    
+    # Password reset
+    reset_token = db.Column(db.String(100))
+    reset_token_expires = db.Column(db.DateTime)
     
     # Relationships
     usage_logs = db.relationship('UsageLog', backref='user', lazy='dynamic')
@@ -54,7 +59,7 @@ class User(UserMixin, db.Model):
     def is_premium(self):
         """Check if user has active premium subscription"""
         if self.subscription_tier in ['pro', 'premium']:
-            if self.subscription_end_date and self.subscription_end_date > datetime.utcnow():
+            if self.subscription_end_date and self.subscription_end_date > datetime.now(timezone.utc):
                 return True
         return False
     
@@ -78,11 +83,33 @@ class User(UserMixin, db.Model):
     
     def get_monthly_usage(self):
         """Get usage count for current month"""
-        start_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        start_of_month = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         return self.usage_logs.filter(
             UsageLog.timestamp >= start_of_month,
             UsageLog.action_type == 'generate_plan'
         ).count()
+    
+    def generate_reset_token(self):
+        """Generate a password reset token"""
+        token = secrets.token_urlsafe(32)
+        self.reset_token = token
+        self.reset_token_expires = datetime.now(timezone.utc) + timedelta(hours=1)
+        db.session.commit()
+        return token
+    
+    def verify_reset_token(self, token):
+        """Verify a password reset token"""
+        if not self.reset_token or self.reset_token != token:
+            return False
+        if self.reset_token_expires < datetime.now(timezone.utc):
+            return False
+        return True
+    
+    def clear_reset_token(self):
+        """Clear the reset token after use"""
+        self.reset_token = None
+        self.reset_token_expires = None
+        db.session.commit()
 
 
 class UsageLog(db.Model):
@@ -93,7 +120,7 @@ class UsageLog(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     action_type = db.Column(db.String(50), nullable=False)  # generate_plan, export_pdf, etc
     credits_used = db.Column(db.Integer, default=0)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     extra_data = db.Column(db.JSON)  # Store additional info like diet_type, calories, etc
 
 
@@ -108,7 +135,7 @@ class Payment(db.Model):
     currency = db.Column(db.String(3), default='usd')
     status = db.Column(db.String(20))  # succeeded, pending, failed
     payment_type = db.Column(db.String(20))  # subscription, credits
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     payment_data = db.Column(db.JSON)
 
 
@@ -120,7 +147,7 @@ class SavedMealPlan(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     meal_plan_data = db.Column(db.JSON, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     def to_dict(self):
         return {
@@ -150,7 +177,7 @@ class PricingPlan(db.Model):
     advanced_features = db.Column(db.Boolean, default=False)
     priority_support = db.Column(db.Boolean, default=False)
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     @staticmethod
     def seed_default_plans():

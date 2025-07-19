@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EMERGENCY TEST - ZERO DEPENDENCIES</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+        .test-btn { 
+            background: #007bff; 
+            color: white; 
+            padding: 15px 30px; 
+            border: none; 
+            cursor: pointer; 
+            margin: 10px; 
+            font-size: 16px; 
+            border-radius: 5px;
+        }
+        .test-btn:hover { background: #0056b3; }
+        .result { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border: 1px solid #ccc; 
+            background: white; 
+        }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>🚨 EMERGENCY TEST - ZERO DEPENDENCIES</h1>
+    <p><strong>This page has NO Bootstrap, NO external CSS, NO external JavaScript</strong></p>
+    
+    <div class="result">
+        <h2>Test Instructions:</h2>
+        <ol>
+            <li>Click each button below</li>
+            <li>Watch the result box for responses</li>
+            <li>If ANY button doesn't work, we have a fundamental issue</li>
+        </ol>
+    </div>
+    
+    <button class="test-btn" onclick="testClick(1)">TEST BUTTON 1</button>
+    <button class="test-btn" onclick="testClick(2)">TEST BUTTON 2</button>
+    <button class="test-btn" onclick="testClick(3)">TEST BUTTON 3</button>
+    
+    <div id="results" class="result">
+        <h3>Results:</h3>
+        <p>Click buttons to test...</p>
+    </div>
+    
+    <div class="result">
+        <h3>Navigation Test:</h3>
+        <a href="/" style="color: #007bff; text-decoration: none; font-weight: bold;">← Go to Home</a><br><br>
+        <a href="/auth/login" style="color: #007bff; text-decoration: none; font-weight: bold;">Go to Login →</a>
+    </div>
+    
+    <script>
+        let testCount = 0;
+        
+        function testClick(buttonNum) {
+            testCount++;
+            const results = document.getElementById('results');
+            results.innerHTML = `
+                <h3>Results:</h3>
+                <div class="success">
+                    ✅ Button ${buttonNum} clicked successfully!<br>
+                    Total clicks: ${testCount}<br>
+                    Time: ${new Date().toLocaleTimeString()}
+                </div>
+                <p>If you can see this, JavaScript is working!</p>
+            `;
+            
+            console.log(`Button ${buttonNum} clicked - test ${testCount}`);
+        }
+        
+        // Test if JavaScript loads
+        console.log('EMERGENCY TEST: JavaScript loaded successfully');
+        
+        // Test if page is interactive
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('EMERGENCY TEST: DOM ready');
+            
+            const results = document.getElementById('results');
+            results.innerHTML = `
+                <h3>Results:</h3>
+                <div class="success">
+                    ✅ JavaScript loaded successfully!<br>
+                    ✅ DOM is ready!<br>
+                    Time: ${new Date().toLocaleTimeString()}
+                </div>
+                <p>Ready for testing - click buttons above</p>
+            `;
+        });
+        
+        // Error handler
+        window.addEventListener('error', function(e) {
+            console.error('EMERGENCY TEST ERROR:', e.message);
+            const results = document.getElementById('results');
+            results.innerHTML = `
+                <h3>Results:</h3>
+                <div class="error">
+                    ❌ ERROR DETECTED: ${e.message}<br>
+                    File: ${e.filename}<br>
+                    Line: ${e.lineno}
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html>

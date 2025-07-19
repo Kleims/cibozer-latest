@@ -3,10 +3,10 @@ Admin Dashboard for Cibozer
 Video generation and analytics for admin use only
 """
 
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, current_app
 from functools import wraps
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import json
 from video_service import VideoService
 import meal_optimizer as mo
@@ -168,14 +168,83 @@ def batch_generate():
         configurations = data.get('configurations', [])
         
         results = []
-        for config in configurations:
-            # Generate each video
-            # Similar to generate_content_video but for multiple configs
-            pass
+        total_generated = 0
+        total_failed = 0
+        
+        for i, config in enumerate(configurations):
+            try:
+                # Generate meal plan for each configuration
+                preferences = {
+                    'diet': config.get('diet_type', 'standard'),
+                    'calories': int(config.get('calories', 2000)),
+                    'pattern': config.get('pattern', 'standard'),
+                    'restrictions': config.get('restrictions', []),
+                    'cuisines': ['all'],
+                    'cooking_methods': ['all'],
+                    'measurement_system': 'US',
+                    'allow_substitutions': True,
+                    'timestamp': datetime.now().isoformat()
+                }
+                
+                # Generate meal plan
+                day_meals, metrics = optimizer.generate_single_day_plan(preferences)
+                totals = optimizer.calculate_day_totals(day_meals)
+                
+                meal_plan = {
+                    'meals': day_meals,
+                    'totals': totals,
+                    'preferences': preferences,
+                    'metrics': metrics
+                }
+                
+                # Generate videos
+                platforms = config.get('platforms', ['youtube_shorts'])
+                voice = config.get('voice', 'christopher')
+                auto_upload = config.get('auto_upload', False)
+                
+                # Run async video generation
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+                try:
+                    video_results = loop.run_until_complete(
+                        video_service.generate_and_upload_videos(
+                            meal_plan, platforms, voice, auto_upload
+                        )
+                    )
+                    
+                    results.append({
+                        'index': i,
+                        'config': config,
+                        'status': 'success',
+                        'videos_generated': video_results['summary']['successful_generations'],
+                        'videos_uploaded': video_results['summary']['successful_uploads']
+                    })
+                    
+                    total_generated += video_results['summary']['successful_generations']
+                    
+                finally:
+                    loop.close()
+                    
+            except Exception as e:
+                results.append({
+                    'index': i,
+                    'config': config,
+                    'status': 'failed',
+                    'error': str(e)
+                })
+                total_failed += 1
+                current_app.logger.error(f"Batch generation failed for config {i}: {e}")
         
         return jsonify({
             'success': True,
-            'results': results
+            'results': results,
+            'summary': {
+                'total_configurations': len(configurations),
+                'total_generated': total_generated,
+                'total_failed': total_failed,
+                'success_rate': (len(configurations) - total_failed) / len(configurations) * 100 if configurations else 0
+            }
         })
         
     except Exception as e:
@@ -192,7 +261,7 @@ def analytics():
     from sqlalchemy import func
     
     # Get user registration trends (last 30 days)
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
     user_registrations = db.session.query(
         func.date(User.created_at).label('date'),
         func.count(User.id).label('count')
@@ -210,20 +279,67 @@ def analytics():
         func.count(UsageLog.id).label('count')
     ).filter(UsageLog.timestamp >= thirty_days_ago).group_by(func.date(UsageLog.timestamp)).all()
     
-    # Get revenue by month
-    revenue_stats = db.session.query(
-        func.date_trunc('month', Payment.created_at).label('month'),
-        func.sum(Payment.amount).label('revenue')
-    ).group_by(func.date_trunc('month', Payment.created_at)).all()
+    # Get revenue statistics (compatible with SQLite and PostgreSQL)
+    try:
+        # Try PostgreSQL date_trunc function first
+        revenue_stats = db.session.query(
+            func.date_trunc('month', Payment.created_at).label('month'),
+            func.sum(Payment.amount).label('revenue')
+        ).group_by(func.date_trunc('month', Payment.created_at)).all()
+    except:
+        # Fallback to SQLite strftime function
+        revenue_stats = db.session.query(
+            func.strftime('%Y-%m', Payment.created_at).label('month'),
+            func.sum(Payment.amount).label('revenue')
+        ).group_by(func.strftime('%Y-%m', Payment.created_at)).all()
+    
+    # Calculate total revenue and MRR
+    total_revenue = db.session.query(func.sum(Payment.amount)).scalar() or 0
+    total_revenue = total_revenue / 100  # Convert from cents
+    
+    # Calculate MRR (Monthly Recurring Revenue)
+    active_pro = User.query.filter_by(subscription_tier='pro', subscription_status='active').count()
+    active_premium = User.query.filter_by(subscription_tier='premium', subscription_status='active').count()
+    current_mrr = (active_pro * 9.99) + (active_premium * 19.99)
+    
+    # Calculate totals
+    total_users = User.query.count()
+    paying_users = User.query.filter(User.subscription_tier.in_(['pro', 'premium'])).count()
+    conversion_rate = (paying_users / total_users * 100) if total_users > 0 else 0
     
     analytics_data = {
         'user_registrations': [{'date': str(r.date), 'count': r.count} for r in user_registrations],
         'subscription_stats': [{'tier': r.subscription_tier, 'count': r.count} for r in subscription_stats],
         'usage_stats': [{'date': str(r.date), 'count': r.count} for r in usage_stats],
-        'revenue_stats': [{'month': str(r.month), 'revenue': float(r.revenue)} for r in revenue_stats]
+        'revenue_stats': [{'month': str(r.month), 'revenue': float(r.revenue) / 100} for r in revenue_stats],
+        'summary': {
+            'total_users': total_users,
+            'paying_users': paying_users,
+            'conversion_rate': round(conversion_rate, 1),
+            'total_revenue': total_revenue,
+            'current_mrr': round(current_mrr, 2),
+            'active_pro': active_pro,
+            'active_premium': active_premium
+        }
     }
     
     return render_template('admin/analytics.html', analytics=analytics_data)
+
+@admin_bp.route('/refill-credits', methods=['POST'])
+@admin_required
+def refill_credits():
+    """Manually trigger monthly credit refill for free users"""
+    from payments import refill_monthly_credits
+    
+    try:
+        refilled_count = refill_monthly_credits()
+        return jsonify({
+            'success': True, 
+            'message': f'Refilled credits for {refilled_count} free tier users',
+            'count': refilled_count
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @admin_bp.route('/users')
 @admin_required
