@@ -518,18 +518,31 @@ def receive_debug_logs():
         data = request.get_json()
         logs = data.get('logs', [])
         
-        # Save to file
+        # Save to file in logs directory
         import json
         from datetime import datetime
         
-        log_file = f'debug_logs_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+        # Ensure logs directory exists
+        logs_dir = 'logs'
+        if not os.path.exists(logs_dir):
+            os.makedirs(logs_dir)
+        
+        # Use secure path join for file creation
+        log_filename = f'debug_logs_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+        log_file = secure_path_join(logs_dir, log_filename)
+        
         with open(log_file, 'w', encoding='utf-8') as f:
             json.dump(logs, f, indent=2)
         
         # Also save to text file for easy reading
-        with open('latest_debug.log', 'w', encoding='utf-8') as f:
+        latest_log = secure_path_join(logs_dir, 'latest_debug.log')
+        with open(latest_log, 'w', encoding='utf-8') as f:
             for log in logs:
-                f.write(f"[{log['timestamp']}] {log['type'].upper()}: {log['message']}\n")
+                # Sanitize log messages to prevent injection
+                timestamp = str(log.get('timestamp', 'unknown'))[:50]
+                log_type = str(log.get('type', 'unknown'))[:20]
+                message = str(log.get('message', ''))[:1000]
+                f.write(f"[{timestamp}] {log_type.upper()}: {message}\n")
         
         return jsonify({'status': 'ok'})
     except Exception as e:
@@ -539,7 +552,9 @@ def receive_debug_logs():
 @app.route('/debug/template')
 def debug_template():
     """Debug what template is actually being served"""
-    with open('templates/create.html', 'r', encoding='utf-8') as f:
+    # Use secure path for template access
+    template_path = secure_path_join('templates', 'create.html')
+    with open(template_path, 'r', encoding='utf-8') as f:
         template_content = f.read()
     
     # Find the API call lines
