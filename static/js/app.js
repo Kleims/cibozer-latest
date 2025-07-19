@@ -9,6 +9,12 @@ let currentUser = null;
 
 // Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Check for reduced motion preference
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.style.setProperty('--animation-duration', '0s');
+        console.log('Reduced motion mode enabled');
+    }
+    
     initializeApp();
 });
 
@@ -59,6 +65,20 @@ function initializeFormValidation() {
             }
             
             form.classList.add('was-validated');
+        });
+    });
+    
+    // Add real-time validation feedback
+    const inputs = document.querySelectorAll('input[required], select[required], textarea[required]');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.checkValidity()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
         });
     });
 }

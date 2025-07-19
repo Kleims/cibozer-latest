@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="fas fa-chart-line me-2"></i>Analytics Dashboard</h2>
+        </div>
+        <div class="col text-end">
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+    
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        Analytics dashboard will be available after implementing user authentication and payment tracking.
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Coming Soon</h5>
+                </div>
+                <div class="card-body">
+                    <p>Future analytics will include:</p>
+                    <ul>
+                        <li>Monthly Recurring Revenue (MRR)</li>
+                        <li>User growth metrics</li>
+                        <li>Conversion rates (Free to Paid)</li>
+                        <li>Most popular diet types</li>
+                        <li>Usage patterns</li>
+                        <li>Churn analysis</li>
+                        <li>Revenue by plan type</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

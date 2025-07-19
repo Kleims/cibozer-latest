@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="fas fa-users me-2"></i>User Management</h2>
+        </div>
+        <div class="col text-end">
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+    
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        User management will be available after implementing authentication system.
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Coming Soon</h5>
+                </div>
+                <div class="card-body">
+                    <p>Future user management features:</p>
+                    <ul>
+                        <li>View all registered users</li>
+                        <li>Search and filter users</li>
+                        <li>View subscription status</li>
+                        <li>Manage user credits</li>
+                        <li>Send emails to users</li>
+                        <li>Ban/suspend accounts</li>
+                        <li>Export user data</li>
+                        <li>View user activity logs</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -41,8 +41,10 @@ def auto_deploy():
             {"src": "/(.*)", "dest": "app.py"}
         ],
         "env": {
-            "SECRET_KEY": "cibozer-auto-deployed-change-later",
-            "DEBUG": "False"
+            "SECRET_KEY": "@secret_key",
+            "DEBUG": "False",
+            "ADMIN_USERNAME": "@admin_username", 
+            "ADMIN_PASSWORD": "@admin_password"
         }
     }
     

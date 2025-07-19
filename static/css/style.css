@@ -53,6 +53,19 @@ body {
     animation: float 3s ease-in-out infinite;
 }
 
+/* Responsive hero icon */
+@media (max-width: 768px) {
+    .hero-icon {
+        font-size: 8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-icon {
+        font-size: 5rem;
+    }
+}
+
 @keyframes float {
     0%, 100% { transform: translateY(0px); }
     50% { transform: translateY(-20px); }
@@ -213,6 +226,39 @@ body {
     margin: 20px auto;
 }
 
+/* Mobile Performance Optimizations */
+@media (max-width: 768px) {
+    /* Reduce animations on mobile for better performance */
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .btn-primary:hover,
+    .btn-success:hover {
+        transform: translateY(-1px);
+    }
+    
+    /* Improve form usability on mobile */
+    .form-control,
+    .form-select {
+        min-height: 48px; /* Better touch targets */
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+    
+    .hero-section {
+        min-height: 60vh; /* Reduce height on mobile */
+        padding: 2rem 0;
+    }
+    
+    .display-4 {
+        font-size: 2rem; /* Scale down large text */
+    }
+    
+    .display-5 {
+        font-size: 1.75rem;
+    }
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
@@ -233,6 +279,11 @@ body {
     box-shadow: 0 10px 25px rgba(0,0,0,0.15);
 }
 
+.meal-card.enhanced {
+    padding: 25px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
 .meal-title {
     font-size: 1.3rem;
     font-weight: 700;
@@ -240,10 +291,49 @@ body {
     margin-bottom: 10px;
 }
 
+.meal-image-container {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.meal-image-placeholder {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.meal-image-placeholder i {
+    color: var(--primary-color);
+    opacity: 0.8;
+}
+
+.meal-time-badge {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary-color);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
+
 .nutrition-info {
     display: flex;
     justify-content: space-between;
     margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .nutrition-item {
@@ -251,7 +341,19 @@ body {
     padding: 8px;
     background: #f8f9fa;
     border-radius: 8px;
-    min-width: 80px;
+    min-width: 60px;
+    flex: 1;
+    transition: all 0.3s ease;
+}
+
+.nutrition-item:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.nutrition-item:hover .nutrition-value,
+.nutrition-item:hover .nutrition-label {
+    color: white;
 }
 
 .nutrition-value {
@@ -261,7 +363,7 @@ body {
 }
 
 .nutrition-label {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: #6c757d;
     text-transform: uppercase;
 }
@@ -285,14 +387,50 @@ body {
     border-bottom: none;
 }
 
+.ingredients-list.enhanced li {
+    padding: 10px 0;
+    transition: background-color 0.3s ease;
+}
+
+.ingredients-list.enhanced li:hover {
+    background-color: rgba(0,123,255,0.05);
+    padding-left: 10px;
+    margin-left: -10px;
+    padding-right: 10px;
+    margin-right: -10px;
+}
+
 .ingredient-name {
     font-weight: 500;
     color: #333;
+    text-transform: capitalize;
 }
 
 .ingredient-amount {
     color: #6c757d;
     font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Instructions List */
+.instructions-list {
+    font-size: 0.95rem;
+    line-height: 1.8;
+}
+
+.instructions-list li {
+    margin-bottom: 8px;
+}
+
+/* Macro Chart */
+.macro-chart {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.macro-chart canvas {
+    max-width: 100%;
+    height: auto;
 }
 
 /* Responsive Design */
@@ -318,6 +456,179 @@ body {
     .nutrition-item {
         flex: 1;
         min-width: 60px;
+    }
+    
+    /* Form adjustments */
+    .form-card {
+        padding: 20px;
+    }
+    
+    .diet-option label {
+        font-size: 0.9rem;
+        padding: 15px;
+    }
+    
+    /* Modal adjustments */
+    .modal-dialog {
+        margin: 10px;
+    }
+    
+    .modal-footer {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .modal-footer .btn {
+        flex: 1 1 45%;
+        margin: 2px;
+    }
+    
+    /* Meal card adjustments */
+    .meal-card.enhanced .row {
+        flex-direction: column;
+    }
+    
+    .meal-image-container {
+        margin-bottom: 20px;
+    }
+    
+    .nutrition-info.compact {
+        justify-content: center;
+    }
+    
+    .nutrition-badge {
+        font-size: 0.8rem;
+        padding: 3px 8px;
+    }
+    
+    /* Navigation tabs */
+    .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .nav-tabs .nav-link {
+        white-space: nowrap;
+        font-size: 0.9rem;
+        padding: 8px 12px;
+    }
+    
+    /* Week summary */
+    .week-summary {
+        padding: 15px;
+    }
+    
+    .week-summary .row {
+        gap: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Extra small devices */
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .display-5 {
+        font-size: 1.5rem;
+    }
+    
+    .btn-lg {
+        padding: 10px 20px;
+        font-size: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+    }
+    
+    /* Feature cards stack */
+    .feature-card {
+        margin-bottom: 15px;
+    }
+    
+    /* Form elements */
+    .form-control,
+    .form-select {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    /* Meal cards compact */
+    .meal-card.compact {
+        padding: 10px;
+    }
+    
+    .meal-icon-compact i {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Ingredients compact */
+    .ingredients-compact {
+        font-size: 0.85rem;
+    }
+    
+    .ingredient-tag {
+        font-size: 0.8rem;
+        padding: 1px 6px;
+    }
+    
+    /* Table responsiveness */
+    table {
+        font-size: 0.9rem;
+    }
+    
+    /* Buttons in results modal */
+    #resultsModal .modal-footer .btn {
+        flex: 1 1 100%;
+        margin: 2px 0;
+    }
+    
+    /* Macro chart smaller on mobile */
+    #macroChart {
+        width: 120px !important;
+        height: 120px !important;
+    }
+}
+
+/* Touch-friendly enhancements */
+@media (hover: none) {
+    .btn {
+        -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+    }
+    
+    .form-check-input {
+        width: 20px;
+        height: 20px;
+        margin-top: 0;
+    }
+    
+    .diet-option label:active {
+        transform: scale(0.95);
+    }
+    
+    .meal-card:hover {
+        transform: none;
+    }
+    
+    .feature-card:hover {
+        transform: none;
+    }
+}
+
+/* Landscape mode adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+    .hero-section {
+        min-height: 50vh;
+    }
+    
+    .modal-dialog {
+        max-height: 90vh;
+        overflow-y: auto;
     }
 }
 
@@ -404,6 +715,87 @@ footer {
 
 .border-radius-custom {
     border-radius: 15px !important;
+}
+
+/* Weekly Plan Styles */
+.week-summary {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.meal-card.compact {
+    padding: 15px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.meal-icon-compact {
+    margin-bottom: 5px;
+}
+
+.meal-name-compact {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+}
+
+.nutrition-info.compact {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.nutrition-badge {
+    background: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid #e9ecef;
+    display: inline-block;
+}
+
+.ingredients-compact {
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.ingredient-tag {
+    background: #e9ecef;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    margin-right: 5px;
+    display: inline-block;
+    margin-bottom: 5px;
+}
+
+.day-totals {
+    font-size: 0.95rem;
+}
+
+.day-totals i {
+    color: var(--primary-color);
+}
+
+/* Tab navigation */
+.nav-tabs .nav-link {
+    color: #6c757d;
+    font-weight: 500;
+    border-radius: 10px 10px 0 0;
+}
+
+.nav-tabs .nav-link.active {
+    background: var(--gradient-primary);
+    color: white;
+    border-color: transparent;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: #e9ecef;
 }
 
 /* Dark mode support */

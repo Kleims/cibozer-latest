@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Upgrade to Pro - Cibozer{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold">Unlock Unlimited Meal Planning</h1>
+                <p class="lead text-muted">Choose the plan that's right for you</p>
+            </div>
+            
+            <div class="row justify-content-center">
+                <!-- Pro Plan -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 border-primary">
+                        <div class="card-header bg-primary text-white text-center">
+                            <h4 class="mb-0">Pro</h4>
+                            <p class="mb-0">Most Popular</p>
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="price-section mb-4">
+                                <h2 class="display-4 fw-bold">$9.99</h2>
+                                <p class="text-muted">per month</p>
+                                <p class="small text-success">Save 33% with annual billing</p>
+                            </div>
+                            
+                            <ul class="list-unstyled mb-4">
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    <strong>Unlimited</strong> meal plans
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    1-7 day meal planning
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    All diet types & restrictions
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    PDF exports
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Advanced grocery lists
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Save unlimited plans
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Priority support
+                                </li>
+                            </ul>
+                            
+                            <button class="btn btn-primary btn-lg w-100 mb-3" onclick="upgradeToPro()">
+                                <i class="fas fa-crown me-2"></i>Upgrade to Pro
+                            </button>
+                            
+                            <p class="small text-muted">
+                                Cancel anytime • 30-day money-back guarantee
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Premium Plan -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 border-warning">
+                        <div class="card-header bg-warning text-dark text-center">
+                            <h4 class="mb-0">Premium</h4>
+                            <p class="mb-0">For Power Users</p>
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="price-section mb-4">
+                                <h2 class="display-4 fw-bold">$19.99</h2>
+                                <p class="text-muted">per month</p>
+                                <p class="small text-success">Save 33% with annual billing</p>
+                            </div>
+                            
+                            <ul class="list-unstyled mb-4">
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    <strong>Everything in Pro</strong>
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Custom macro targets
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Meal prep instructions
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Recipe scaling
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Family planning (2-6 people)
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    API access
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Priority support
+                                </li>
+                            </ul>
+                            
+                            <button class="btn btn-warning btn-lg w-100 mb-3" onclick="upgradeToPremium()">
+                                <i class="fas fa-star me-2"></i>Upgrade to Premium
+                            </button>
+                            
+                            <p class="small text-muted">
+                                Cancel anytime • 30-day money-back guarantee
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Features Comparison -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <h3 class="text-center mb-4">Feature Comparison</h3>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th class="text-center">Free</th>
+                                    <th class="text-center">Pro</th>
+                                    <th class="text-center">Premium</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Meal Plans per Month</td>
+                                    <td class="text-center">3</td>
+                                    <td class="text-center">Unlimited</td>
+                                    <td class="text-center">Unlimited</td>
+                                </tr>
+                                <tr>
+                                    <td>Max Days Planning</td>
+                                    <td class="text-center">1 day</td>
+                                    <td class="text-center">7 days</td>
+                                    <td class="text-center">7 days</td>
+                                </tr>
+                                <tr>
+                                    <td>PDF Export</td>
+                                    <td class="text-center">❌</td>
+                                    <td class="text-center">✅</td>
+                                    <td class="text-center">✅</td>
+                                </tr>
+                                <tr>
+                                    <td>Advanced Grocery Lists</td>
+                                    <td class="text-center">❌</td>
+                                    <td class="text-center">✅</td>
+                                    <td class="text-center">✅</td>
+                                </tr>
+                                <tr>
+                                    <td>Custom Macro Targets</td>
+                                    <td class="text-center">❌</td>
+                                    <td class="text-center">❌</td>
+                                    <td class="text-center">✅</td>
+                                </tr>
+                                <tr>
+                                    <td>Family Planning</td>
+                                    <td class="text-center">❌</td>
+                                    <td class="text-center">❌</td>
+                                    <td class="text-center">✅</td>
+                                </tr>
+                                <tr>
+                                    <td>API Access</td>
+                                    <td class="text-center">❌</td>
+                                    <td class="text-center">❌</td>
+                                    <td class="text-center">✅</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Payment Integration</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Stripe payment integration will be available soon! 
+                    For now, contact admin to upgrade your account.
+                </div>
+                <p>What you'll get:</p>
+                <ul id="selectedFeatures"></ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function upgradeToPro() {
+    showPaymentModal('Pro', [
+        'Unlimited meal plans',
+        '1-7 day meal planning',
+        'All diet types & restrictions',
+        'PDF exports',
+        'Advanced grocery lists',
+        'Save unlimited plans',
+        'Priority support'
+    ]);
+}
+
+function upgradeToPremium() {
+    showPaymentModal('Premium', [
+        'Everything in Pro',
+        'Custom macro targets',
+        'Meal prep instructions',
+        'Recipe scaling',
+        'Family planning (2-6 people)',
+        'API access',
+        'Priority support'
+    ]);
+}
+
+function showPaymentModal(plan, features) {
+    document.querySelector('.modal-title').textContent = `Upgrade to ${plan}`;
+    
+    const featuresHtml = features.map(feature => `<li>${feature}</li>`).join('');
+    document.getElementById('selectedFeatures').innerHTML = featuresHtml;
+    
+    const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    modal.show();
+}
+</script>
+{% endblock %}
