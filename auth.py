@@ -233,7 +233,8 @@ def account():
     
     return render_template('auth/account.html',
                          monthly_usage=monthly_usage,
-                         saved_plans_count=saved_plans_count)
+                         saved_plans_count=saved_plans_count,
+                         now=datetime.now(timezone.utc))
 
 @auth_bp.route('/api/check-limits')
 @login_required
