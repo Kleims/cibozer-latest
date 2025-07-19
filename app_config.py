@@ -17,12 +17,22 @@ load_dotenv()
 
 def _get_required_secret_key():
     """Get SECRET_KEY or raise error in production"""
-    if os.getenv('FLASK_ENV') == 'production' or not os.getenv('FLASK_DEBUG'):
+    # First try to get from environment variable
+    env_key = os.getenv('SECRET_KEY')
+    if env_key:
+        return env_key
+    
+    # Check if we're in production
+    is_production = (os.getenv('FLASK_ENV') == 'production' or 
+                    not os.getenv('FLASK_DEBUG', 'False').lower() == 'true')
+    
+    if is_production:
         raise ValueError(
             "CRITICAL: SECRET_KEY environment variable is required in production!\n"
             "Generate a secure key with: python -c \"import secrets; print(secrets.token_urlsafe(64))\"\n"
             "Then set it in your environment: export SECRET_KEY='your-generated-key'"
         )
+    
     # Only generate a key for development
     generated_key = secrets.token_urlsafe(32)
     print(f"⚠️  WARNING: Using generated SECRET_KEY for development: {generated_key[:8]}...")
