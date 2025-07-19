@@ -7,7 +7,7 @@ from flask import Flask, render_template, request, jsonify, send_file, flash, re
 from flask_cors import CORS
 from flask_login import LoginManager, login_required, current_user
 from flask_migrate import Migrate
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, csrf_exempt
 import os
 import json
 import time
@@ -512,6 +512,7 @@ def create_meal_plan():
         return render_template('error.html', error=str(e)), 500
 
 @app.route('/api/debug-logs', methods=['POST'])
+@csrf_exempt
 def receive_debug_logs():
     """Receive debug logs from browser"""
     try:
