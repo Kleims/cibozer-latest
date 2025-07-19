@@ -10,6 +10,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from datetime import timedelta
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 def _get_required_secret_key():
     """Get SECRET_KEY or raise error in production"""
