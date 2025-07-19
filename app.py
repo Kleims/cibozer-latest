@@ -17,6 +17,7 @@ import traceback
 import logging
 import logging.config
 import meal_optimizer as mo
+from meal_optimizer_web import get_web_optimizer
 import tempfile
 import shutil
 from pathlib import Path
@@ -285,7 +286,8 @@ def rate_limit_check():
 
 # Initialize meal optimizer
 try:
-    optimizer = mo.MealPlanOptimizer()
+    # Use web-safe optimizer to prevent input() crashes
+    optimizer = get_web_optimizer()
     app.logger.info("[OK] Meal optimizer initialized successfully")
 except Exception as e:
     app.logger.error(f"[ERROR] Failed to initialize meal optimizer: {str(e)}")
@@ -460,7 +462,8 @@ def create_meal_plan():
         if not hasattr(app, 'optimizer') and 'optimizer' not in globals():
             log_error("Optimizer not found - reinitializing")
             global optimizer
-            optimizer = mo.MealPlanOptimizer()
+            # Use web-safe optimizer to prevent input() crashes
+            optimizer = get_web_optimizer()
         
         # Get available options from the optimizer
         log_info("Getting diet types from optimizer")
