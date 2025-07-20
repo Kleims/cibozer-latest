@@ -9,6 +9,7 @@ from unittest.mock import patch, MagicMock
 # Mock problematic video modules before any imports
 # Also mock bcrypt to avoid PyO3 initialization issues in tests
 mock_bcrypt = MagicMock()
+# Return bytes that can be decoded to match User model expectations
 mock_bcrypt.hashpw = MagicMock(return_value=b'$2b$12$fake.hash.for.testing')
 mock_bcrypt.checkpw = MagicMock(return_value=True)
 mock_bcrypt.gensalt = MagicMock(return_value=b'$2b$12$fake.salt')
