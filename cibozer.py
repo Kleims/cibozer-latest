@@ -1323,7 +1323,8 @@ class VideoCreator:
         # Try to create a large font, fallback to available font
         try:
             large_font = ImageFont.truetype(self.slide_generator.font_path if hasattr(self.slide_generator, 'font_path') else 'arial.ttf', 120)
-        except:
+        except (IOError, OSError) as e:
+            self.logger.warning(f"Failed to load large font: {str(e)}")
             large_font = self.slide_generator.font_title or ImageFont.load_default()
         
         self.slide_generator.center_text(draw, f"{meal['calories']:.0f}", 
@@ -1413,7 +1414,8 @@ class VideoCreator:
         # Try to create a large font for checkmark, fallback to available font
         try:
             check_font = ImageFont.truetype(self.slide_generator.font_path if hasattr(self.slide_generator, 'font_path') else 'arial.ttf', 80)
-        except:
+        except (IOError, OSError) as e:
+            self.logger.warning(f"Failed to load check font: {str(e)}")
             check_font = self.slide_generator.font_title or ImageFont.load_default()
         
         self.slide_generator.center_text(draw, "✓", check_y, check_font)

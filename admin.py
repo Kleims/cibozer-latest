@@ -286,8 +286,9 @@ def analytics():
             func.date_trunc('month', Payment.created_at).label('month'),
             func.sum(Payment.amount).label('revenue')
         ).group_by(func.date_trunc('month', Payment.created_at)).all()
-    except:
+    except Exception as e:
         # Fallback to SQLite strftime function
+        app.logger.warning(f"PostgreSQL date_trunc failed, using SQLite fallback: {str(e)}")
         revenue_stats = db.session.query(
             func.strftime('%Y-%m', Payment.created_at).label('month'),
             func.sum(Payment.amount).label('revenue')
