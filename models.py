@@ -48,6 +48,7 @@ class User(UserMixin, db.Model):
     # Relationships
     usage_logs = db.relationship('UsageLog', backref='user', lazy='dynamic')
     payments = db.relationship('Payment', backref='user', lazy='dynamic')
+    shared_meal_plans = db.relationship('SharedMealPlan', backref='creator', lazy='dynamic')
     meal_plans = db.relationship('SavedMealPlan', backref='user', lazy='dynamic')
     
     def set_password(self, password):
@@ -239,3 +240,81 @@ class PricingPlan(db.Model):
                 db.session.add(plan)
         
         db.session.commit()
+
+
+class SharedMealPlan(db.Model):
+    """Model for shared meal plans with unique shareable links"""
+    __tablename__ = 'shared_meal_plans'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    share_code = db.Column(db.String(32), unique=True, nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Meal plan data
+    meal_plan_data = db.Column(db.JSON, nullable=False)  # Stores the complete meal plan
+    title = db.Column(db.String(200))
+    description = db.Column(db.Text)
+    
+    # Sharing settings
+    is_public = db.Column(db.Boolean, default=True)
+    allow_copying = db.Column(db.Boolean, default=True)
+    expires_at = db.Column(db.DateTime)  # Optional expiration
+    password_hash = db.Column(db.String(255))  # Optional password protection
+    
+    # Analytics
+    view_count = db.Column(db.Integer, default=0)
+    copy_count = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    last_viewed_at = db.Column(db.DateTime)
+    
+    # Metadata
+    calorie_target = db.Column(db.Integer)
+    diet_type = db.Column(db.String(50))
+    days_count = db.Column(db.Integer)
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if not self.share_code:
+            self.share_code = self.generate_share_code()
+    
+    @staticmethod
+    def generate_share_code():
+        """Generate a unique share code"""
+        while True:
+            code = secrets.token_urlsafe(24)[:32]  # URL-safe code
+            if not SharedMealPlan.query.filter_by(share_code=code).first():
+                return code
+    
+    def increment_view_count(self):
+        """Increment view count and update last viewed time"""
+        self.view_count += 1
+        self.last_viewed_at = datetime.now(timezone.utc)
+        db.session.commit()
+    
+    def is_expired(self):
+        """Check if the shared plan has expired"""
+        if not self.expires_at:
+            return False
+        return datetime.now(timezone.utc) > self.expires_at
+    
+    def verify_password(self, password):
+        """Verify password for protected shares"""
+        if not self.password_hash:
+            return True
+        return bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
+    
+    def to_dict(self):
+        """Convert to dictionary for API responses"""
+        return {
+            'share_code': self.share_code,
+            'title': self.title or f"Meal Plan - {self.created_at.strftime('%B %d, %Y')}",
+            'description': self.description,
+            'meal_plan_data': self.meal_plan_data,
+            'calorie_target': self.calorie_target,
+            'diet_type': self.diet_type,
+            'days_count': self.days_count,
+            'created_at': self.created_at.isoformat(),
+            'view_count': self.view_count,
+            'is_public': self.is_public,
+            'allow_copying': self.allow_copying
+        }
