@@ -182,7 +182,9 @@ class TestMealPlanGeneration:
         preferences = {
             'calories': 2000,
             'diet': 'balanced',
+            'pattern': 'normal',
             'cuisine': ['all'],
+            'restrictions': [],
             'meal_types': ['breakfast', 'lunch', 'dinner']
         }
         
@@ -277,11 +279,13 @@ class TestMealPlanGeneration:
             }
         }
         
-        is_valid, message = optimizer.validate_meal_plan(
-            valid_plan,
-            target_calories=2000,
-            diet_type='balanced'
-        )
+        preferences = {
+            'calories': 2000,
+            'diet': 'balanced'
+        }
+        
+        result = optimizer.validate_meal_plan(valid_plan, preferences)
+        is_valid = result.get('is_valid', False)
         assert is_valid is True
         
         # Invalid meal plan (too few calories)
@@ -294,11 +298,9 @@ class TestMealPlanGeneration:
             }
         }
         
-        is_valid, message = optimizer.validate_meal_plan(
-            invalid_plan,
-            target_calories=2000,
-            diet_type='balanced'
-        )
+        result = optimizer.validate_meal_plan(invalid_plan, preferences)
+        is_valid = result.get('is_valid', False)
+        message = result.get('message', '')
         assert is_valid is False
         assert "calories" in message.lower()
 
@@ -392,8 +394,8 @@ class TestUtilityFunctions:
         """Test meal nutrition calculation"""
         meal_template = {
             'base_ingredients': [
-                {'item': 'chicken_breast', 'base_amount': 100},
-                {'item': 'white_rice', 'base_amount': 50}
+                {'item': 'chicken_breast', 'amount': 100},
+                {'item': 'white_rice', 'amount': 50}
             ]
         }
         
@@ -410,7 +412,9 @@ class TestUtilityFunctions:
         preferences = {
             'calories': 2000,
             'diet': 'balanced',
+            'pattern': 'normal',
             'cuisine': ['all'],
+            'restrictions': [],
             'meal_types': ['breakfast', 'lunch', 'dinner']
         }
         
