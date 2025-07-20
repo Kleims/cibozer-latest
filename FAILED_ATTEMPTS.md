@@ -8,3 +8,11 @@
 ---
 
 TODO(Iter 3): Implement async video generation with Celery - see FAILED_ATTEMPTS.md
+
+## Iteration #6 - 2025-07-20 06:45:00
+**Issue**: bcrypt import error in test environment
+**Tried**: Running test_share_feature.py tests
+**Blocked by**: ImportError: PyO3 modules compiled for CPython 3.8 or older may only be initialized once per interpreter process
+**Priority**: MEDIUM
+**Occurrences**: 1
+---
