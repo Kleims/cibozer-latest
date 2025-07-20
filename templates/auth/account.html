@@ -151,7 +151,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Load user stats
-    fetch('/auth/api/user/stats')
+    fetch('{{ url_for("auth.user_stats") }}')
         .then(response => response.json())
         .then(data => {
             // Update any dynamic stats here

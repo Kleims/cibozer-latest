@@ -250,7 +250,7 @@ async function initiateCheckout(plan) {
             // Test mode - show success message
             showSuccessMessage(`Test mode: Successfully upgraded to ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan!`);
             setTimeout(() => {
-                window.location.href = '/auth/account';
+                window.location.href = '{{ url_for("auth.account") }}';
             }, 2000);
         } else if (data.checkout_url) {
             // Redirect to Stripe checkout
