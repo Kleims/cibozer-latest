@@ -31,7 +31,6 @@ from admin import admin_bp
 from auth import auth_bp
 from payments import payments_bp, check_user_credits, deduct_credit
 from share_routes import share_bp
-from chat_routes import chat_bp
 from models import db, User, UsageLog, SavedMealPlan, PricingPlan
 from dotenv import load_dotenv
 from app_config import get_app_config, validate_config
@@ -195,7 +194,6 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(payments_bp)
 app.register_blueprint(share_bp)
-app.register_blueprint(chat_bp)
 
 # Create database tables
 with app.app_context():
