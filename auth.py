@@ -80,6 +80,7 @@ def validate_password(password):
     return errors
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
+@rate_limit
 def register():
     """User registration"""
     if request.method == 'POST':
@@ -301,6 +302,7 @@ def user_stats():
     return jsonify(stats)
 
 @auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+@rate_limit
 def forgot_password():
     """Request password reset"""
     if current_user.is_authenticated:
