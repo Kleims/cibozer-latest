@@ -12,6 +12,7 @@ from video_service import VideoService
 import meal_optimizer as mo
 import asyncio
 from models import db, User, UsageLog, Payment
+from sqlalchemy import func, case
 
 # Create admin blueprint
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -66,21 +67,26 @@ def logout():
 @admin_required
 def dashboard():
     """Admin dashboard"""
-    # Get statistics
-    total_users = User.query.count()
-    active_users = User.query.filter_by(is_active=True).count()
+    # Get statistics with optimized queries
+    user_stats = db.session.query(
+        func.count(User.id).label('total'),
+        func.sum(case((User.is_active == True, 1), else_=0)).label('active')
+    ).first()
     
     # Calculate revenue from payments
-    total_revenue = db.session.query(db.func.sum(Payment.amount)).scalar() or 0
+    total_revenue = db.session.query(func.sum(Payment.amount)).scalar() or 0
     revenue_formatted = f"${total_revenue:.2f}"
     
+    # Get usage log count
+    usage_count = db.session.query(func.count(UsageLog.id)).scalar() or 0
+    
     stats = {
-        'total_users': total_users,
-        'active_users': active_users,
+        'total_users': user_stats.total or 0,
+        'active_users': user_stats.active or 0,
         'total_plans': len(os.listdir('saved_plans')) if os.path.exists('saved_plans') else 0,
         'total_videos': len(os.listdir('videos')) if os.path.exists('videos') else 0,
         'revenue': revenue_formatted,
-        'usage_logs': UsageLog.query.count()
+        'usage_logs': usage_count
     }
     
     return render_template('admin/dashboard.html', stats=stats)
@@ -298,9 +304,14 @@ def analytics():
     total_revenue = db.session.query(func.sum(Payment.amount)).scalar() or 0
     total_revenue = total_revenue / 100  # Convert from cents
     
-    # Calculate MRR (Monthly Recurring Revenue)
-    active_pro = User.query.filter_by(subscription_tier='pro', subscription_status='active').count()
-    active_premium = User.query.filter_by(subscription_tier='premium', subscription_status='active').count()
+    # Calculate MRR (Monthly Recurring Revenue) with single query
+    mrr_stats = db.session.query(
+        func.sum(case((User.subscription_tier == 'pro', 1), else_=0)).label('pro_count'),
+        func.sum(case((User.subscription_tier == 'premium', 1), else_=0)).label('premium_count')
+    ).filter(User.subscription_status == 'active').first()
+    
+    active_pro = mrr_stats.pro_count or 0
+    active_premium = mrr_stats.premium_count or 0
     current_mrr = (active_pro * 9.99) + (active_premium * 19.99)
     
     # Calculate totals
@@ -355,14 +366,23 @@ def users():
         page=page, per_page=per_page, error_out=False
     )
     
-    # Get user stats
+    # Get user stats with a single optimized query
+    stats_query = db.session.query(
+        func.count(User.id).label('total'),
+        func.sum(case((User.is_active == True, 1), else_=0)).label('active'),
+        func.sum(case((User.email_verified == True, 1), else_=0)).label('verified'),
+        func.sum(case((User.subscription_tier == 'free', 1), else_=0)).label('free_tier'),
+        func.sum(case((User.subscription_tier == 'pro', 1), else_=0)).label('pro_tier'),
+        func.sum(case((User.subscription_tier == 'premium', 1), else_=0)).label('premium_tier')
+    ).first()
+    
     user_stats = {
-        'total': User.query.count(),
-        'active': User.query.filter_by(is_active=True).count(),
-        'verified': User.query.filter_by(email_verified=True).count(),
-        'free_tier': User.query.filter_by(subscription_tier='free').count(),
-        'pro_tier': User.query.filter_by(subscription_tier='pro').count(),
-        'premium_tier': User.query.filter_by(subscription_tier='premium').count()
+        'total': stats_query.total or 0,
+        'active': stats_query.active or 0,
+        'verified': stats_query.verified or 0,
+        'free_tier': stats_query.free_tier or 0,
+        'pro_tier': stats_query.pro_tier or 0,
+        'premium_tier': stats_query.premium_tier or 0
     }
     
     return render_template('admin/users.html', 
