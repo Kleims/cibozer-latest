@@ -39,6 +39,7 @@ from middleware import (
     TestVoiceSchema, FrontendLogsSchema, sanitize_input, validate_json_request
 )
 from simple_logger import log_info, log_error, log_request, log_form_data
+from logging_setup import setup_app_logging, get_logger, log_execution_time, audit_logger
 
 # Load environment variables
 load_dotenv()
@@ -51,9 +52,6 @@ config = get_app_config()
 
 # Initialize Flask app with centralized config
 app = Flask(__name__)
-
-# Initialize simple logging
-log_info("=== CIBOZER STARTING UP ===")
 
 # Add simple before/after request logging
 @app.before_request
@@ -83,36 +81,13 @@ def log_response_info(response):
     return response
 app.config.update(config.to_flask_config())
 
-# Configure logging
-logging.config.dictConfig(config.get_logging_config())
+# Set up centralized logging
+setup_app_logging(app)
 
 # Validate SECRET_KEY strength
 if not config.flask.DEBUG and not validate_secret_key(config.flask.SECRET_KEY):
     app.logger.warning("[SECURITY] Weak SECRET_KEY detected. Please use a stronger key.")
     app.logger.info("[SECURITY] Generate a secure key with: python -c 'import secrets; print(secrets.token_urlsafe(32))'")
-
-# Setup comprehensive logging
-if not app.debug:
-    if not os.path.exists('logs'):
-        os.mkdir('logs')
-    # Use regular FileHandler to avoid Windows permission issues with rotation
-    # Consider implementing daily rotation with new files instead
-    file_handler = logging.FileHandler(f'logs/cibozer_{datetime.now().strftime("%Y%m%d")}.log')
-    file_handler.setFormatter(logging.Formatter(
-        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-    ))
-    file_handler.setLevel(logging.INFO)
-    app.logger.addHandler(file_handler)
-    app.logger.setLevel(logging.INFO)
-    app.logger.info('Cibozer startup')
-
-# Console logging for development
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-console_handler.setFormatter(formatter)
-app.logger.addHandler(console_handler)
-app.logger.setLevel(logging.DEBUG)
 
 # Initialize extensions
 db.init_app(app)
