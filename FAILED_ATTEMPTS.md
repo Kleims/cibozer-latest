@@ -4,4 +4,5 @@
 **Blocked by**: Some tests still fail due to string/bytes mismatch in password operations
 **Priority**: HIGH
 **Occurrences**: 1
+**RESOLVED**: Iteration #2 - Fixed remaining datetime comparison issues
 ---
