@@ -62,4 +62,4 @@ static/generated/
 Thumbs.db
 
 # Vercel
-.vercel
+.vercel.iteration
