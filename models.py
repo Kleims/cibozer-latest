@@ -63,8 +63,13 @@ class User(UserMixin, db.Model):
     def is_premium(self):
         """Check if user has active premium subscription"""
         if self.subscription_tier in ['pro', 'premium']:
-            if self.subscription_end_date and self.subscription_end_date > datetime.now(timezone.utc):
-                return True
+            if self.subscription_end_date:
+                # Handle both naive and aware datetimes for SQLite compatibility
+                end_date = self.subscription_end_date
+                if end_date.tzinfo is None:
+                    end_date = end_date.replace(tzinfo=timezone.utc)
+                if end_date > datetime.now(timezone.utc):
+                    return True
         return False
     
     def has_credits(self):
@@ -116,7 +121,11 @@ class User(UserMixin, db.Model):
         """Verify a password reset token"""
         if not self.reset_token or self.reset_token != token:
             return False
-        if self.reset_token_expires < datetime.now(timezone.utc):
+        # Handle both naive and aware datetimes for SQLite compatibility
+        expires = self.reset_token_expires
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+        if expires < datetime.now(timezone.utc):
             return False
         return True
     

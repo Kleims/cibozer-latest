@@ -55,11 +55,15 @@ class TestUserModel:
             
             assert user.email == 'newuser@example.com'
             assert user.full_name == 'New User'
+            
+            # Add to session and flush to apply defaults
+            db.session.add(user)
+            db.session.flush()
+            
             assert user.subscription_tier == 'free'
             assert user.credits_balance == 3
             assert user.is_active is True
             
-            db.session.add(user)
             db.session.commit()
             
             # Verify user was saved
@@ -155,6 +159,9 @@ class TestUserModel:
             assert len(token) > 20
             assert user.reset_token == token
             assert user.reset_token_expires is not None
+            
+            # Refresh the user object to ensure we have the latest data
+            db.session.refresh(user)
             
             # Verify valid token
             assert user.verify_reset_token(token) is True
@@ -264,9 +271,11 @@ class TestSavedMealPlan:
             meal_plan = SavedMealPlan(
                 user_id=user.id,
                 name='Weekly Meal Plan',
-                diet_type='balanced',
-                target_calories=2000,
-                meals_data={'monday': {'breakfast': 'Oatmeal'}}
+                meal_plan_data={
+                    'diet_type': 'balanced',
+                    'target_calories': 2000,
+                    'meals': {'monday': {'breakfast': 'Oatmeal'}}
+                }
             )
             
             db.session.add(meal_plan)
@@ -276,5 +285,5 @@ class TestSavedMealPlan:
             saved_plan = SavedMealPlan.query.filter_by(user_id=user.id).first()
             assert saved_plan is not None
             assert saved_plan.name == 'Weekly Meal Plan'
-            assert saved_plan.diet_type == 'balanced'
-            assert saved_plan.meals_data['monday']['breakfast'] == 'Oatmeal'
+            assert saved_plan.meal_plan_data['diet_type'] == 'balanced'
+            assert saved_plan.meal_plan_data['meals']['monday']['breakfast'] == 'Oatmeal'
