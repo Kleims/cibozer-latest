@@ -62,4 +62,20 @@ static/generated/
 Thumbs.db
 
 # Vercel
-.vercel.iteration
+.vercel
+
+# APEX/Evolution temporary files
+.apex_state
+.evolution_state
+*.bak
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+*.cover
+
+# Credentials
+social_credentials.json
+*_credentials.json
