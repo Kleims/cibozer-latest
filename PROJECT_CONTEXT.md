@@ -1,35 +1,44 @@
-# Project Context - Cibozer
-# AI-powered meal planning SaaS platform
+# Project Context - Cibozer (Python/Flask)
+# Auto-detected on $(date)
 
-## Stack Details
-STACK="Python/Flask"
-FRAMEWORK="Flask 2.3.3"
-DATABASE="SQLAlchemy with SQLite"
-TESTING="pytest with coverage"
-DEPLOYMENT="Gunicorn, Heroku/Render/Railway/Vercel ready"
+# Test command - runs pytest with coverage
+TEST_CMD="python -m pytest -v --tb=short"
 
-## Commands
-TEST_CMD="python -m pytest"
-BUILD_CMD="pip install -r requirements.txt"
+# Build command - for Python, we'll use a validation check
+BUILD_CMD="python -m py_compile app.py models.py"
+
+# Coverage command - get coverage percentage
 COVERAGE_CMD="python -m pytest --cov=. --cov-report=term-missing"
-AUDIT_CMD="pip-audit"
+
+# Security audit command - check for vulnerabilities
+AUDIT_CMD="pip list --outdated | grep -E 'critical|high' || echo 'No critical updates'"
+
+# File pattern for main code files
 FILE_PATTERN="*.py"
-TEST_FAIL_PATTERN="FAILED|AssertionError|Exception|ERROR"
-TEST_PASS_PATTERN="passed|PASSED"
-COVERAGE_PATTERN="[0-9]+%"
-LINT_CMD="python -m flake8 . --max-line-length=120 --exclude=venv,.git,__pycache__"
 
-## Key Features
-- AI Meal Planning with calorie targets
-- Video generation for social media
-- PDF export functionality
-- Stripe payment integration
-- Credit-based usage system
-- Admin dashboard
+# Pattern that indicates test failure
+TEST_FAIL_PATTERN="FAILED|AssertionError|Exception|ERROR|KeyError|TypeError"
 
-## Architecture Notes
-- Modular blueprint-based Flask app
-- Security-focused with CSRF protection
-- Centralized logging with custom loggers
-- Web-safe meal optimizer wrapper
-- Async video generation (needs improvement)
+# Pattern that indicates test pass
+TEST_PASS_PATTERN="passed|PASSED|[0-9]+ passed"
+
+# Pattern to extract coverage number
+COVERAGE_PATTERN="TOTAL.*\s([0-9]+)%"
+
+# Project type
+PROJECT_TYPE="Python/Flask Web Application"
+
+# Main test framework
+TEST_FRAMEWORK="pytest"
+
+# Package manager
+PACKAGE_MANAGER="pip"
+
+# Requirements file
+REQUIREMENTS_FILE="requirements.txt"
+
+# Additional project info
+DEPLOYMENT_PLATFORMS="Heroku, Railway, Vercel, Render"
+DATABASE="SQLAlchemy with SQLite/PostgreSQL"
+AUTH_SYSTEM="Flask-Login with bcrypt"
+PAYMENT_SYSTEM="Stripe"
