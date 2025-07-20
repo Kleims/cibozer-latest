@@ -8,8 +8,10 @@ from flask_login import UserMixin
 from datetime import datetime, timedelta, timezone
 import bcrypt
 import secrets
+from logging_setup import get_logger, log_database_operation, audit_logger
 
 db = SQLAlchemy()
+logger = get_logger(__name__)
 
 class User(UserMixin, db.Model):
     """User model for authentication and subscription tracking"""
@@ -51,6 +53,7 @@ class User(UserMixin, db.Model):
     def set_password(self, password):
         """Hash and set password"""
         self.password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        logger.info(f"Password updated for user {self.email}")
     
     def check_password(self, password):
         """Check if password matches"""
@@ -70,9 +73,18 @@ class User(UserMixin, db.Model):
     def use_credits(self, amount=1):
         """Deduct credits from balance"""
         if self.credits_balance >= amount:
+            old_balance = self.credits_balance
             self.credits_balance -= amount
             db.session.commit()
+            log_database_operation('update', 'User', 
+                                 user_id=self.id, 
+                                 credits_before=old_balance,
+                                 credits_after=self.credits_balance,
+                                 credits_used=amount)
+            audit_logger.log('credits_used', user_id=self.id, amount=amount, 
+                           remaining=self.credits_balance)
             return True
+        logger.warning(f"Insufficient credits for user {self.id}: has {self.credits_balance}, needs {amount}")
         return False
     
     def can_generate_plan(self):
@@ -95,6 +107,8 @@ class User(UserMixin, db.Model):
         self.reset_token = token
         self.reset_token_expires = datetime.now(timezone.utc) + timedelta(hours=1)
         db.session.commit()
+        logger.info(f"Password reset token generated for user {self.email}")
+        audit_logger.log('password_reset_requested', user_id=self.id, email=self.email)
         return token
     
     def verify_reset_token(self, token):
