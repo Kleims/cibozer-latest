@@ -1532,6 +1532,33 @@ def favicon():
         # Return a 204 No Content instead of 404 to prevent browser errors
         return '', 204
 
+@app.route('/health')
+def health_check():
+    """Health check endpoint for monitoring"""
+    try:
+        # Check database connectivity
+        db.session.execute('SELECT 1')
+        
+        # Check if core services are initialized
+        health_status = {
+            'status': 'healthy',
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'version': '1.0.0',
+            'database': 'connected',
+            'meal_optimizer': 'initialized' if 'meal_optimizer' in globals() else 'not_initialized',
+            'video_service': 'initialized' if 'video_service' in globals() else 'not_initialized',
+            'pdf_generator': 'initialized' if 'pdf_generator' in globals() else 'not_initialized'
+        }
+        
+        return jsonify(health_status), 200
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'error': str(e)
+        }), 503
+
 if __name__ == '__main__':
     print("Starting Cibozer Web Application...")
     print("Visit: http://localhost:5001")
