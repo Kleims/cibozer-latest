@@ -69,7 +69,7 @@ fi
 CHANGED_FILES=$(git diff --name-only 2>/dev/null | head -5 | sed 's/^/- /')
 
 # Increment counter
-echo "$ITER" > .iteration
+echo "$((ITER+1))" > .iteration
 
 # Commit with comprehensive message
 git add -A

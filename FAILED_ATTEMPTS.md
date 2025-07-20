@@ -15,11 +15,20 @@ Format:
 
 ## Known Issues
 
-### bcrypt import error in tests
-**Issue**: ImportError: PyO3 modules compiled for CPython 3.8 or older
-**Blocked by**: Environment-specific bcrypt compilation issue
-**Priority**: MEDIUM
-**Workaround**: Run tests in fresh environment or use bcrypt-cffi
+## Iteration #3 - 2025-07-20 06:35:00
+**Issue**: Synchronous video generation blocking main thread
+**Tried**: Analyzed video_service.py and app.py video generation endpoints
+**Blocked by**: Would require adding Celery or similar task queue system - too large for single iteration
+**Priority**: HIGH
+**Occurrences**: 1
+---
 
+## Iteration #6 - 2025-07-20 06:45:00
+**Issue**: bcrypt import error in test environment  
+**Tried**: Running test_share_feature.py tests
+**Blocked by**: ImportError: PyO3 modules compiled for CPython 3.8 or older may only be initialized once
+**Priority**: MEDIUM
+**Occurrences**: 2
+**Workaround**: Run tests in fresh environment or use bcrypt-cffi
 ---
 
