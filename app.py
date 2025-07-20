@@ -1523,6 +1523,16 @@ def handle_exception(e):
 # CSRF exemptions - must be done after route definitions
 csrf.exempt(receive_debug_logs)
 
+@app.route('/favicon.ico')
+def favicon():
+    """Serve favicon to prevent 404 errors"""
+    try:
+        return send_file('static/favicon.ico', mimetype='image/vnd.microsoft.icon')
+    except FileNotFoundError:
+        # Return a 204 No Content instead of 404 to prevent browser errors
+        return '', 204
+
+
 if __name__ == '__main__':
     print("Starting Cibozer Web Application...")
     print("Visit: http://localhost:5001")

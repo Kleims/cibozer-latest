@@ -78,8 +78,8 @@
     <div class="test-section">
         <h2>Test 5: Auth Links</h2>
         <p>Test the actual auth links that are causing problems:</p>
-        <a href="/auth/login" class="btn">Sign In</a>
-        <a href="/auth/register" class="btn">Get Started</a>
+        <a href="{{ url_for('auth.login') }}" class="btn">Sign In</a>
+        <a href="{{ url_for('auth.register') }}" class="btn">Get Started</a>
     </div>
     
     <div class="test-section">
