@@ -327,3 +327,5 @@ class SharedMealPlan(db.Model):
             'is_public': self.is_public,
             'allow_copying': self.allow_copying
         }
+
+
