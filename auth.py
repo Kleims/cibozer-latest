@@ -321,7 +321,7 @@ def forgot_password():
             # For now, just show the link
             reset_url = url_for('auth.reset_password', token=token, _external=True)
             flash(f'Password reset link: {reset_url}', 'info')
-            app.logger.info(f"Password reset requested for {email}. Token: {token}")
+            app.logger.info(f"Password reset requested for {email}")
         else:
             # Don't reveal if email exists
             flash('If an account exists with this email, you will receive a password reset link.', 'info')

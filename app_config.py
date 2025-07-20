@@ -35,7 +35,7 @@ def _get_required_secret_key():
     
     # Only generate a key for development
     generated_key = secrets.token_urlsafe(32)
-    print(f"⚠️  WARNING: Using generated SECRET_KEY for development: {generated_key[:8]}...")
+    print("⚠️  WARNING: Using generated SECRET_KEY for development only - NOT for production!")
     return generated_key
 
 @dataclass
