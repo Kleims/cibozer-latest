@@ -133,8 +133,8 @@ class TestDatabaseValidation:
         
         optimizer = MealPlanOptimizer()
         captured = capsys.readouterr()
-        # The validator prints errors for invalid macros, not warnings
-        assert "Macros don't sum to 100" in captured.out or "[ERROR]" in captured.out
+        # Check for missing field validation
+        assert "Missing fat for test_ingredient" in captured.out or "[WARNING]" in captured.out
     
     @patch('meal_optimizer.nd.INGREDIENTS')
     def test_validate_database_integrity_negative_values(self, mock_ingredients, capsys):
@@ -150,13 +150,13 @@ class TestDatabaseValidation:
         
         optimizer = MealPlanOptimizer()
         captured = capsys.readouterr()
-        # The validator prints errors for invalid macros, not warnings
-        assert "Macros don't sum to 100" in captured.out or "[ERROR]" in captured.out
+        # Check for negative value validation
+        assert "Negative calories for bad_ingredient" in captured.out or "[WARNING]" in captured.out
     
-    @patch('meal_optimizer.nd.DIET_PROFILES')
-    def test_validate_diet_profiles_macros_sum(self, mock_profiles, capsys):
+    def test_validate_diet_profiles_macros_sum(self, capsys):
         """Test validation of diet profile macros"""
-        mock_profiles.update({
+        # Patch before creating optimizer
+        with patch('meal_optimizer.nd.DIET_PROFILES', {
             'bad_diet': {
                 'macros': {
                     'protein': 30,
@@ -164,12 +164,11 @@ class TestDatabaseValidation:
                     'carbs': 30  # Sum is 90, not 100
                 }
             }
-        })
-        
-        optimizer = MealPlanOptimizer()
-        captured = capsys.readouterr()
-        # The validator prints errors for invalid macros, not warnings
-        assert "Macros don't sum to 100" in captured.out or "[ERROR]" in captured.out
+        }):
+            optimizer = MealPlanOptimizer()
+            captured = capsys.readouterr()
+            # Check for macro sum validation
+            assert "Macros don't sum to 100 for diet bad_diet" in captured.out or "[WARNING]" in captured.out
 
 
 class TestMealPlanGeneration:
