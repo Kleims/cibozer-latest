@@ -93,6 +93,21 @@ class User(UserMixin, db.Model):
         logger.warning(f"Insufficient credits for user {self.id}: has {self.credits_balance}, needs {amount}")
         return False
     
+    def add_credits(self, amount=10):
+        """Add credits to user balance"""
+        old_balance = self.credits_balance
+        self.credits_balance += amount
+        db.session.commit()
+        log_database_operation('update', 'User', 
+                             user_id=self.id, 
+                             credits_before=old_balance,
+                             credits_after=self.credits_balance,
+                             credits_added=amount)
+        audit_logger.log('credits_added', user_id=self.id, amount=amount, 
+                       new_balance=self.credits_balance)
+        logger.info(f"Added {amount} credits to user {self.id}. New balance: {self.credits_balance}")
+        return True
+    
     def can_generate_plan(self):
         """Check if user can generate a meal plan"""
         if self.is_premium():
