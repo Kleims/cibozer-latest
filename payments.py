@@ -336,8 +336,8 @@ def check_user_credits(user):
     """Check if user has available credits"""
     # Check if user has active premium subscription (unlimited credits)
     if user.subscription_tier in ['pro', 'premium'] and user.subscription_status == 'active':
-        # Verify subscription hasn't expired
-        if user.subscription_end_date and user.subscription_end_date > datetime.now(timezone.utc):
+        # Verify subscription hasn't expired (None means unlimited/no expiry)
+        if user.subscription_end_date is None or user.subscription_end_date > datetime.now(timezone.utc):
             return True  # Unlimited credits for active subscribers
         else:
             # Subscription expired, downgrade user
