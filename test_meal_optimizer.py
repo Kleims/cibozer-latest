@@ -183,7 +183,7 @@ class TestMealPlanGeneration:
         """Test single day plan generation"""
         preferences = {
             'calories': 2000,
-            'diet': 'balanced',
+            'diet': 'standard',
             'pattern': 'standard',
             'cuisine': ['all'],
             'restrictions': [],
@@ -283,7 +283,7 @@ class TestMealPlanGeneration:
         
         preferences = {
             'calories': 2000,
-            'diet': 'balanced'
+            'diet': 'standard'
         }
         
         result = optimizer.validate_meal_plan(valid_plan, preferences)
@@ -413,7 +413,7 @@ class TestUtilityFunctions:
         """Test optimization tracking and metrics"""
         preferences = {
             'calories': 2000,
-            'diet': 'balanced',
+            'diet': 'standard',
             'pattern': 'standard',
             'cuisine': ['all'],
             'restrictions': [],
