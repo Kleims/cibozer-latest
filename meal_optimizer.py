@@ -1872,11 +1872,17 @@ optimizer.set_constraints(preferences)""",
         
         for day_name, day_data in plan.items():
             day_issues = []
-            totals = day_data['totals']
+            # Handle both 'totals' and direct 'daily_totals' format
+            if 'totals' in day_data:
+                totals = day_data['totals']
+            else:
+                # Direct format like {'daily_totals': {...}}
+                totals = day_data
             
-            # Track cuisines
-            for meal_data in day_data['meals'].values():
-                cuisines_used.add(meal_data.get('cuisine', 'standard'))
+            # Track cuisines (only if meals exist in structure)
+            if 'meals' in day_data:
+                for meal_data in day_data['meals'].values():
+                    cuisines_used.add(meal_data.get('cuisine', 'standard'))
             
             # Calculate score
             score = self.calculate_nutrition_score(totals, target_calories, target_macros)
@@ -2355,7 +2361,7 @@ optimizer.set_constraints(preferences)""",
         """Generate consolidated shopping list with validation"""
         shopping_list = {}
         
-        # Handle single day or weekly plans
+        # Handle different meal plan formats
         if 'meals' in meal_plan:
             # Single day plan
             for meal_name, meal_data in meal_plan['meals'].items():
@@ -2376,6 +2382,31 @@ optimizer.set_constraints(preferences)""",
                     
                     shopping_list[ingredient]['total_grams'] += weight_g
                     shopping_list[ingredient]['original_units'].append(f"{amount} {unit}")
+        elif any(key.startswith('Day') for key in meal_plan.keys()):
+            # Handle Day format like {'Day 1': {'breakfast': {...}, 'lunch': {...}}}
+            for day_name, day_data in meal_plan.items():
+                if not day_name.startswith('Day'):
+                    continue
+                for meal_name, meal_data in day_data.items():
+                    if 'ingredients' not in meal_data:
+                        continue
+                    for ingredient_info in meal_data['ingredients']:
+                        ingredient = ingredient_info['item']
+                        amount = ingredient_info['amount']
+                        unit = ingredient_info['unit']
+                        
+                        # Convert to standard units for aggregation
+                        weight_g = self.convert_unit_to_grams(unit, amount, ingredient)
+                        
+                        if ingredient not in shopping_list:
+                            shopping_list[ingredient] = {
+                                'total_grams': 0,
+                                'category': self.ingredients.get(ingredient, {}).get('category', 'other'),
+                                'original_units': []
+                            }
+                        
+                        shopping_list[ingredient]['total_grams'] += weight_g
+                        shopping_list[ingredient]['original_units'].append(f"{amount} {unit}")
         else:
             # Weekly plan format (if exists)
             for week_key in ['week1', 'week2']:
@@ -2420,28 +2451,63 @@ optimizer.set_constraints(preferences)""",
             else:
                 display_amount = f"{total_g:.0f} g"
             
-            organized_list[category][ingredient] = display_amount
+            organized_list[category][ingredient] = {
+                'total_amount': total_g,
+                'unit': 'g'
+            }
         
-        return organized_list
+        return {
+            'grouped': organized_list,
+            'total_items': len(shopping_list)
+        }
     
     def validate_shopping_amounts(self, shopping_list: Dict) -> Dict:
         """Validate and cap shopping amounts to reasonable levels"""
-        validated_list = shopping_list.copy()
-        
-        for ingredient, data in validated_list.items():
-            # Check against maximum amounts
-            if ingredient in self.max_shopping_amounts:
-                max_amount = self.max_shopping_amounts[ingredient]
-                if data['total_grams'] > max_amount:
-                    print(f"Warning: Capping {ingredient} from {data['total_grams']:.0f}g to {max_amount}g")
-                    data['total_grams'] = max_amount
+        # Handle both old format and new grouped format
+        if 'grouped' in shopping_list:
+            # New format - extract and validate each category
+            validated_grouped = shopping_list.copy()
+            for category, items in validated_grouped['grouped'].items():
+                for ingredient, data in items.items():
+                    # Handle both total_grams and total_amount
+                    total_grams = data.get('total_grams', data.get('total_amount', 0))
+                    
+                    # Check against maximum amounts
+                    if ingredient in self.max_shopping_amounts:
+                        max_amount = self.max_shopping_amounts[ingredient]
+                        if total_grams > max_amount:
+                            print(f"Warning: Capping {ingredient} from {total_grams:.0f}g to {max_amount}g")
+                            total_grams = max_amount
+                    
+                    # General sanity check - nothing should be more than 5kg
+                    if total_grams > 5000:
+                        print(f"Warning: Capping {ingredient} from {total_grams:.0f}g to 5000g")
+                        total_grams = 5000
+                    
+                    # Update the data
+                    if 'total_grams' in data:
+                        data['total_grams'] = total_grams
+                    else:
+                        data['total_amount'] = total_grams
+            return validated_grouped
+        else:
+            # Old format
+            validated_list = shopping_list.copy()
             
-            # General sanity check - nothing should be more than 5kg
-            if data['total_grams'] > 5000:
-                print(f"Warning: Capping {ingredient} from {data['total_grams']:.0f}g to 5000g")
-                data['total_grams'] = 5000
-        
-        return validated_list
+            for ingredient, data in validated_list.items():
+                # Check against maximum amounts
+                if ingredient in self.max_shopping_amounts:
+                    max_amount = self.max_shopping_amounts[ingredient]
+                    if data['total_grams'] > max_amount:
+                        print(f"Warning: Capping {ingredient} from {data['total_grams']:.0f}g to {max_amount}g")
+                        data['total_grams'] = max_amount
+                
+                # General sanity check - nothing should be more than 5kg
+                if data['total_grams'] > 5000:
+                    print(f"Warning: Capping {ingredient} from {data['total_grams']:.0f}g to 5000g")
+                    data['total_grams'] = 5000
+            
+            return validated_list
     
     def save_meal_plan(self, meal_plan: Dict, filename: str = 'meal_plan_enhanced.json'):
         """Save meal plan to JSON file"""
