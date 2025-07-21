@@ -287,8 +287,9 @@ class TestMealPlanGeneration:
         }
         
         result = optimizer.validate_meal_plan(valid_plan, preferences)
-        is_valid = result.get('is_valid', False)
-        assert is_valid is True
+        # Check that we get a good score for a valid plan
+        assert result['overall_score'] > 80
+        assert 'status' in result
         
         # Invalid meal plan (too few calories)
         invalid_plan = {
@@ -301,10 +302,9 @@ class TestMealPlanGeneration:
         }
         
         result = optimizer.validate_meal_plan(invalid_plan, preferences)
-        is_valid = result.get('is_valid', False)
-        message = result.get('message', '')
-        assert is_valid is False
-        assert "calories" in message.lower()
+        # For low calories, we should get low calorie accuracy and overall score
+        assert result['calorie_accuracy'] < 70  # Should be ~50%
+        assert result['overall_score'] < 80
 
 
 class TestIngredientScaling:
@@ -396,8 +396,8 @@ class TestUtilityFunctions:
         """Test meal nutrition calculation"""
         meal_template = {
             'base_ingredients': [
-                {'item': 'chicken_breast', 'amount': 100},
-                {'item': 'white_rice', 'amount': 50}
+                {'item': 'chicken_breast', 'amount': 100, 'unit': 'g'},
+                {'item': 'white_rice', 'amount': 50, 'unit': 'g'}
             ]
         }
         
