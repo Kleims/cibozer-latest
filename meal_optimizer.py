@@ -2177,13 +2177,16 @@ optimizer.set_constraints(preferences)""",
         }
         
         for meal in meals.values():
-            totals['calories'] += meal.get('calories', 0)
-            totals['protein'] += meal.get('protein', 0)
-            totals['fat'] += meal.get('fat', 0)
-            totals['carbs'] += meal.get('carbs', 0)
+            # Handle nested 'totals' structure or direct values
+            meal_data = meal.get('totals', meal) if 'totals' in meal else meal
+            
+            totals['calories'] += meal_data.get('calories', 0)
+            totals['protein'] += meal_data.get('protein', 0)
+            totals['fat'] += meal_data.get('fat', 0)
+            totals['carbs'] += meal_data.get('carbs', 0)
             
             # Handle fiber properly - only add if it exists and is not None
-            fiber_val = meal.get('fiber')
+            fiber_val = meal_data.get('fiber')
             if fiber_val is not None and isinstance(fiber_val, (int, float)):
                 totals['fiber'] += fiber_val
         
