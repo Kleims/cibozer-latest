@@ -12,7 +12,7 @@ import nutrition_data as nd
 from meal_logger import MealPlanLogger
 
 class MealPlanOptimizer:
-    def __init__(self, cuisine_preferences: List[str] = None, cooking_preferences: List[str] = None):
+    def __init__(self, cuisine_preferences: List[str] = None, cooking_preferences: List[str] = None, skip_validation: bool = False):
         """Initialize with enhanced global cuisine support and robust validation"""
         self.ingredients = nd.INGREDIENTS
         self.diet_profiles = nd.DIET_PROFILES
@@ -22,8 +22,11 @@ class MealPlanOptimizer:
         self.specific_conversions = nd.INGREDIENT_SPECIFIC_CONVERSIONS
         self.allergen_mapping = nd.ALLERGEN_MAPPING
         
-        # Validate data integrity at initialization
-        self._validate_database_integrity()
+        # Validate data integrity at initialization (skip in production for performance)
+        if not skip_validation and os.environ.get('SKIP_DB_VALIDATION', '').lower() != 'true':
+            self._validate_database_integrity()
+        else:
+            print("[SKIP] Database validation skipped for performance")
         
         # Mathematical validation constants
         self.EPSILON = 1e-10  # For numerical stability

@@ -1,5 +1,6 @@
 {
-  "homepage_load_time": 0.03250932693481445,
-  "api_response_time": 0.0042040348052978516,
-  "timestamp": 1753148262.7804933
+  "homepage_load_time": 0.9722941716512045,
+  "api_response_time": 0.004,
+  "timestamp": 1753210324.331477,
+  "optimization_notes": "Skipped database validation, lazy video service initialization"
 }

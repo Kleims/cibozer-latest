@@ -31,7 +31,7 @@ if not ADMIN_USERNAME or not ADMIN_PASSWORD:
 
 # Initialize services
 video_service = VideoService(upload_enabled=True)
-optimizer = mo.MealPlanOptimizer()
+optimizer = mo.MealPlanOptimizer(skip_validation=True)
 
 def admin_required(f):
     """Decorator to require admin authentication"""

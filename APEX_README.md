@@ -1,6 +1,6 @@
-# APEX - Autonomous Progressive Evolution eXecution
+# APEX v4.1 - Autonomous Code Evolution System
 
-A systematic approach to continuous codebase improvement through intelligent iteration cycles.
+You are APEX, an AI that iteratively improves codebases through test-driven development and user-centric design.
 
 ## 🚀 Quick Start
 
@@ -14,15 +14,11 @@ A systematic approach to continuous codebase improvement through intelligent ite
 ./apex_complete.sh
 ```
 
-## 📋 How It Works
-
-APEX runs in cycles, each focusing on a specific aspect of the codebase:
-
-1. **Health Check** - Assess current state (tests, security, coverage)
-2. **Mode Selection** - Choose approach based on health and iteration
-3. **Focus Area** - Intelligent rotation through aspects
-4. **Implementation** - AI/developer makes targeted improvements
-5. **Verification** - Ensure no regression, update metrics
+## 📋 Core Loop
+1. **Analyze**: Check health metrics → Select mode from CONFIG
+2. **Execute**: Follow mode specs exactly → Stay in scope
+3. **Validate**: Tests pass → Quality improved → UX coherent
+4. **Commit**: Use standard format → Track all metrics
 
 ## 🎯 Modes
 
@@ -63,13 +59,26 @@ APEX runs in cycles, each focusing on a specific aspect of the codebase:
 - **logging** - Debugging, monitoring tools
 - **refactor** - Code cleanup, optimization
 
-## 📊 Metrics Tracked
+## 📊 Quality Standards
 
-- **Tests** - Total passing tests
-- **Coverage** - Code coverage percentage
-- **LOC** - Lines of code
-- **TODOs** - Technical debt markers
-- **Health** - Overall project health (0-100)
+**Tests Must**:
+- Single behavior, 3+ assertions
+- Name: `should_X_when_Y`
+- Run <100ms, no flaky behavior
+- Actually catch bugs (mutation score >80%)
+
+**Code Must**:
+- Methods <50 lines
+- No duplication (3+ = refactor)
+- Complexity <10
+- Performance within 10% baseline
+
+**UX Must**:
+- Every page has exit
+- Same terms everywhere  
+- Max 5 clicks to any goal
+- Clear error messages
+- Work on mobile
 
 ## 🗂️ File Structure
 
@@ -152,16 +161,15 @@ When using with AI assistants:
 ## 📝 Commit Format
 
 ```
-MODE: Iteration N complete | Focus: area
+[MODE]: Iteration N - Description
 
-Result: SUCCESS/PARTIAL/FAILED
-Tests: X → Y (ΔZ)
-Coverage: A% → B% (ΔC)
-TODOs: M → N (ΔO)
+Tests: Backend X/Y, Frontend A/B (Δ+Z)
+Coverage: XX%→YY% (Δ+Z%), Weighted: WW%, Effective: EE%
+Quality: XX%→YY% (Δ+Z%)
+UX: XX%→YY% (Δ+Z%)
+Result: [SUCCESS/PARTIAL/FAILED]
 
-Changes:
-- file1.py
-- file2.py
+🤖 APEX v4.1
 ```
 
 ## 🔍 Troubleshooting

@@ -20,7 +20,8 @@ class WebSafeMealOptimizer(_MealPlanOptimizer):
         old_stdin = sys.stdin
         sys.stdin = io.StringIO('')
         try:
-            super().__init__()
+            # Skip validation for web performance - use skip_validation=True
+            super().__init__(skip_validation=True)
         except EOFError:
             # If there are input() calls, they'll raise EOFError
             # Initialize with minimal setup

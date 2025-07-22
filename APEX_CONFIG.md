@@ -1,194 +1,127 @@
-# APEX_CONFIG.md - v3.0
+# APEX_CONFIG v4.1
 
-## Health Calculation Formula
-```
-Test Health = (Backend_Pass_Rate × 0.6) + (Frontend_Pass_Rate × 0.4)
-Security Health = 100 - (Critical × 20) - (High × 10) - (Medium × 2)
-Performance Health = 100 × (Baseline_Time / Current_Time)
-Overall Health = (Test × 0.5) + (Security × 0.3) + (Performance × 0.2)
-```
-
-## Mode Selection Rules
+## Health Metrics
 ```python
-if critical_vulnerabilities > 0:
-    return "SECURITY"
-elif health < 40 or critical_failures > 3:
-    return "EMERGENCY"
-elif iteration % 30 == 0:
-    return "SECURITY"
-elif iteration % 20 == 0:
-    return "DOCUMENTATION"
-elif iteration % 15 == 0 and performance_degraded:
-    return "PERFORMANCE"
-elif iteration % 10 == 0 and has_structural_issues:
-    return "ARCHITECTURE"
-elif health < 70:
-    return "RECOVERY"
-elif tech_debt > 80:
-    return "DEBT_PAYMENT"
-elif health > 85 and iteration % 5 == 0:
-    return "FEATURE"
-else:
-    return "STANDARD"
+# Component Health
+Test_Health = (Backend_Pass% × 0.6) + (Frontend_Pass% × 0.4)
+Test_Quality = (Assertions/LOC × 0.3) + (Mutations_Killed% × 0.3) + 
+               (100-Flaky% × 0.2) + (Speed_Score × 0.2)
+Security = 100 - (Critical × 20) - (High × 10) - (Medium × 2)
+Performance = 100 × (Baseline_Time / Current_Time)
+Logging = (Critical_Logged / Total_Critical) × 100
+UX = (Nav_Clarity × 0.3) + (Content_Consistency × 0.3) + 
+     (Journey_Success% × 0.2) + (Context_Preserved% × 0.2)
+
+# Overall
+Health = (Test × 0.25) + (Quality × 0.15) + (Security × 0.2) + 
+         (Performance × 0.15) + (Logging × 0.1) + (UX × 0.15)
 ```
 
-## Mode Specifications
+## Mode Selection
+```python
+if critical_vulns > 0: return "SECURITY"
+elif health < 40 or critical_fails > 3: return "EMERGENCY"
+elif test_quality < 50: return "TEST_QUALITY"
+elif ux < 60: return "UX_COHERENCE"
+elif logging < 60: return "LOGGING"
+elif iteration % 30 == 0: return "SECURITY"
+elif iteration % 25 == 0: return "LOGGING"
+elif iteration % 20 == 0: return "DOCUMENTATION"
+elif iteration % 18 == 0: return "UX_COHERENCE"
+elif iteration % 15 == 0 and perf_degraded: return "PERFORMANCE"
+elif iteration % 12 == 0 and quality < 70: return "TEST_QUALITY"
+elif iteration % 10 == 0 and structural_issues: return "ARCHITECTURE"
+elif health < 70: return "RECOVERY"
+elif debt > 80: return "DEBT_PAYMENT"
+elif health > 85 and iteration % 5 == 0: return "FEATURE"
+else: return "STANDARD"
+```
+
+## Modes
 
 ### EMERGENCY
-**Goal**: Stop critical failures immediately
-- Fix ONLY the most critical issue
-- Add regression test
-- Document root cause
-- Max time: 2 hours
+Fix critical issue only → Add regression test → Document → 2hr max
 
-### RECOVERY  
-**Goal**: Restore system to healthy state
-- Fix top 2-3 test failures (80%)
-- Improve critical path coverage (20%)
-- No new features
+### RECOVERY
+Fix top 3 test failures (80%) → Improve coverage (20%)
 
 ### STANDARD
-**Goal**: Balanced progress
-- Fix 1-2 tests OR improve coverage (60%)
-- Small improvements (30%)
-  - IF you see obvious issues: simple refactors
-  - IF not needed: add small feature/fix
-- Address TODOs (10%)
+- Tests/Coverage (35%)
+- Review test quality (20%)
+- Small improvements (20%)
+- UX quick fixes (15%)
+- Logging (5%)
+- TODOs (5%)
 
 ### FEATURE
-**Goal**: Add new capability
-- Implement feature with tests (70%)
-- Fix blockers only (20%)
-- Update docs (10%)
-- Requirement: >90% coverage on new code
-- Note: Refactor ONLY if blocking feature
+- Implementation + tests (50%)
+- UX integration (20%)
+- Blockers only (10%)
+- Feature logging (10%)
+- Docs (10%)
+Requirements: 90% coverage, quality >75%, UX validated
+
+### TEST_QUALITY
+- Mutation testing (30%)
+- Fix flaky tests (25%)
+- Add assertions (20%)
+- Parameterize tests (15%)
+- Property tests (10%)
+
+### UX_COHERENCE
+- Navigation audit (30%)
+- Content consistency (25%)
+- Journey testing (25%)
+- Context preservation (20%)
 
 ### ARCHITECTURE
-**Goal**: Improve structure (when needed)
-- Triggers:
-  - Code duplication > 3 instances
-  - Circular dependencies detected
-  - Performance bottlenecks from poor structure
-  - Major feature blocked by current design
-- Actions:
-  - Large-scale refactoring
-  - Extract services/modules
-  - Implement design patterns
-  - Update dependency graph
+Triggers: Duplication >3, circular deps, blockers
+Actions: Refactor, extract, patterns, standardize
 
 ### SECURITY
-**Goal**: Zero vulnerabilities
-- Run full audit
-- Update all vulnerable deps
-- Review auth code
-- Add security tests
-- Update SECURITY.log
+Audit → Update deps → Auth review → Security tests → Logging
 
 ### PERFORMANCE
-**Goal**: Meet/exceed baselines
-- Profile bottlenecks
-- Optimize slowest parts
-- Reduce bundle 10%
-- Add benchmarks
+Profile → Optimize → Reduce bundle → Benchmarks → User metrics
 
 ### DOCUMENTATION
-**Goal**: Knowledge capture
-- Update API docs
-- Architecture diagrams
-- Setup guide
-- Recent decisions (ADRs)
+API docs → Diagrams → Test docs → UX patterns → ADRs
 
 ### DEBT_PAYMENT
-**Goal**: Address accumulated issues
-- Triggers:
-  - Complexity score > threshold
-  - TODO count > 20
-  - Dead code detected
-  - Team velocity declining
-- Actions (pick based on need):
-  - Refactor high-complexity functions
-  - Remove unused code
-  - Consolidate duplicates
-  - Address oldest TODOs
+Triggered by: Complexity, TODOs >20, dead code, velocity drop
+Fix based on priority
 
-### INTEGRATION
-**Goal**: External reliability
-- Add retry logic
-- Circuit breakers
-- Fallback mechanisms
-- Integration tests
+### LOGGING
+Security → Performance → Business → System → Compliance
 
-### COMPLIANCE
-**Goal**: Meet requirements
-- Privacy audit
-- Accessibility check
-- License review
-- Audit trails
+## Standards
 
-### RESILIENCE
-**Goal**: System robustness
-- Health endpoints
-- Error boundaries
-- Graceful degradation
-- Chaos tests
+**Tests**: 3+ assertions, <100ms, no flaky, 80%+ mutation score
+**Code**: <50 lines/method, <10 complexity, no duplication
+**UX**: <5 clicks to goal, consistent terms, mobile-first
 
-## Success Criteria
-
-### SUCCESS (all required)
-- ✓ Critical tests pass
-- ✓ No regression >2%
-- ✓ No new vulnerabilities
-- ✓ Performance within 10%
-- ✓ Mode goals met
-
-### PARTIAL
-- Core goals met
-- Minor regressions (<5%)
-- Document issues
-
-### FAILED  
-- Critical tests fail
-- Coverage drop >5%
-- New vulnerabilities
-- Performance >20% worse
-
-## Weighted Coverage Formula
+## Debt Tracking
 ```
-Weighted = (Backend_Coverage × 0.6) + (Frontend_Coverage × 0.4)
+Test_Debt = (No_Assertions × 5) + (Flaky × 10) + (Slow × 2) + 
+            (Duplicate × 3) + (Commented × 20)
+UX_Debt = (Dead_Ends × 10) + (Inconsistent × 3) + (Broken_Flows × 15) + 
+          (No_Errors × 5) + (Unclear_CTAs × 2)
 ```
 
-## Refactoring Guidelines by Mode
-
-### Refactoring Philosophy:
-- **Opportunistic**: Refactor when you see issues, not on schedule
-- **Boy Scout Rule**: Leave code better than you found it
-- **Pragmatic**: Only refactor if it provides clear value
-
-### When to Refactor:
-- **During STANDARD**: If touching code that needs cleanup
-- **During DEBT_PAYMENT**: When metrics show it's needed
-- **During ARCHITECTURE**: When structure blocks progress
-- **During FEATURE**: Minimal - only if blocking
-- **NEVER during**: Emergency, Security, Recovery modes
-
-### Red Flags that Trigger Refactoring:
-- Method > 50 lines
-- Duplicated code (3+ copies)
-- Complexity score > 10
-- "TODO: refactor this" comments
-- Performance bottlenecks from structure
-
-## Commit Message Format
+## Commit Format
 ```
-[MODE]: Iteration N - Brief description
+[MODE]: Iteration N - Description
 
 Tests: Backend X/Y, Frontend A/B (Δ+Z)
-Coverage: XX% → YY% (Δ+Z%), Weighted: WW%
-[Additional metrics if relevant]
+Coverage: XX%→YY% (Δ+Z%), Weighted: WW%, Effective: EE%
+Quality: XX%→YY% (Δ+Z%)
+UX: XX%→YY% (Δ+Z%)
 Result: [SUCCESS/PARTIAL/FAILED]
+
+🤖 APEX v4.1
 ```
 
-## Emergency Response
-- EMERGENCY/SECURITY modes: Next iteration ASAP
-- RECOVERY mode: Within 24 hours  
-- Others: Regular schedule
+## Success Criteria
+SUCCESS: All critical pass + Quality >70% + UX >75% + No regression + Goals met
+PARTIAL: Core goals met, minor issues documented
+FAILED: Critical fail OR quality <50% OR major regression

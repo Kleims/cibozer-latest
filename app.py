@@ -179,33 +179,50 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(payments_bp)
 app.register_blueprint(share_bp)
 
-# Create database tables
-with app.app_context():
-    db.create_all()
-    # Seed default pricing plans
-    PricingPlan.seed_default_plans()
-    
-    # Create admin user if doesn't exist
-    # Only create admin user if credentials are provided in environment
-    admin_email = os.environ.get('ADMIN_EMAIL', 'admin@cibozer.com')
-    admin_password = os.environ.get('ADMIN_PASSWORD')
-    
-    if admin_password:
-        admin_user = User.query.filter_by(email=admin_email).first()
-        if not admin_user:
-            admin_user = User(
-                email=admin_email,
-                full_name='Administrator',
-                subscription_tier='premium',
-                credits_balance=999999,  # Unlimited credits
-                is_active=True
-            )
-            admin_user.set_password(admin_password)
-            db.session.add(admin_user)
-            db.session.commit()
-            app.logger.info(f"Admin user created: {admin_email}")
-    else:
-        app.logger.warning("ADMIN_PASSWORD not set - admin user creation skipped. Run create_admin.py to create admin.")
+# Lazy database initialization for better startup performance
+def init_database():
+    """Initialize database tables and default data - called on first request"""
+    with app.app_context():
+        db.create_all()
+        # Seed default pricing plans
+        PricingPlan.seed_default_plans()
+        
+        # Create admin user if doesn't exist
+        # Only create admin user if credentials are provided in environment
+        admin_email = os.environ.get('ADMIN_EMAIL', 'admin@cibozer.com')
+        admin_password = os.environ.get('ADMIN_PASSWORD')
+        
+        if admin_password:
+            admin_user = User.query.filter_by(email=admin_email).first()
+            if not admin_user:
+                admin_user = User(
+                    email=admin_email,
+                    full_name='Administrator',
+                    subscription_tier='premium',
+                    credits_balance=999999,  # Unlimited credits
+                    is_active=True
+                )
+                admin_user.set_password(admin_password)
+                db.session.add(admin_user)
+                db.session.commit()
+                app.logger.info(f"Admin user created: {admin_email}")
+        else:
+            app.logger.warning("ADMIN_PASSWORD not set - admin user creation skipped. Run create_admin.py to create admin.")
+
+# Flag to track if database has been initialized
+_db_initialized = False
+
+def ensure_database_initialized():
+    """Ensure database is initialized on first request"""
+    global _db_initialized
+    if not _db_initialized:
+        init_database()
+        _db_initialized = True
+
+# Add to before_request to initialize database on first request
+@app.before_request
+def init_db_on_first_request():
+    ensure_database_initialized()
 
 # Configuration
 # Additional Flask config from centralized configuration
@@ -254,25 +271,32 @@ except Exception as e:
     app.logger.error(f"[ERROR] Failed to initialize meal optimizer: {str(e)}")
     raise RuntimeError(f"Critical: Meal optimizer initialization failed: {str(e)}")
 
-# Initialize video service (optional - don't crash if fails)
-try:
-    # Check if social media credentials exist
-    import os
-    credentials_exist = os.path.exists('social_credentials.json')
-    from video_service import VideoService
-    video_service = VideoService(upload_enabled=credentials_exist)
-    
-    if credentials_exist:
-        app.logger.info("[OK] Video service initialized with upload capabilities")
-    else:
-        app.logger.info("[OK] Video service initialized (uploads disabled - no credentials)")
-        app.logger.info("[INFO] To enable uploads: copy social_credentials_template.json to social_credentials.json and configure")
-except ImportError as e:
-    app.logger.warning(f"[WARN] Video service module not found: {str(e)}")
-    video_service = None
-except Exception as e:
-    app.logger.warning(f"[WARN] Video service initialization failed: {str(e)}")
-    video_service = None
+# Lazy video service initialization (heavy import - defer until needed)
+video_service = None
+
+def get_video_service():
+    """Lazy initialize video service when first needed"""
+    global video_service
+    if video_service is None:
+        try:
+            # Check if social media credentials exist
+            import os
+            credentials_exist = os.path.exists('social_credentials.json')
+            from video_service import VideoService
+            video_service = VideoService(upload_enabled=credentials_exist)
+            
+            if credentials_exist:
+                app.logger.info("[OK] Video service initialized with upload capabilities")
+            else:
+                app.logger.info("[OK] Video service initialized (uploads disabled - no credentials)")
+                app.logger.info("[INFO] To enable uploads: copy social_credentials_template.json to social_credentials.json and configure")
+        except ImportError as e:
+            app.logger.warning(f"[WARN] Video service module not found: {str(e)}")
+            video_service = None
+        except Exception as e:
+            app.logger.warning(f"[WARN] Video service initialization failed: {str(e)}")
+            video_service = None
+    return video_service
 
 # Initialize PDF generator
 try:
@@ -837,7 +861,8 @@ def generate_video(validated_data=None):
         voice = validated_data.get('voice', 'christopher')
         auto_upload = validated_data.get('auto_upload', False)
         
-        if not video_service:
+        vs = get_video_service()
+        if not vs:
             return jsonify({'error': 'Video service not available'}), 503
         
         # Run async video generation
@@ -846,7 +871,7 @@ def generate_video(validated_data=None):
         
         try:
             results = loop.run_until_complete(
-                video_service.generate_and_upload_videos(
+                vs.generate_and_upload_videos(
                     meal_plan, platforms, voice, auto_upload
                 )
             )
@@ -867,7 +892,7 @@ def generate_video(validated_data=None):
             }
             
             # Add upload capability info
-            if not video_service.upload_enabled:
+            if not vs or not vs.upload_enabled:
                 response_data['upload_info'] = {
                     'status': 'disabled',
                     'reason': 'Social media credentials not configured',
@@ -978,26 +1003,26 @@ def emergency_test():
 @app.route('/api/video/platforms')
 def get_video_platforms():
     """Get available video platforms"""
-    if not video_service:
-        return jsonify({'error': 'Video service not available'}), 503
-    return jsonify(video_service.get_platform_info())
+    vs = get_video_service()
+    if not vs:
+        return jsonify({'error': 'Video service not available'}), 500
+    return jsonify(vs.get_platform_info())
 
 @app.route('/api/video/stats')
 def get_video_stats():
     """Get video generation statistics"""
-    if not video_service:
-        return jsonify({'error': 'Video service not available'}), 503
-    return jsonify(video_service.get_video_stats())
+    vs = get_video_service()
+    if not vs:
+        return jsonify({'error': 'Video service not available'}), 500
+    return jsonify(vs.get_video_stats())
 
 @app.route('/api/video/upload-status')
 def get_upload_status():
     """Get video upload capabilities and setup guidance"""
-    if not video_service:
-        return jsonify({'error': 'Video service not available'}), 503
     
     credentials_exist = os.path.exists('social_credentials.json')
     status = {
-        'upload_enabled': video_service.upload_enabled if video_service else False,
+        'upload_enabled': get_video_service().upload_enabled if get_video_service() else False,
         'credentials_configured': credentials_exist,
         'setup_instructions': {
             'step1': 'Copy social_credentials_template.json to social_credentials.json',
@@ -1018,7 +1043,8 @@ def get_upload_status():
 @validate_request(TestVoiceSchema)
 def test_voice(validated_data=None):
     """Test voice generation"""
-    if not video_service:
+    vs = get_video_service()
+    if not vs:
         return jsonify({'error': 'Video service not available'}), 503
         
     try:
@@ -1033,7 +1059,7 @@ def test_voice(validated_data=None):
         
         try:
             audio_path = loop.run_until_complete(
-                video_service.test_voice_generation(text)
+                vs.test_voice_generation(text)
             )
             
             return jsonify({

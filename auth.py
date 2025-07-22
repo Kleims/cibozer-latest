@@ -58,12 +58,27 @@ def clear_attempts(identifier):
 
 def is_valid_email(email):
     """Validate email format"""
+    if email is None or not isinstance(email, str):
+        return False
+    
+    if not email.strip():
+        return False
+        
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
 
 def validate_password(password):
     """Validate password strength"""
     errors = []
+    
+    # Handle None or invalid input
+    if password is None:
+        errors.append("Password is required")
+        return errors
+        
+    if not isinstance(password, str):
+        errors.append("Password must be a string")
+        return errors
     
     if len(password) < 8:
         errors.append("Password must be at least 8 characters long")

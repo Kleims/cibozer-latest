@@ -1,5 +1,5 @@
 #!/bin/bash
-# APEX - Autonomous Progressive Evolution eXecution
+# APEX v4.1 - Autonomous Code Evolution System
 # Complete integrated script for evolution iterations
 
 # Initialize tracking files

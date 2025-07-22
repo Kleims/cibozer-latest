@@ -1,4 +1,4 @@
-# 🔄 APEX v3.0 - Iteration Checklist
+# 🔄 APEX v4.1 - Iteration Checklist
 
 ## ☐ 1. Initialize
 ```bash
@@ -78,7 +78,7 @@ Tests: B:X/Y F:A/B (Δ+N)
 Coverage: X%→Y% Weighted: Z%
 Result: [RESULT]
 
-🤖 APEX v3.0"
+🤖 APEX v4.1"
 ```
 
 ## ☐ 10. Update METRICS.md

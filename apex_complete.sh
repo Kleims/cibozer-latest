@@ -1,5 +1,5 @@
 #!/bin/bash
-# APEX - Complete iteration after implementation
+# APEX v4.1 - Complete iteration after implementation
 
 # Load state
 if [ ! -f .apex_state ]; then

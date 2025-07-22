@@ -28,8 +28,10 @@ def client():
 def test_user(client):
     """Create a test user"""
     with app.app_context():
+        from werkzeug.security import generate_password_hash
         user = User(
             email='test@example.com',
+            password_hash=generate_password_hash('testpass123'),
             credits_balance=10,
             subscription_tier='free'
         )
@@ -42,8 +44,10 @@ def test_user(client):
 def premium_user(client):
     """Create a premium test user"""
     with app.app_context():
+        from werkzeug.security import generate_password_hash
         user = User(
             email='premium@example.com', 
+            password_hash=generate_password_hash('premiumpass123'),
             credits_balance=0,
             subscription_tier='premium'
         )
@@ -58,54 +62,60 @@ class TestCreditSystem:
     def test_deduct_credit_success(self, test_user):
         """Test successful credit deduction."""
         with app.app_context():
-            initial_credits = test_user.credits_balance
+            # Re-fetch user to avoid detached instance issues
+            user = User.query.filter_by(email=test_user.email).first()
+            initial_credits = user.credits_balance
             
-            result = deduct_credit(test_user, 2)
+            result = deduct_credit(user, 2)
             
             assert result is True
-            db.session.refresh(test_user)
-            assert test_user.credits_balance == initial_credits - 2
+            db.session.refresh(user)
+            assert user.credits_balance == initial_credits - 2
     
     def test_add_credits_success(self, test_user):
         """Test successful credit addition."""
         with app.app_context():
-            initial_credits = test_user.credits_balance
+            user = User.query.filter_by(email=test_user.email).first()
+            initial_credits = user.credits_balance
             
-            result = add_credits(test_user, 10)
+            result = add_credits(user, 10)
             
             assert result is True
-            db.session.refresh(test_user)
-            assert test_user.credits_balance == initial_credits + 10
+            db.session.refresh(user)
+            assert user.credits_balance == initial_credits + 10
 
     def test_check_user_credits_free_user(self, test_user):
         """Test credit checking for free user."""
         with app.app_context():
-            test_user.credits_balance = 5
-            test_user.subscription_tier = 'free'
+            user = User.query.filter_by(email=test_user.email).first()
+            user.credits_balance = 5
+            user.subscription_tier = 'free'
             db.session.commit()
             
-            result = check_user_credits(test_user)
+            result = check_user_credits(user)
             
             assert result is True  # Has credits available
 
     def test_check_user_credits_premium_user(self, premium_user):
         """Test credit checking for premium user."""
         with app.app_context():
-            result = check_user_credits(premium_user)
+            user = User.query.filter_by(email=premium_user.email).first()
+            result = check_user_credits(user)
             
             assert result is True  # Premium users have unlimited credits
     
     def test_deduct_credit_insufficient_funds(self, test_user):
         """Test credit deduction with insufficient funds."""
         with app.app_context():
-            test_user.credits_balance = 1
+            user = User.query.filter_by(email=test_user.email).first()
+            user.credits_balance = 1
             db.session.commit()
             
-            result = deduct_credit(test_user, 5)
+            result = deduct_credit(user, 5)
             
             assert result is False
             # Balance should remain unchanged
-            assert test_user.credits_balance == 1
+            assert user.credits_balance == 1
 
     def test_get_pricing_plans(self, client):
         """Test getting pricing plans via API endpoint."""
@@ -183,5 +193,6 @@ class TestPricingPlans:
             plan = PricingPlan.query.first()
             assert plan is not None
             assert hasattr(plan, 'name')
-            assert hasattr(plan, 'price')
-            assert hasattr(plan, 'credits_per_month')
+            assert hasattr(plan, 'display_name')
+            assert hasattr(plan, 'price_monthly')
+            assert hasattr(plan, 'meal_plans_limit')
