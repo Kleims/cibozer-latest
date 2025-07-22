@@ -1,5 +1,5 @@
 #!/bin/bash
-# APEX v4.2 - Autonomous Code Evolution System
+# APEX v4.2.1 - Autonomous Code Evolution System
 # Complete integrated script for evolution iterations
 
 # Initialize tracking files
@@ -187,10 +187,39 @@ BRANCH=$BRANCH
 MAIN_BRANCH=$MAIN_BRANCH
 START_TIME=$START_TIME
 STASHED=${STASHED:-false}
+
+# Project Context Summary
 EOF
+
+# Append key project context if available
+if [ -f PROJECT_CONTEXT.md ] && grep -q "System Architecture Overview" PROJECT_CONTEXT.md 2>/dev/null; then
+    echo "PROJECT_SUMMARY=true" >> .apex_state
+    echo "# Key Architecture Points:" >> .apex_state
+    grep -A 2 "System Architecture Overview" PROJECT_CONTEXT.md | tail -2 | sed 's/^/# /' >> .apex_state
+    grep -A 3 "Technical Stack" PROJECT_CONTEXT.md | tail -3 | sed 's/^/# /' >> .apex_state
+    grep -A 3 "Key Features" PROJECT_CONTEXT.md | tail -3 | sed 's/^/# /' >> .apex_state
+else
+    echo "PROJECT_SUMMARY=false" >> .apex_state
+fi
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Display project context for AI awareness
+if [ -f PROJECT_CONTEXT.md ] && grep -q "System Architecture Overview" PROJECT_CONTEXT.md 2>/dev/null; then
+    echo ""
+    echo "📋 Project Context Summary:"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    # Extract key sections
+    grep -A 2 "## 🏗️ System Architecture Overview" PROJECT_CONTEXT.md 2>/dev/null | tail -2 || true
+    echo ""
+    grep -A 5 "## 🔧 Technical Stack" PROJECT_CONTEXT.md 2>/dev/null | tail -5 || true
+    echo ""
+    grep -A 4 "## 🎯 Key Features" PROJECT_CONTEXT.md 2>/dev/null | tail -4 || true
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+fi
+
+echo ""
 echo "State saved to .apex_state"
 echo "AI should now implement based on MODE=$MODE and FOCUS=$NEXT_FOCUS"
 echo "After implementation, run: ./apex_complete.sh"

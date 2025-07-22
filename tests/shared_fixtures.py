@@ -11,7 +11,15 @@ import auth
 
 def create_test_app():
     """Create a Flask test app with common configuration"""
-    app = Flask(__name__)
+    import os
+    # Get the project root directory
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    template_dir = os.path.join(project_root, 'templates')
+    static_dir = os.path.join(project_root, 'static')
+    
+    app = Flask(__name__, 
+                template_folder=template_dir,
+                static_folder=static_dir)
     app.config['TESTING'] = True
     app.config['SECRET_KEY'] = 'test-secret-key'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'

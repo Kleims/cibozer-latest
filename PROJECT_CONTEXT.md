@@ -11,6 +11,8 @@ COVERAGE_PATTERN="[0-9]+%"
 LINT_CMD="python -m flake8 . --max-line-length=120 --exclude=venv,.git,__pycache__"
 
 # Project Context - Cibozer v4.1
+
+# Project Context - Cibozer v4.1
 *Last Updated: Iteration 41 - Architecture Review*
 
 ## 🏗️ System Architecture Overview

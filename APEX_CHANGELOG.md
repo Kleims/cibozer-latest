@@ -1,5 +1,13 @@
 # APEX Changelog
 
+## v4.2.1 (2025-01-22)
+### Project Context Awareness
+
+#### 🎯 Enhancement
+- **Automatic Context Display**: PROJECT_CONTEXT.md summary now shown at start of each iteration
+- **Context in State File**: Key architecture points saved to .apex_state for AI reference
+- **Better AI Awareness**: AI now receives project context without manual review
+
 ## v4.2 (2025-01-22)
 ### Enhanced Tracking System
 

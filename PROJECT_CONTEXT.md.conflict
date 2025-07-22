@@ -1,5 +1,21 @@
 <<<<<<< Updated upstream
 # Project Context - Cibozer v4.1
+=======
+# Project Context - Cibozer
+>>>>>>> Stashed changes
+STACK="Python/Flask"
+TEST_CMD="python -m pytest"
+BUILD_CMD="pip install -r requirements.txt"
+COVERAGE_CMD="python -m pytest --cov=. --cov-report=term-missing"
+AUDIT_CMD="pip-audit"
+FILE_PATTERN="*.py"
+TEST_FAIL_PATTERN="FAILED|AssertionError|Exception|ERROR"
+TEST_PASS_PATTERN="passed|PASSED"
+COVERAGE_PATTERN="[0-9]+%"
+LINT_CMD="python -m flake8 . --max-line-length=120 --exclude=venv,.git,__pycache__"
+<<<<<<< Updated upstream
+
+# Project Context - Cibozer v4.1
 *Last Updated: Iteration 41 - Architecture Review*
 
 ## 🏗️ System Architecture Overview
@@ -52,16 +68,6 @@ Cibozer is an AI-powered meal planning SaaS platform built with Python/Flask, de
 ## ⚙️ Build & Development Commands
 ```bash
 # Core Commands
-=======
-# Project Context - Cibozer
-STACK="Python/Flask"
->>>>>>> Stashed changes
-TEST_CMD="python -m pytest"
-BUILD_CMD="pip install -r requirements.txt"
-COVERAGE_CMD="python -m pytest --cov=. --cov-report=term-missing"
-AUDIT_CMD="pip-audit"
-<<<<<<< Updated upstream
-LINT_CMD="python -m flake8 . --max-line-length=120 --exclude=venv,.git,__pycache__"
 
 # Development
 python run.py                    # Development server
@@ -75,13 +81,6 @@ python scripts/setup_production.py  # Production setup
 
 ## 📊 File Patterns & Conventions
 ```bash
-=======
->>>>>>> Stashed changes
-FILE_PATTERN="*.py"
-TEST_FAIL_PATTERN="FAILED|AssertionError|Exception|ERROR"
-TEST_PASS_PATTERN="passed|PASSED"
-COVERAGE_PATTERN="[0-9]+%"
-<<<<<<< Updated upstream
 ```
 
 ## 🎯 Key Features Architecture
@@ -122,5 +121,4 @@ COVERAGE_PATTERN="[0-9]+%"
 - **Performance Tracking**: Baseline maintenance and regression prevention
 - **Security Updates**: Regular vulnerability assessments and fixes
 =======
-LINT_CMD="python -m flake8 . --max-line-length=120 --exclude=venv,.git,__pycache__"
 >>>>>>> Stashed changes

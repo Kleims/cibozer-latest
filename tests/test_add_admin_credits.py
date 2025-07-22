@@ -4,7 +4,9 @@ import pytest
 import unittest.mock as mock
 from unittest.mock import patch, MagicMock
 
-import add_admin_credits
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 from add_admin_credits import add_admin_credits
 
 
