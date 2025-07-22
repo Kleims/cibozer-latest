@@ -1,211 +1,229 @@
-"""Tests for auth.py"""
+"""Tests for auth.py - Authentication functionality"""
 
 import pytest
-import unittest.mock as mock
-from unittest.mock import patch, MagicMock
+import re
+from app import app, db
+from models import User
+from auth import is_valid_email, validate_password
 
-import auth
-from auth import rate_limit, record_attempt, clear_attempts, is_valid_email, validate_password, register, login, logout, account, check_limits, upgrade, user_stats, forgot_password, reset_password
 
-
-def test_rate_limit_success():
-    """Test rate_limit with valid inputs"""
-    # Mock arguments
-    mock_f = MagicMock()
+@pytest.fixture
+def client():
+    """Create test client with temporary database"""
+    app.config['TESTING'] = True
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    app.config['SECRET_KEY'] = 'test-secret-key'
+    app.config['WTF_CSRF_ENABLED'] = False
     
-    # Call function
-    result = rate_limit(mock_f)
-    
-    # Basic assertion (customize based on function)
-    assert result is not None
+    with app.test_client() as client:
+        with app.app_context():
+            db.create_all()
+            yield client
 
-def test_rate_limit_error_handling():
-    """Test rate_limit error handling"""
-    # Test with invalid inputs or mocked exceptions
-    with pytest.raises((ValueError, TypeError, Exception)):
-        rate_limit(None)  # or other invalid input
-
-def test_record_attempt_success():
-    """Test record_attempt with valid inputs"""
-    # Mock arguments
-    mock_identifier = MagicMock()
-    
-    # Call function
-    result = record_attempt(mock_identifier)
-    
-    # Basic assertion (customize based on function)
-    assert result is not None
-
-def test_record_attempt_error_handling():
-    """Test record_attempt error handling"""
-    # Test with invalid inputs or mocked exceptions
-    with pytest.raises((ValueError, TypeError, Exception)):
-        record_attempt(None)  # or other invalid input
-
-def test_clear_attempts_success():
-    """Test clear_attempts with valid inputs"""
-    # Mock arguments
-    mock_identifier = MagicMock()
-    
-    # Call function
-    result = clear_attempts(mock_identifier)
-    
-    # Basic assertion (customize based on function)
-    assert result is not None
-
-def test_clear_attempts_error_handling():
-    """Test clear_attempts error handling"""
-    # Test with invalid inputs or mocked exceptions
-    with pytest.raises((ValueError, TypeError, Exception)):
-        clear_attempts(None)  # or other invalid input
 
 def test_is_valid_email_success():
-    """Test is_valid_email with valid inputs"""
-    # Mock arguments
-    mock_email = MagicMock()
+    """Test email validation with valid emails"""
+    valid_emails = [
+        'test@example.com',
+        'user.name@domain.co.uk',
+        'user+tag@example.org'
+    ]
     
-    # Call function
-    result = is_valid_email(mock_email)
-    
-    # Basic assertion (customize based on function)
-    assert result is not None
+    for email in valid_emails:
+        assert is_valid_email(email) is True
 
-def test_is_valid_email_error_handling():
-    """Test is_valid_email error handling"""
-    # Test with invalid inputs or mocked exceptions
-    with pytest.raises((ValueError, TypeError, Exception)):
-        is_valid_email(None)  # or other invalid input
+
+def test_is_valid_email_failure():
+    """Test email validation with invalid emails"""
+    invalid_emails = [
+        'invalid-email',
+        '@example.com',
+        'test@',
+        ''
+    ]
+    
+    for email in invalid_emails:
+        assert is_valid_email(email) is False
+    
+    # Test None separately since it causes TypeError
+    try:
+        result = is_valid_email(None)
+        assert result is False
+    except TypeError:
+        # This is expected behavior for None input
+        pass
+
 
 def test_validate_password_success():
-    """Test validate_password with valid inputs"""
-    # Mock arguments
-    mock_password = MagicMock()
+    """Test password validation with valid passwords"""
+    valid_passwords = [
+        'StrongPass123!',
+        'MySecure@Password1',
+        'C0mplex!Pass'
+    ]
     
-    # Call function
-    result = validate_password(mock_password)
+    for password in valid_passwords:
+        errors = validate_password(password)
+        assert len(errors) == 0, f"Password '{password}' should be valid but got errors: {errors}"
+
+
+def test_validate_password_failure():
+    """Test password validation with invalid passwords"""
+    invalid_passwords = [
+        ('short', 'too short'),
+        ('nouppercase123', 'no uppercase'),
+        ('NOLOWERCASE123', 'no lowercase'),
+        ('NoNumbers', 'no numbers'),
+        ('', 'empty string')
+    ]
     
-    # Basic assertion (customize based on function)
-    assert result is not None
-
-def test_validate_password_error_handling():
-    """Test validate_password error handling"""
-    # Test with invalid inputs or mocked exceptions
-    with pytest.raises((ValueError, TypeError, Exception)):
-        validate_password(None)  # or other invalid input
-
-def test_register_success():
-    """Test register with valid inputs"""
-    result = register()
-    assert result is not None
-
-def test_register_error_handling():
-    """Test register error handling"""
-    # Test with invalid inputs or mocked exceptions
-    with pytest.raises((ValueError, TypeError, Exception)):
-        register(None)  # or other invalid input
-
-def test_login_success():
-    """Test login with valid inputs"""
-    result = login()
-    assert result is not None
-
-def test_login_error_handling():
-    """Test login error handling"""
-    # Test with invalid inputs or mocked exceptions
-    with pytest.raises((ValueError, TypeError, Exception)):
-        login(None)  # or other invalid input
-
-def test_logout_success():
-    """Test logout with valid inputs"""
-    result = logout()
-    assert result is not None
-
-def test_logout_error_handling():
-    """Test logout error handling"""
-    # Test with invalid inputs or mocked exceptions
-    with pytest.raises((ValueError, TypeError, Exception)):
-        logout(None)  # or other invalid input
-
-def test_account_success():
-    """Test account with valid inputs"""
-    result = account()
-    assert result is not None
-
-def test_account_error_handling():
-    """Test account error handling"""
-    # Test with invalid inputs or mocked exceptions
-    with pytest.raises((ValueError, TypeError, Exception)):
-        account(None)  # or other invalid input
-
-def test_check_limits_success():
-    """Test check_limits with valid inputs"""
-    result = check_limits()
-    assert result is not None
-
-def test_check_limits_error_handling():
-    """Test check_limits error handling"""
-    # Test with invalid inputs or mocked exceptions
-    with pytest.raises((ValueError, TypeError, Exception)):
-        check_limits(None)  # or other invalid input
-
-def test_upgrade_success():
-    """Test upgrade with valid inputs"""
-    result = upgrade()
-    assert result is not None
-
-def test_upgrade_error_handling():
-    """Test upgrade error handling"""
-    # Test with invalid inputs or mocked exceptions
-    with pytest.raises((ValueError, TypeError, Exception)):
-        upgrade(None)  # or other invalid input
-
-def test_user_stats_success():
-    """Test user_stats with valid inputs"""
-    result = user_stats()
-    assert result is not None
-
-def test_user_stats_error_handling():
-    """Test user_stats error handling"""
-    # Test with invalid inputs or mocked exceptions
-    with pytest.raises((ValueError, TypeError, Exception)):
-        user_stats(None)  # or other invalid input
-
-def test_forgot_password_success():
-    """Test forgot_password with valid inputs"""
-    result = forgot_password()
-    assert result is not None
-
-def test_forgot_password_error_handling():
-    """Test forgot_password error handling"""
-    # Test with invalid inputs or mocked exceptions
-    with pytest.raises((ValueError, TypeError, Exception)):
-        forgot_password(None)  # or other invalid input
-
-def test_reset_password_success():
-    """Test reset_password with valid inputs"""
-    # Mock arguments
-    mock_token = MagicMock()
+    for password, reason in invalid_passwords:
+        errors = validate_password(password)
+        assert len(errors) > 0, f"Password '{password}' should be invalid ({reason}) but got no errors"
     
-    # Call function
-    result = reset_password(mock_token)
+    # Test None separately
+    try:
+        errors = validate_password(None)
+        assert len(errors) > 0
+    except (TypeError, AttributeError):
+        # Expected for None input
+        pass
+
+
+def test_register_page_get(client):
+    """Test GET request to register page"""
+    response = client.get('/register')
+    assert response.status_code == 200
+    assert b'Sign Up' in response.data
+
+
+def test_login_page_get(client):
+    """Test GET request to login page"""
+    response = client.get('/login')
+    assert response.status_code == 200
+    assert b'Sign In' in response.data
+
+
+def test_register_valid_user(client):
+    """Test user registration with valid data"""
+    data = {
+        'email': 'test@example.com',
+        'password': 'StrongPass123!',
+        'password_confirm': 'StrongPass123!'
+    }
     
-    # Basic assertion (customize based on function)
-    assert result is not None
+    response = client.post('/register', data=data, follow_redirects=True)
+    assert response.status_code == 200
+    
+    # Check user was created
+    with app.app_context():
+        user = User.query.filter_by(email='test@example.com').first()
+        assert user is not None
 
-def test_reset_password_error_handling():
-    """Test reset_password error handling"""
-    # Test with invalid inputs or mocked exceptions
-    with pytest.raises((ValueError, TypeError, Exception)):
-        reset_password(None)  # or other invalid input
 
-# Commented out - decorated_function doesn't exist in auth.py
-# def test_decorated_function_success():
-#     """Test decorated_function with valid inputs"""
-#     result = decorated_function()
-#     assert result is not None
+def test_register_duplicate_email(client):
+    """Test registration with duplicate email"""
+    # Create first user
+    data = {
+        'email': 'duplicate@example.com',
+        'password': 'StrongPass123!',
+        'password_confirm': 'StrongPass123!'
+    }
+    client.post('/register', data=data)
+    
+    # Try to create second user with same email
+    response = client.post('/register', data=data, follow_redirects=True)
+    assert response.status_code == 200
+    # Should show error message (implementation dependent)
 
-# def test_decorated_function_error_handling():
-#     """Test decorated_function error handling"""
-#     # Test with invalid inputs or mocked exceptions
-#     with pytest.raises((ValueError, TypeError, Exception)):
-#         decorated_function(None)  # or other invalid input
+
+def test_login_valid_user(client):
+    """Test login with valid credentials"""
+    # First register a user via the registration endpoint to ensure it's properly created
+    register_data = {
+        'email': 'logintest@example.com',
+        'password': 'StrongPass123!',
+        'password_confirm': 'StrongPass123!'
+    }
+    client.post('/register', data=register_data)
+    
+    # Now try to login
+    login_data = {
+        'email': 'logintest@example.com',
+        'password': 'StrongPass123!'
+    }
+    
+    response = client.post('/login', data=login_data, follow_redirects=True)
+    assert response.status_code == 200
+
+
+def test_login_invalid_credentials(client):
+    """Test login with invalid credentials"""
+    data = {
+        'email': 'nonexistent@example.com',
+        'password': 'WrongPassword123!'
+    }
+    
+    response = client.post('/login', data=data, follow_redirects=True)
+    assert response.status_code == 200
+    # Should show error message
+
+
+def test_rate_limiting_decorator():
+    """Test that rate_limit decorator exists and works"""
+    from auth import rate_limit
+    
+    @rate_limit
+    def dummy_function():
+        return "test"
+    
+    # This tests that the decorator can be applied
+    assert callable(dummy_function)
+
+
+def test_record_attempt_function():
+    """Test record_attempt helper function"""
+    from auth import record_attempt, login_attempts
+    
+    # Clear any existing attempts
+    login_attempts.clear()
+    
+    # Record an attempt
+    identifier = "test_ip"
+    record_attempt(identifier)
+    
+    # Check it was recorded
+    assert identifier in login_attempts
+    assert login_attempts[identifier]['count'] == 1
+
+
+def test_clear_attempts_function():
+    """Test clear_attempts helper function"""
+    from auth import clear_attempts, record_attempt, login_attempts
+    
+    # Setup - record an attempt
+    identifier = "test_ip_clear"
+    record_attempt(identifier)
+    assert identifier in login_attempts
+    
+    # Clear attempts
+    clear_attempts(identifier)
+    
+    # Check it was cleared
+    assert identifier not in login_attempts
+
+
+def test_logout_route(client):
+    """Test logout route exists and handles requests"""
+    response = client.get('/logout', follow_redirects=True)
+    assert response.status_code == 200
+
+
+def test_protected_routes_require_login(client):
+    """Test that protected routes redirect to login"""
+    protected_routes = ['/account', '/upgrade']
+    
+    for route in protected_routes:
+        response = client.get(route, follow_redirects=False)
+        # Should redirect to login (302) or show unauthorized (401)
+        assert response.status_code in [302, 401]

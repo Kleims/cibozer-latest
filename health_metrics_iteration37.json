@@ -1,0 +1,25 @@
+{
+  "timestamp": "2025-07-22T11:59:17.156139",
+  "iteration": 37,
+  "overall_health": 43.7,
+  "test_health": 37.9,
+  "security_health": 82,
+  "performance_health": 0.9,
+  "coverage": 5.0,
+  "weighted_coverage": 5.0,
+  "backend_tests_passed": 36,
+  "backend_tests_total": 57,
+  "frontend_tests_passed": 0,
+  "frontend_tests_total": 0,
+  "critical_vulnerabilities": 0,
+  "high_vulnerabilities": 1,
+  "medium_vulnerabilities": 4,
+  "total_todos": 32,
+  "tech_debt": 64.0,
+  "baseline_time": 0.032509,
+  "current_time": 3.445,
+  "recommended_mode": "RECOVERY",
+  "mode_reasons": [
+    "Health below 70% (43.7%)"
+  ]
+}

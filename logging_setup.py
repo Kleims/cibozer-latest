@@ -6,7 +6,7 @@ Provides consistent logging configuration across all modules
 import os
 import logging
 import logging.handlers
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Dict, Any
 import json
@@ -27,7 +27,7 @@ class StructuredFormatter(logging.Formatter):
     
     def format(self, record):
         log_obj = {
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'level': record.levelname,
             'logger': record.name,
             'message': record.getMessage(),
@@ -291,7 +291,7 @@ class AuditLogger:
             extra={
                 'action': action,
                 'user_id': user_id,
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 **kwargs
             }
         )
