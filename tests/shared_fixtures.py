@@ -66,7 +66,8 @@ def test_user(app):
         )
         db.session.add(user)
         db.session.commit()
-        return user
+        # Return just the ID to avoid detached instance issues
+        return user.id
 
 
 @pytest.fixture
@@ -81,7 +82,8 @@ def premium_user(app):
         )
         db.session.add(user)
         db.session.commit()
-        return user
+        # Return just the ID to avoid detached instance issues
+        return user.id
 
 
 @pytest.fixture
@@ -97,4 +99,5 @@ def admin_user(app):
         )
         db.session.add(user)
         db.session.commit()
-        return user
+        # Return just the ID to avoid detached instance issues
+        return user.id

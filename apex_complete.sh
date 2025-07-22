@@ -1,5 +1,5 @@
 #!/bin/bash
-# APEX v4.1 - Complete iteration after implementation
+# APEX v4.2 - Complete iteration after implementation
 
 # Load state
 if [ ! -f .apex_state ]; then
@@ -58,11 +58,23 @@ if [ $TESTS_DELTA -gt 0 ] && [ -n "$ERROR_TYPE" ]; then
 fi
 
 # Update baselines if improved
+BASELINE_UPDATED=false
 if [ $(awk "BEGIN {print ($AFTER_COV > $COV)}") -eq 1 ]; then
     sed -i.bak "s/COV=.*/COV=$AFTER_COV/" BASELINES.md && rm -f BASELINES.md.bak
+    echo "📈 Coverage baseline updated: $COV% → $AFTER_COV%"
+    BASELINE_UPDATED=true
 fi
 if [ $AFTER_TESTS -gt $TESTS ]; then
     sed -i.bak "s/TESTS=.*/TESTS=$AFTER_TESTS/" BASELINES.md && rm -f BASELINES.md.bak
+    echo "📈 Test baseline updated: $TESTS → $AFTER_TESTS"
+    BASELINE_UPDATED=true
+fi
+# Always update LOC
+sed -i.bak "s/LOC=.*/LOC=$AFTER_LOC/" BASELINES.md && rm -f BASELINES.md.bak
+
+# Log baseline updates to FIXES.log
+if [ "$BASELINE_UPDATED" = "true" ]; then
+    echo "  - Updated performance baselines" >> FIXES.log
 fi
 
 # Get list of changed files
@@ -96,18 +108,81 @@ fi
 # Restore stashed changes if any
 [ "$STASHED" = "true" ] && git stash pop
 
-# Update METRICS.md
+# Update METRICS.md with comprehensive information
 DURATION=$(($(date +%s) - START_TIME))
+FAILED_TESTS=$(echo "$TEST_OUTPUT" | grep -ciE "${TEST_FAIL_PATTERN:-fail|error|FAIL|ERROR}" || echo 0)
+
+# Get summary of changes
+CHANGE_SUMMARY="Unknown changes"
+if [ "$RESULT" = "SUCCESS" ]; then
+    if [ $TESTS_DELTA -gt 0 ]; then
+        CHANGE_SUMMARY="Added $TESTS_DELTA tests"
+    elif [ $COV_DELTA -gt 0 ]; then
+        CHANGE_SUMMARY="Improved coverage by ${COV_DELTA}%"
+    elif [ $TODOS_DELTA -lt 0 ]; then
+        CHANGE_SUMMARY="Reduced TODOs by $((TODOS_DELTA * -1))"
+    else
+        CHANGE_SUMMARY="General improvements and fixes"
+    fi
+elif [ "$RESULT" = "FAILED" ]; then
+    CHANGE_SUMMARY="Failed - $FAILED_TESTS tests failing"
+else
+    CHANGE_SUMMARY="Partial success - some issues remain"
+fi
+
 cat >> METRICS.md << EOF
 ## Iteration #$ITER - $(date '+%Y-%m-%d %H:%M:%S')
 - **Mode**: $MODE | **Health**: $HEALTH/100 | **Focus**: $NEXT_FOCUS
 - **Result**: $RESULT
 - **Stack**: $STACK
-- **Tests**: $AFTER_TESTS (Δ$TESTS_DELTA) | **Coverage**: $AFTER_COV% (Δ$COV_DELTA)
+- **Tests**: $BEFORE_TESTS → $AFTER_TESTS (Δ$TESTS_DELTA) | **Coverage**: $BEFORE_COV% → $AFTER_COV% (Δ$COV_DELTA%)
 - **LOC**: $AFTER_LOC | **TODOs**: $AFTER_TODOS (Δ$TODOS_DELTA)
 - **Duration**: ${DURATION}s
 - **Unresolved**: $(grep -c "Priority: HIGH" FAILED_ATTEMPTS.md 2>/dev/null || echo 0) issues
+- **Changes**: $CHANGE_SUMMARY
 EOF
+
+# Log to FAILED_ATTEMPTS.md if iteration failed or had issues
+if [ "$RESULT" != "SUCCESS" ] || [ $FAILED_TESTS -gt 0 ]; then
+    ISSUE_DESC="Unknown issue"
+    if [ $FAILED_TESTS -gt 0 ]; then
+        ISSUE_DESC="$FAILED_TESTS tests failing"
+        [ -n "$ERROR_TYPE" ] && ISSUE_DESC="$ISSUE_DESC - $ERROR_TYPE"
+    elif [ $CRITICAL_FAILS -gt 0 ]; then
+        ISSUE_DESC="Critical test failures in auth/payment/core modules"
+    elif [ $TESTS_DELTA -lt 0 ]; then
+        ISSUE_DESC="Test regression - lost $((TESTS_DELTA * -1)) tests"
+    fi
+    
+    PRIORITY="MEDIUM"
+    [ $CRITICAL_FAILS -gt 0 ] && PRIORITY="HIGH"
+    [ $TESTS_DELTA -lt -5 ] && PRIORITY="HIGH"
+    
+    cat >> FAILED_ATTEMPTS.md << EOF
+
+## Iteration #$ITER - $(date '+%a, %b %d, %Y %I:%M:%S %p')
+**Issue**: $ISSUE_DESC
+**Priority**: $PRIORITY
+---
+EOF
+fi
+
+# Update FIXES.log if we fixed something
+if [ "$RESULT" = "SUCCESS" ] && [ $TESTS_DELTA -gt 0 ]; then
+    FIXES_DESC="Fixed $TESTS_DELTA test failures"
+    [ $COV_DELTA -gt 0 ] && FIXES_DESC="$FIXES_DESC, improved coverage by ${COV_DELTA}%"
+    
+    cat >> FIXES.log << EOF
+
+[Iteration $ITER] - $(date '+%Y-%m-%d') - $MODE: $FIXES_DESC
+EOF
+    
+    # Add details of what was fixed
+    if [ -n "$CHANGED_FILES" ]; then
+        echo "  Files modified:" >> FIXES.log
+        echo "$CHANGED_FILES" | sed 's/^/  /' >> FIXES.log
+    fi
+fi
 
 # Pattern analysis every 10 iterations
 if [ $((ITER % 10)) -eq 0 ]; then

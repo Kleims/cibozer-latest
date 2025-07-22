@@ -79,6 +79,12 @@ migrate = Migrate(app, db)
 CORS(app)
 csrf = CSRFProtect(app)
 
+# Apply database optimizations
+from utils.db_optimization import setup_connection_pool, setup_query_logging, enable_query_cache
+setup_connection_pool(app)
+setup_query_logging(app)
+enable_query_cache(app)
+
 # Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
