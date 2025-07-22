@@ -1,145 +1,194 @@
-# APEX Configuration - Cibozer
-*Last Updated: 2025-07-21*
+# APEX_CONFIG.md - v3.0
 
 ## Health Calculation Formula
+```
+Test Health = (Backend_Pass_Rate × 0.6) + (Frontend_Pass_Rate × 0.4)
+Security Health = 100 - (Critical × 20) - (High × 10) - (Medium × 2)
+Performance Health = 100 × (Baseline_Time / Current_Time)
+Overall Health = (Test × 0.5) + (Security × 0.3) + (Performance × 0.2)
+```
 
-### Base Score
-- Starting health: 100 points
-- Floor: 0 (cannot go negative)
-- Ceiling: 100 (perfect health)
+## Mode Selection Rules
+```python
+if critical_vulnerabilities > 0:
+    return "SECURITY"
+elif health < 40 or critical_failures > 3:
+    return "EMERGENCY"
+elif iteration % 30 == 0:
+    return "SECURITY"
+elif iteration % 20 == 0:
+    return "DOCUMENTATION"
+elif iteration % 15 == 0 and performance_degraded:
+    return "PERFORMANCE"
+elif iteration % 10 == 0 and has_structural_issues:
+    return "ARCHITECTURE"
+elif health < 70:
+    return "RECOVERY"
+elif tech_debt > 80:
+    return "DEBT_PAYMENT"
+elif health > 85 and iteration % 5 == 0:
+    return "FEATURE"
+else:
+    return "STANDARD"
+```
 
-### Failure Penalties
-**Critical Module Failures** (auth/payment/database/video):
-- Penalty: 10 points per failure
-- These are high-priority and affect core functionality
+## Mode Specifications
 
-**Normal Test Failures**:
-- Small test suite (<50 tests): 5 points per failure
-- Medium test suite (50-200 tests): 3 points per failure
-- Large test suite (>200 tests): 2 points per failure
+### EMERGENCY
+**Goal**: Stop critical failures immediately
+- Fix ONLY the most critical issue
+- Add regression test
+- Document root cause
+- Max time: 2 hours
 
-### Single-Component Project
-Since this is a Flask monolith with integrated frontend:
-- Tests run as single suite: `pytest`
-- Health based on total test results
-- Critical modules: auth.py, payments.py, models.py, video_generator.py
+### RECOVERY  
+**Goal**: Restore system to healthy state
+- Fix top 2-3 test failures (80%)
+- Improve critical path coverage (20%)
+- No new features
 
-### Special Considerations
-- Database connection failures: Immediate health = 0
-- Build/dependency failures: Immediate health = 0
-- No tests found: Health = 0
-- Deprecation warnings: 1 point per warning (max 10)
+### STANDARD
+**Goal**: Balanced progress
+- Fix 1-2 tests OR improve coverage (60%)
+- Small improvements (30%)
+  - IF you see obvious issues: simple refactors
+  - IF not needed: add small feature/fix
+- Address TODOs (10%)
 
-## Mode Determination Rules
+### FEATURE
+**Goal**: Add new capability
+- Implement feature with tests (70%)
+- Fix blockers only (20%)
+- Update docs (10%)
+- Requirement: >90% coverage on new code
+- Note: Refactor ONLY if blocking feature
 
-### Priority Order (check in sequence)
-1. **RECOVERY MODE**
-   - Condition: health < 60 OR last iteration FAILED/PARTIAL
-   - Override: Always takes precedence
-   - Focus: Fix most critical issue only
+### ARCHITECTURE
+**Goal**: Improve structure (when needed)
+- Triggers:
+  - Code duplication > 3 instances
+  - Circular dependencies detected
+  - Performance bottlenecks from poor structure
+  - Major feature blocked by current design
+- Actions:
+  - Large-scale refactoring
+  - Extract services/modules
+  - Implement design patterns
+  - Update dependency graph
 
-2. **ARCHITECTURE MODE**
-   - Condition: iteration % 10 == 0 AND health > 80
-   - Focus: Refactor patterns, reduce duplication
-   - Requirement: Last 3 iterations must be successful
+### SECURITY
+**Goal**: Zero vulnerabilities
+- Run full audit
+- Update all vulnerable deps
+- Review auth code
+- Add security tests
+- Update SECURITY.log
 
-3. **FEATURE MODE**
-   - Condition: iteration % 5 == 0 AND health > 85
-   - Focus: Add new functionality (80% effort)
-   - Requirement: No critical failures
+### PERFORMANCE
+**Goal**: Meet/exceed baselines
+- Profile bottlenecks
+- Optimize slowest parts
+- Reduce bundle 10%
+- Add benchmarks
 
-4. **STANDARD MODE**
-   - Condition: Default when no other mode applies
-   - Focus: Fix 1-2 issues (80%) + improvement (20%)
-   - Also used when: 60 ≤ health < 70 (stability focus)
+### DOCUMENTATION
+**Goal**: Knowledge capture
+- Update API docs
+- Architecture diagrams
+- Setup guide
+- Recent decisions (ADRs)
+
+### DEBT_PAYMENT
+**Goal**: Address accumulated issues
+- Triggers:
+  - Complexity score > threshold
+  - TODO count > 20
+  - Dead code detected
+  - Team velocity declining
+- Actions (pick based on need):
+  - Refactor high-complexity functions
+  - Remove unused code
+  - Consolidate duplicates
+  - Address oldest TODOs
+
+### INTEGRATION
+**Goal**: External reliability
+- Add retry logic
+- Circuit breakers
+- Fallback mechanisms
+- Integration tests
+
+### COMPLIANCE
+**Goal**: Meet requirements
+- Privacy audit
+- Accessibility check
+- License review
+- Audit trails
+
+### RESILIENCE
+**Goal**: System robustness
+- Health endpoints
+- Error boundaries
+- Graceful degradation
+- Chaos tests
 
 ## Success Criteria
 
-### Result Determination
-**SUCCESS**:
-- All critical modules pass (100% pass rate)
-- No test regressions (or documented reason)
-- Coverage didn't drop > 2%
-- pytest completes successfully
-- Health improved or maintained > 90%
+### SUCCESS (all required)
+- ✓ Critical tests pass
+- ✓ No regression >2%
+- ✓ No new vulnerabilities
+- ✓ Performance within 10%
+- ✓ Mode goals met
 
-**PARTIAL**:
-- 1-2 minor test failures
-- Non-critical modules affected
-- Health between 60-89%
-- Some progress made but not all goals met
+### PARTIAL
+- Core goals met
+- Minor regressions (<5%)
+- Document issues
 
-**FAILED**:
-- Critical module failures
-- pytest crashes or hangs
-- Health < 60
-- Regression in test count
-- Unable to complete primary task
+### FAILED  
+- Critical tests fail
+- Coverage drop >5%
+- New vulnerabilities
+- Performance >20% worse
 
-## Trend Analysis
-
-### Health Trends
-- Track last 3 iterations for trend
-- Improving: 3 consecutive increases
-- Declining: 3 consecutive decreases
-- Stable: Variance < 5 points
-
-### Mode History
-- Don't repeat FEATURE/ARCHITECTURE if last attempt failed
-- After RECOVERY, prefer STANDARD for stabilization
-- Track success rate per mode type
-
-## Calculation Examples
-
-### Example 1: Normal Run
+## Weighted Coverage Formula
 ```
-Total: 60 tests, 4 failures (1 in auth module)
-Health: 100 - (1×10) - (3×3) = 81
+Weighted = (Backend_Coverage × 0.6) + (Frontend_Coverage × 0.4)
 ```
 
-### Example 2: Critical Failures
+## Refactoring Guidelines by Mode
+
+### Refactoring Philosophy:
+- **Opportunistic**: Refactor when you see issues, not on schedule
+- **Boy Scout Rule**: Leave code better than you found it
+- **Pragmatic**: Only refactor if it provides clear value
+
+### When to Refactor:
+- **During STANDARD**: If touching code that needs cleanup
+- **During DEBT_PAYMENT**: When metrics show it's needed
+- **During ARCHITECTURE**: When structure blocks progress
+- **During FEATURE**: Minimal - only if blocking
+- **NEVER during**: Emergency, Security, Recovery modes
+
+### Red Flags that Trigger Refactoring:
+- Method > 50 lines
+- Duplicated code (3+ copies)
+- Complexity score > 10
+- "TODO: refactor this" comments
+- Performance bottlenecks from structure
+
+## Commit Message Format
 ```
-Total: 60 tests, 6 failures (2 in payments, 1 in auth)
-Health: 100 - (3×10) - (3×3) = 61
+[MODE]: Iteration N - Brief description
+
+Tests: Backend X/Y, Frontend A/B (Δ+Z)
+Coverage: XX% → YY% (Δ+Z%), Weighted: WW%
+[Additional metrics if relevant]
+Result: [SUCCESS/PARTIAL/FAILED]
 ```
 
-## Coverage Calculation
-
-### Accurate Coverage Tracking
-- Run coverage: `pytest --cov=. --cov-report=term-missing`
-- HTML report: `pytest --cov=. --cov-report=html`
-- Coverage config in pytest.ini
-
-### Coverage Health Indicators
-- 80%+ : Excellent ✅
-- 60-79%: Good 🟡
-- 40-59%: Fair 🟠
-- <40%  : Poor 🔴
-
-## Flask-Specific Considerations
-
-### Critical Test Categories
-- Authentication flows (login, logout, registration)
-- Payment processing (Stripe integration)
-- Database operations (models, migrations)
-- Video generation pipeline
-- PDF generation
-- API endpoints
-
-### Common Issues to Watch
-- SQLAlchemy session management
-- CSRF token validation
-- File upload security
-- Async task handling
-- Memory leaks in video processing
-
-## Configuration History
-- 2025-07-21: Initial configuration for Cibozer Flask project
-- Based on APEX v2 universal template
-- Adapted for Python/Flask architecture
-
-## Notes
-- Focus on integration tests due to monolithic architecture
-- Video/PDF generation may require mocking for speed
-- Database tests should use test database
-- Consider test markers for slow tests
+## Emergency Response
+- EMERGENCY/SECURITY modes: Next iteration ASAP
+- RECOVERY mode: Within 24 hours  
+- Others: Regular schedule

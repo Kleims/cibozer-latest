@@ -1,0 +1,22 @@
+{
+  "test_config": {
+    "num_users": 100,
+    "duration": 30,
+    "timestamp": 1753144903.2751534
+  },
+  "results": {
+    "total_requests": 870,
+    "successful_requests": 851,
+    "failed_requests": 19,
+    "success_rate": 97.816091954023,
+    "test_duration": 70.31917881965637,
+    "requests_per_second": 12.372158131016288,
+    "average_response_time": 0.7723704801208672,
+    "min_response_time": 0.05016827583312988,
+    "max_response_time": 3.1399505138397217,
+    "p50_response_time": 0.4585866928100586,
+    "p95_response_time": 2.5660693764686586,
+    "p99_response_time": 3.0310438895225524,
+    "error_count": 19
+  }
+}

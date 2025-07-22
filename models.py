@@ -3,11 +3,16 @@ Database models for Cibozer
 User authentication and subscription management
 """
 
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin
-from datetime import datetime, timedelta, timezone
-import bcrypt
+# Standard library imports
 import secrets
+from datetime import datetime, timedelta, timezone
+
+# Third-party imports
+import bcrypt
+from flask_login import UserMixin
+from flask_sqlalchemy import SQLAlchemy
+
+# Local application imports
 from logging_setup import get_logger, log_database_operation, audit_logger
 
 db = SQLAlchemy()
@@ -63,6 +68,10 @@ class User(UserMixin, db.Model):
     def is_premium(self):
         """Check if user has active premium subscription"""
         if self.subscription_tier in ['pro', 'premium']:
+            # If no end date, subscription is unlimited (e.g., admin users)
+            if self.subscription_end_date is None:
+                return True
+            # If there is an end date, check if it's still valid
             if self.subscription_end_date:
                 # Handle both naive and aware datetimes for SQLite compatibility
                 end_date = self.subscription_end_date

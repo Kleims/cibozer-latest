@@ -11,7 +11,8 @@ from unittest.mock import patch, MagicMock
 
 # Import modules to test
 from cibozer import MealPlanParameters, CibozerVideoGenerator, VideoConfig, SlideGenerator
-from config import CibozerConfig, load_config, get_config
+from app_config import get_app_config
+config = get_app_config()
 
 
 class TestMealPlanParameters(unittest.TestCase):

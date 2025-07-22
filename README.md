@@ -1,6 +1,6 @@
 # Cibozer - AI-Powered Meal Planning Platform
 
-[Live Demo](https://cibozer.com) | [Documentation](./docs) | [API Reference](./API.md)
+[Live Demo](https://cibozer.com) | [Documentation](./docs) | [API Reference](./docs/api.md)
 
 ## Overview
 
@@ -47,7 +47,7 @@ pip install -r requirements.txt
 
 4. Set up environment variables:
 ```bash
-cp .env.example .env
+cp .env.template .env
 # Edit .env with your configuration
 ```
 
@@ -115,6 +115,39 @@ cp social_credentials_template.json social_credentials.json
 3. Update `social_credentials.json` with your credentials
 
 4. Restart the application
+
+## Project Structure
+
+```
+cibozer/
+├── app.py              # Main Flask application
+├── models.py           # Database models
+├── auth.py             # Authentication routes
+├── admin.py            # Admin panel routes
+├── payments.py         # Payment processing
+├── share_routes.py     # Sharing functionality
+├── meal_optimizer.py   # Core meal planning algorithm
+├── video_service.py    # Video generation service
+├── pdf_generator.py    # PDF export functionality
+├── app_config.py       # Centralized configuration
+├── logging_setup.py    # Logging configuration
+├── middleware.py       # Request validation middleware
+├── requirements.txt    # Python dependencies
+├── .env.template       # Environment variables template
+├── core/               # Core application modules (future)
+├── routes/             # Route blueprints (future)
+├── services/           # Service layer modules (future)
+├── scripts/            # Utility and setup scripts
+├── tests/              # Test suite
+├── docs/               # Documentation
+│   ├── api.md          # API documentation
+│   ├── plans/          # Project plans
+│   ├── audits/         # Audit reports
+│   └── technical/      # Technical documentation
+├── templates/          # HTML templates
+├── static/             # CSS, JS, images
+└── migrations/         # Database migrations
+```
 
 ## API Endpoints
 

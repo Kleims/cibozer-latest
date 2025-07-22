@@ -1,0 +1,1322 @@
+[
+  {
+    "timestamp": "2025-07-21T15:38:44.741733",
+    "phase": 2,
+    "iteration": 14,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 27
+    }
+  },
+  {
+    "timestamp": "2025-07-21T15:38:45.009509",
+    "phase": 2,
+    "iteration": 14,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 29
+    }
+  },
+  {
+    "timestamp": "2025-07-21T15:42:50.424323",
+    "phase": 2,
+    "iteration": 15,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 30
+    }
+  },
+  {
+    "timestamp": "2025-07-21T15:46:07.386649",
+    "phase": 2,
+    "iteration": 16,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 30
+    }
+  },
+  {
+    "timestamp": "2025-07-21T15:49:45.234351",
+    "phase": 2,
+    "iteration": 17,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 30
+    }
+  },
+  {
+    "timestamp": "2025-07-21T15:50:11.030658",
+    "phase": 2,
+    "iteration": 17,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 30
+    }
+  },
+  {
+    "timestamp": "2025-07-21T15:55:48.398970",
+    "phase": 2,
+    "iteration": 18,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 31
+    }
+  },
+  {
+    "timestamp": "2025-07-21T15:57:41.061613",
+    "phase": 2,
+    "iteration": 18,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 33
+    }
+  },
+  {
+    "timestamp": "2025-07-21T15:59:24.424049",
+    "phase": 2,
+    "iteration": 19,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 33
+    }
+  },
+  {
+    "timestamp": "2025-07-21T15:59:25.243843",
+    "phase": 2,
+    "iteration": 19,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 34
+    }
+  },
+  {
+    "timestamp": "2025-07-21T15:59:53.710277",
+    "phase": 2,
+    "iteration": 20,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 34
+    }
+  },
+  {
+    "timestamp": "2025-07-21T15:59:54.555979",
+    "phase": 2,
+    "iteration": 20,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 34
+    }
+  },
+  {
+    "timestamp": "2025-07-21T16:00:14.297809",
+    "phase": 2,
+    "iteration": 21,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 34
+    }
+  },
+  {
+    "timestamp": "2025-07-21T16:00:15.526542",
+    "phase": 2,
+    "iteration": 21,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 34
+    }
+  },
+  {
+    "timestamp": "2025-07-21T16:00:51.555878",
+    "phase": 2,
+    "iteration": 22,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 34
+    }
+  },
+  {
+    "timestamp": "2025-07-21T16:00:52.529117",
+    "phase": 2,
+    "iteration": 22,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 35
+    }
+  },
+  {
+    "timestamp": "2025-07-21T16:02:19.900646",
+    "phase": 2,
+    "iteration": 23,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 36
+    }
+  },
+  {
+    "timestamp": "2025-07-21T16:02:21.051923",
+    "phase": 2,
+    "iteration": 23,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 36
+    }
+  },
+  {
+    "timestamp": "2025-07-21T16:02:36.198649",
+    "phase": 2,
+    "iteration": 24,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 36
+    }
+  },
+  {
+    "timestamp": "2025-07-21T16:02:38.028901",
+    "phase": 2,
+    "iteration": 24,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 38
+    }
+  },
+  {
+    "timestamp": "2025-07-21T16:05:10.089491",
+    "phase": 2,
+    "iteration": 25,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 39
+    }
+  },
+  {
+    "timestamp": "2025-07-21T16:06:21.050304",
+    "phase": 2,
+    "iteration": 25,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 39
+    }
+  },
+  {
+    "timestamp": "2025-07-21T16:07:29.872881",
+    "phase": 2,
+    "iteration": 26,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 39
+    }
+  },
+  {
+    "timestamp": "2025-07-21T16:08:40.904316",
+    "phase": 3,
+    "iteration": 26,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": 2.5,
+        "error_rate": 0.5,
+        "uptime": 99.5,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 150,
+        "day_1_retention": 35,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": 3.5,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 150,
+        "cac": 35,
+        "ltv": 105,
+        "ltv_cac_ratio": 3.0
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 39
+    }
+  },
+  {
+    "timestamp": "2025-07-21T16:25:02.550126",
+    "phase": 1,
+    "iteration": 27,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 39
+    }
+  },
+  {
+    "timestamp": "2025-07-21T16:25:05.511147",
+    "phase": 2,
+    "iteration": 27,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 40
+    }
+  },
+  {
+    "timestamp": "2025-07-21T17:21:07.316680",
+    "phase": 2,
+    "iteration": 28,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 41
+    }
+  },
+  {
+    "timestamp": "2025-07-21T17:23:04.500895",
+    "phase": 3,
+    "iteration": 28,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 41
+    }
+  },
+  {
+    "timestamp": "2025-07-21T17:37:27.658723",
+    "phase": 1,
+    "iteration": 29,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 41
+    }
+  },
+  {
+    "timestamp": "2025-07-21T17:37:29.437843",
+    "phase": 2,
+    "iteration": 29,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 42
+    }
+  },
+  {
+    "timestamp": "2025-07-21T17:54:33.932966",
+    "phase": 2,
+    "iteration": 30,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 45
+    }
+  },
+  {
+    "timestamp": "2025-07-21T17:55:23.382058",
+    "phase": 2,
+    "iteration": 30,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 45
+    }
+  },
+  {
+    "timestamp": "2025-07-21T18:22:20.012944",
+    "phase": 2,
+    "iteration": 31,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 45
+    }
+  },
+  {
+    "timestamp": "2025-07-21T18:25:36.675274",
+    "phase": 2,
+    "iteration": 31,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 45
+    }
+  },
+  {
+    "timestamp": "2025-07-21T18:36:35.229759",
+    "phase": 2,
+    "iteration": 32,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 45
+    }
+  },
+  {
+    "timestamp": "2025-07-21T18:39:23.967704",
+    "phase": 2,
+    "iteration": 33,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 46
+    }
+  },
+  {
+    "timestamp": "2025-07-21T18:39:24.981446",
+    "phase": 2,
+    "iteration": 32,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 46
+    }
+  },
+  {
+    "timestamp": "2025-07-21T18:42:03.092148",
+    "phase": 2,
+    "iteration": 34,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 46
+    }
+  },
+  {
+    "timestamp": "2025-07-21T18:42:43.978743",
+    "phase": 3,
+    "iteration": 33,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 46
+    }
+  },
+  {
+    "timestamp": "2025-07-21T18:43:04.220592",
+    "phase": 3,
+    "iteration": 34,
+    "metrics": {
+      "technical": {
+        "test_coverage": 32,
+        "page_load_time": null,
+        "error_rate": null,
+        "uptime": null,
+        "security_score": null
+      },
+      "user": {
+        "total_users": 0,
+        "day_1_retention": null,
+        "day_7_retention": null,
+        "day_30_retention": null,
+        "conversion_rate": null,
+        "churn_rate": null
+      },
+      "business": {
+        "mrr": 0,
+        "cac": null,
+        "ltv": null,
+        "ltv_cac_ratio": null
+      }
+    },
+    "git_info": {
+      "commit_hash": "04c982f",
+      "branch": "main",
+      "uncommitted_changes": 46
+    }
+  }
+]

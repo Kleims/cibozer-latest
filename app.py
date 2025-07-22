@@ -3,44 +3,49 @@ Cibozer Web Application
 Flask-based web interface for AI meal planning and video generation
 """
 
+# Standard library imports
+import asyncio
+import json
+import logging
+import logging.config
+import os
+import shutil
+import tempfile
+import time
+import traceback
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+
+# Third-party imports
 from flask import Flask, render_template, request, jsonify, send_file, flash, redirect, url_for
 from flask_cors import CORS
 from flask_login import LoginManager, login_required, current_user
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
-import os
-import json
-import time
-import asyncio
-from datetime import datetime, timezone, timedelta
-import traceback
-import logging
-import logging.config
-import meal_optimizer as mo
-from meal_optimizer_web import get_web_optimizer
-import tempfile
-import shutil
-from pathlib import Path
-from video_service import VideoService
-from pdf_generator import PDFGenerator
-from utils.security import (
-    secure_path_join, validate_json_filename, validate_video_filename, 
-    validate_pdf_filename, validate_secret_key, SecurityError
-)
-from admin import admin_bp
-from auth import auth_bp
-from payments import payments_bp, check_user_credits, deduct_credit
-from share_routes import share_bp
-from models import db, User, UsageLog, SavedMealPlan, PricingPlan
 from dotenv import load_dotenv
+
+# Local application imports
+import meal_optimizer as mo
+from admin import admin_bp
 from app_config import get_app_config, validate_config
+from auth import auth_bp
+from logging_setup import setup_app_logging, get_logger, log_execution_time, audit_logger
+from meal_optimizer_web import get_web_optimizer
 from middleware import (
     validate_request, MealPlanRequestSchema, VideoGenerationRequestSchema,
     ExportGroceryListSchema, SaveMealPlanSchema, ExportPDFSchema, 
     TestVoiceSchema, FrontendLogsSchema, sanitize_input, validate_json_request
 )
-from simple_logger import log_info, log_error, log_request, log_form_data
-from logging_setup import setup_app_logging, get_logger, log_execution_time, audit_logger
+from models import db, User, UsageLog, SavedMealPlan, PricingPlan
+from payments import payments_bp, check_user_credits, deduct_credit
+from pdf_generator import PDFGenerator
+from share_routes import share_bp
+# Removed redundant simple_logger import - using logging_setup instead
+from utils.security import (
+    secure_path_join, validate_json_filename, validate_video_filename, 
+    validate_pdf_filename, validate_secret_key, SecurityError
+)
+from video_service import VideoService
 
 # Load environment variables
 load_dotenv()
@@ -54,31 +59,31 @@ config = get_app_config()
 # Initialize Flask app with centralized config
 app = Flask(__name__)
 
-# Add simple before/after request logging
+# Add request logging using the centralized logger
+logger = get_logger(__name__)
+
 @app.before_request
 def log_request_info():
     try:
-        from flask_login import current_user
         user = current_user.email if current_user.is_authenticated else "anonymous"
-    except Exception as e:
-        app.logger.debug(f"Could not get current user: {e}")
+    except Exception:
         user = "anonymous"
     
-    log_request(request.method, request.path, user=user)
+    logger.info(f"{request.method} {request.path} | User: {user}")
     
     if request.form:
-        log_form_data(dict(request.form))
+        # Filter out sensitive data
+        safe_data = {k: v for k, v in request.form.items() if 'password' not in k.lower()}
+        logger.debug(f"Form data: {safe_data}")
 
 @app.after_request
 def log_response_info(response):
     try:
-        from flask_login import current_user
         user = current_user.email if current_user.is_authenticated else "anonymous"
-    except Exception as e:
-        app.logger.debug(f"Could not get current user: {e}")
+    except Exception:
         user = "anonymous"
     
-    log_request(request.method, request.path, response.status_code, user=user)
+    logger.info(f"{request.method} {request.path} -> {response.status_code} | User: {user}")
     return response
 app.config.update(config.to_flask_config())
 
@@ -403,7 +408,7 @@ def format_ingredients_for_frontend(ingredients):
 @app.route('/')
 def index():
     """Main landing page"""
-    log_info("INDEX route accessed")
+    app.logger.info("INDEX route accessed")
     app.logger.info(f"INDEX route accessed from {request.remote_addr}")
     app.logger.debug(f"Request headers: {dict(request.headers)}")
     
@@ -433,7 +438,7 @@ def create_meal_plan():
     try:
         app.logger.info(f"[CREATE] Page accessed by user: {current_user.email if current_user.is_authenticated else 'Unknown'}")
         app.logger.info(f"[CREATE] User credits: {current_user.credits_balance if current_user.is_authenticated else 'N/A'}")
-        log_info("CREATE MEAL PLAN page accessed")
+        app.logger.info("CREATE MEAL PLAN page accessed")
         
         # Check if optimizer exists
         if not hasattr(app, 'optimizer') and 'optimizer' not in globals():
@@ -443,20 +448,20 @@ def create_meal_plan():
             optimizer = get_web_optimizer()
         
         # Get available options from the optimizer
-        log_info("Getting diet types from optimizer")
+        app.logger.info("Getting diet types from optimizer")
         diet_types = list(optimizer.diet_profiles.keys())
-        log_info(f"Diet types: {diet_types}")
+        app.logger.info(f"Diet types: {diet_types}")
         
-        log_info("Getting meal patterns from optimizer")
+        app.logger.info("Getting meal patterns from optimizer")
         meal_patterns = list(optimizer.meal_patterns.keys())
-        log_info(f"Meal patterns: {meal_patterns}")
+        app.logger.info(f"Meal patterns: {meal_patterns}")
         
-        log_info("Rendering create.html template")
-        log_info(f"Template variables: diet_types={len(diet_types)}, meal_patterns={len(meal_patterns)}")
+        app.logger.info("Rendering create.html template")
+        app.logger.info(f"Template variables: diet_types={len(diet_types)}, meal_patterns={len(meal_patterns)}")
         
         # Log the exact template being rendered
         template_name = 'create.html'
-        log_info(f"About to render template: {template_name}")
+        app.logger.info(f"About to render template: {template_name}")
         
         try:
             # Check if template exists
@@ -471,7 +476,7 @@ def create_meal_plan():
                                    meal_patterns=meal_patterns,
                                    diet_profiles=optimizer.diet_profiles,
                                    meal_patterns_data=optimizer.meal_patterns)
-            log_info("Template rendered successfully")
+            app.logger.info("Template rendered successfully")
             return result
         except Exception as template_error:
             app.logger.error(f"[CREATE] Template rendering failed: {str(template_error)}")
@@ -585,7 +590,7 @@ def generate_meal_plan(validated_data=None):
     
     app.logger.info("=== ✅ CORRECT GENERATE ENDPOINT CALLED ===")
     app.logger.info("✅ SUCCESS: Frontend is calling the correct /api/generate endpoint!")
-    log_info(f"GENERATE_MEAL_PLAN_REQUEST - Data: {validated_data}")
+    app.logger.info(f"GENERATE_MEAL_PLAN_REQUEST - Data: {validated_data}")
     app.logger.info("[START] Meal plan generation")
     app.logger.info(f"   User: {current_user.email if current_user else 'Unknown'}")
     

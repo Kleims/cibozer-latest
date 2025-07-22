@@ -79,3 +79,7 @@ coverage.xml
 # Credentials
 social_credentials.json
 *_credentials.json
+
+.env.*
+!.env.example
+!.env.template

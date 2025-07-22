@@ -3,13 +3,16 @@ Centralized configuration management for Cibozer Flask application
 Handles all app settings, security, database, and service configurations
 """
 
+# Standard library imports
+import logging
 import os
 import secrets
-from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
-from pathlib import Path
 from datetime import timedelta
-import logging
+from pathlib import Path
+from typing import Dict, Any, Optional, List
+
+# Third-party imports
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -30,12 +33,12 @@ def _get_required_secret_key():
         raise ValueError(
             "CRITICAL: SECRET_KEY environment variable is required in production!\n"
             "Generate a secure key with: python -c \"import secrets; print(secrets.token_urlsafe(64))\"\n"
-            "Then set it in your environment: export SECRET_KEY='your-generated-key'"
+            "Then set it in your environment: export SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key')"
         )
     
     # Only generate a key for development
     generated_key = secrets.token_urlsafe(32)
-    print("⚠️  WARNING: Using generated SECRET_KEY for development only - NOT for production!")
+    print("[WARNING] Using generated SECRET_KEY for development only - NOT for production!")
     return generated_key
 
 @dataclass
@@ -138,6 +141,30 @@ class LoggingConfig:
     LOG_FILE_BACKUP_COUNT: int = 5
 
 @dataclass
+class VideoConfig:
+    """Video generation configuration"""
+    # Video Settings
+    WIDTH: int = field(default_factory=lambda: int(os.getenv('CIBOZER_VIDEO_WIDTH', '1920')))
+    HEIGHT: int = field(default_factory=lambda: int(os.getenv('CIBOZER_VIDEO_HEIGHT', '1080')))
+    FPS: int = field(default_factory=lambda: int(os.getenv('CIBOZER_VIDEO_FPS', '30')))
+    QUALITY: str = field(default_factory=lambda: os.getenv('CIBOZER_VIDEO_QUALITY', '1080p'))
+    
+    # Output Settings
+    OUTPUT_PATH: str = field(default_factory=lambda: os.getenv('CIBOZER_OUTPUT_PATH', './cibozer_output'))
+    GENERATE_SHORTS: bool = field(default_factory=lambda: os.getenv('CIBOZER_GENERATE_SHORTS', 'true').lower() == 'true')
+    GENERATE_METADATA: bool = field(default_factory=lambda: os.getenv('CIBOZER_GENERATE_METADATA', 'true').lower() == 'true')
+    SAVE_MEAL_PLANS: bool = field(default_factory=lambda: os.getenv('CIBOZER_SAVE_MEAL_PLANS', 'true').lower() == 'true')
+    
+    # Font Settings
+    FONT_SIZE_SCALE: float = 1.0
+    FONT_FAMILY_PREFERENCE: str = "arial"
+    
+    # Performance Settings
+    MAX_BATCH_SIZE: int = 50
+    ENABLE_CACHING: bool = True
+    PARALLEL_PROCESSING: bool = True
+
+@dataclass
 class AppConfig:
     """Main application configuration combining all sections"""
     # Sub-configurations
@@ -148,6 +175,7 @@ class AppConfig:
     admin: AdminConfig = field(default_factory=AdminConfig)
     email: EmailConfig = field(default_factory=EmailConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
+    video: VideoConfig = field(default_factory=VideoConfig)
     
     # App-specific settings
     APP_NAME: str = "Cibozer"
@@ -168,6 +196,15 @@ class AppConfig:
     # Performance
     REQUEST_TIMEOUT: int = 300  # 5 minutes
     VIDEO_GENERATION_TIMEOUT: int = 600  # 10 minutes
+    
+    # Meal Optimizer Settings
+    MIN_CALORIES: int = 800
+    MAX_CALORIES: int = 5000
+    WARN_CALORIES_LOW: int = 1200
+    WARN_CALORIES_HIGH: int = 3500
+    MAX_ITERATIONS: int = 25
+    ACCURACY_TARGET: float = 0.95
+    CALORIE_TOLERANCE: int = 50
     
     def __post_init__(self):
         """Validate configuration and create necessary directories"""
