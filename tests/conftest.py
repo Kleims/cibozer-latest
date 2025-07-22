@@ -41,6 +41,14 @@ with patch.dict('sys.modules', {
         # Import and register auth blueprint without video dependencies
         with app.app_context():
             db.init_app(app)
+            # Register essential blueprints for testing
+            try:
+                from auth import auth_bp
+                from payments import payments_bp
+                app.register_blueprint(auth_bp)
+                app.register_blueprint(payments_bp)
+            except ImportError:
+                pass  # Skip if blueprints can't be imported
             
         return app
 

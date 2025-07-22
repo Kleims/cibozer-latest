@@ -1,0 +1,38 @@
+Requirement already satisfied: cryptography in c:\users\jose_\miniconda3\lib\site-packages (42.0.5)
+Collecting cryptography
+  Downloading cryptography-45.0.5-cp311-abi3-win_amd64.whl.metadata (5.7 kB)
+Requirement already satisfied: h11 in c:\users\jose_\miniconda3\lib\site-packages (0.14.0)
+Collecting h11
+  Using cached h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+Requirement already satisfied: pypdf in c:\users\jose_\miniconda3\lib\site-packages (5.3.0)
+Collecting pypdf
+  Using cached pypdf-5.8.0-py3-none-any.whl.metadata (7.1 kB)
+Requirement already satisfied: urllib3 in c:\users\jose_\miniconda3\lib\site-packages (2.2.2)
+Collecting urllib3
+  Using cached urllib3-2.5.0-py3-none-any.whl.metadata (6.5 kB)
+Requirement already satisfied: cffi>=1.14 in c:\users\jose_\miniconda3\lib\site-packages (from cryptography) (1.16.0)
+Requirement already satisfied: pycparser in c:\users\jose_\miniconda3\lib\site-packages (from cffi>=1.14->cryptography) (2.21)
+Downloading cryptography-45.0.5-cp311-abi3-win_amd64.whl (3.4 MB)
+   ---------------------------------------- 3.4/3.4 MB 9.1 MB/s eta 0:00:00
+Using cached h11-0.16.0-py3-none-any.whl (37 kB)
+Using cached pypdf-5.8.0-py3-none-any.whl (309 kB)
+Using cached urllib3-2.5.0-py3-none-any.whl (129 kB)
+Installing collected packages: urllib3, pypdf, h11, cryptography
+  Attempting uninstall: urllib3
+    Found existing installation: urllib3 2.2.2
+    Uninstalling urllib3-2.2.2:
+      Successfully uninstalled urllib3-2.2.2
+  Attempting uninstall: pypdf
+    Found existing installation: pypdf 5.3.0
+    Uninstalling pypdf-5.3.0:
+      Successfully uninstalled pypdf-5.3.0
+  Attempting uninstall: h11
+    Found existing installation: h11 0.14.0
+    Uninstalling h11-0.14.0:
+      Successfully uninstalled h11-0.14.0
+  Attempting uninstall: cryptography
+    Found existing installation: cryptography 42.0.5
+    Uninstalling cryptography-42.0.5:
+      Successfully uninstalled cryptography-42.0.5
+
+Successfully installed cryptography-45.0.5 h11-0.16.0 pypdf-5.8.0 urllib3-2.5.0

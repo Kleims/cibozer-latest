@@ -62,29 +62,7 @@ app = Flask(__name__)
 # Add request logging using the centralized logger
 logger = get_logger(__name__)
 
-@app.before_request
-def log_request_info():
-    try:
-        user = current_user.email if current_user.is_authenticated else "anonymous"
-    except Exception:
-        user = "anonymous"
-    
-    logger.info(f"{request.method} {request.path} | User: {user}")
-    
-    if request.form:
-        # Filter out sensitive data
-        safe_data = {k: v for k, v in request.form.items() if 'password' not in k.lower()}
-        logger.debug(f"Form data: {safe_data}")
-
-@app.after_request
-def log_response_info(response):
-    try:
-        user = current_user.email if current_user.is_authenticated else "anonymous"
-    except Exception:
-        user = "anonymous"
-    
-    logger.info(f"{request.method} {request.path} -> {response.status_code} | User: {user}")
-    return response
+# Removed duplicate logging decorators - consolidated below
 app.config.update(config.to_flask_config())
 
 # Set up centralized logging
@@ -126,26 +104,27 @@ login_manager.login_message = 'Please sign in to access this page.'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Global request logging
+# Optimized request logging - single instance
 @app.before_request
 def log_request_info():
-    app.logger.info(f"[REQ] {request.method} {request.url}")
-    app.logger.info(f"   Remote: {request.remote_addr}")
-    app.logger.info(f"   Agent: {request.headers.get('User-Agent', 'N/A')[:100]}")
-    if request.method in ['POST', 'PUT', 'PATCH']:
-        try:
-            if request.is_json:
-                app.logger.info(f"   JSON Body: {request.get_json()}")
-            elif request.form:
-                app.logger.info(f"   Form Data: {dict(request.form)}")
-        except (AttributeError, TypeError, ValueError) as e:
-            app.logger.warning(f"   Could not log request body: {e}")
+    try:
+        user = current_user.email if current_user.is_authenticated else "anonymous"
+    except Exception:
+        user = "anonymous"
+    
+    # Only log essential info to reduce performance impact
+    app.logger.info(f"[REQ] {request.method} {request.path} | User: {user}")
 
 @app.after_request
 def log_response_info(response):
-    app.logger.info(f"[RESP] {response.status_code} for {request.method} {request.path}")
+    try:
+        user = current_user.email if current_user.is_authenticated else "anonymous"
+    except Exception:
+        user = "anonymous"
+    
+    # Only log errors and essential info
     if response.status_code >= 400:
-        app.logger.error(f"   Error Response: {response.get_data(as_text=True)[:500]}")
+        app.logger.error(f"[RESP] {response.status_code} for {request.method} {request.path} | User: {user}")
     
     # Add security headers
     response.headers['X-Content-Type-Options'] = 'nosniff'
