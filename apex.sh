@@ -1,27 +1,11 @@
 #!/bin/bash
-# APEX v4.2.1 - Autonomous Code Evolution System
+# APEX v4.1 - Autonomous Code Evolution System
 # Complete integrated script for evolution iterations
 
 # Initialize tracking files
 [ ! -f .iteration ] && echo "0" > .iteration && touch METRICS.md FAILED_ATTEMPTS.md PROJECT_CONTEXT.md BASELINES.md FIXES.log
 ITER=$(cat .iteration)
 START_TIME=$(date +%s)
-
-# Verify tracking files are in good state
-TRACKING_ISSUES=""
-[ ! -s METRICS.md ] && TRACKING_ISSUES="$TRACKING_ISSUES METRICS.md(empty)"
-[ ! -s BASELINES.md ] && TRACKING_ISSUES="$TRACKING_ISSUES BASELINES.md(empty)"
-[ ! -s FIXES.log ] && TRACKING_ISSUES="$TRACKING_ISSUES FIXES.log(empty)"
-
-if [ -n "$TRACKING_ISSUES" ]; then
-    echo "⚠️  Tracking files need initialization:$TRACKING_ISSUES"
-    # Initialize empty files with headers
-    [ ! -s METRICS.md ] && echo "# APEX Metrics Log" > METRICS.md
-    [ ! -s BASELINES.md ] && echo "COV=0" > BASELINES.md && echo "PERF=999" >> BASELINES.md && echo "TESTS=0" >> BASELINES.md && echo "LOC=0" >> BASELINES.md
-    [ ! -s FIXES.log ] && echo "# APEX Fixes Log" > FIXES.log && echo "Track all fixes applied during iterations" >> FIXES.log && echo "" >> FIXES.log && echo "Format: [Iteration #] - [Date] - [Fix Description]" >> FIXES.log && echo "==========================================" >> FIXES.log
-    [ ! -s FAILED_ATTEMPTS.md ] && echo "# APEX Failed Attempts Log" > FAILED_ATTEMPTS.md && echo "*Document failed iterations for analysis and learning*" >> FAILED_ATTEMPTS.md
-fi
-
 echo "=== APEX Iteration: $ITER | $(date '+%Y-%m-%d %H:%M:%S') ==="
 
 # First run: Detect stack and commands
@@ -41,33 +25,6 @@ TEST_PASS_PATTERN="passed|PASSED"
 COVERAGE_PATTERN="[0-9]+%"
 LINT_CMD="python -m flake8 . --max-line-length=120 --exclude=venv,.git,__pycache__"
 EOF
-elif grep -q "<<<<<<< Updated upstream" PROJECT_CONTEXT.md 2>/dev/null; then
-    echo "⚠️  Merge conflicts detected in PROJECT_CONTEXT.md - preserving v4.1 version"
-    # Extract and preserve the v4.1 content if it exists
-    if grep -q "Project Context - Cibozer v4.1" PROJECT_CONTEXT.md; then
-        # Keep a backup
-        cp PROJECT_CONTEXT.md PROJECT_CONTEXT.md.conflict
-        # Extract the v4.1 content between conflict markers
-        sed -n '/<<<<<<< Updated upstream/,/=======/{/<<<<<<< Updated upstream/!{/=======/!p}}' PROJECT_CONTEXT.md > PROJECT_CONTEXT.md.tmp
-        # Add the test commands at the top
-        echo "# Project Context - Cibozer v4.1" > PROJECT_CONTEXT.md.new
-        echo "STACK=\"Python/Flask\"" >> PROJECT_CONTEXT.md.new
-        echo "TEST_CMD=\"python -m pytest\"" >> PROJECT_CONTEXT.md.new
-        echo "BUILD_CMD=\"pip install -r requirements.txt\"" >> PROJECT_CONTEXT.md.new
-        echo "COVERAGE_CMD=\"python -m pytest --cov=. --cov-report=term-missing\"" >> PROJECT_CONTEXT.md.new
-        echo "AUDIT_CMD=\"pip-audit\"" >> PROJECT_CONTEXT.md.new
-        echo "FILE_PATTERN=\"*.py\"" >> PROJECT_CONTEXT.md.new
-        echo "TEST_FAIL_PATTERN=\"FAILED|AssertionError|Exception|ERROR\"" >> PROJECT_CONTEXT.md.new
-        echo "TEST_PASS_PATTERN=\"passed|PASSED\"" >> PROJECT_CONTEXT.md.new
-        echo "COVERAGE_PATTERN=\"[0-9]+%\"" >> PROJECT_CONTEXT.md.new
-        echo "LINT_CMD=\"python -m flake8 . --max-line-length=120 --exclude=venv,.git,__pycache__\"" >> PROJECT_CONTEXT.md.new
-        echo "" >> PROJECT_CONTEXT.md.new
-        # Append the architectural content
-        grep -v "^STACK=\|^TEST_CMD=\|^BUILD_CMD=\|^COVERAGE_CMD=\|^AUDIT_CMD=\|^FILE_PATTERN=\|^TEST_FAIL_PATTERN=\|^TEST_PASS_PATTERN=\|^COVERAGE_PATTERN=\|^LINT_CMD=" PROJECT_CONTEXT.md.tmp >> PROJECT_CONTEXT.md.new
-        mv PROJECT_CONTEXT.md.new PROJECT_CONTEXT.md
-        rm -f PROJECT_CONTEXT.md.tmp
-        echo "✅ PROJECT_CONTEXT.md conflicts resolved"
-    fi
 fi
 
 # Load configuration
@@ -187,39 +144,10 @@ BRANCH=$BRANCH
 MAIN_BRANCH=$MAIN_BRANCH
 START_TIME=$START_TIME
 STASHED=${STASHED:-false}
-
-# Project Context Summary
 EOF
-
-# Append key project context if available
-if [ -f PROJECT_CONTEXT.md ] && grep -q "System Architecture Overview" PROJECT_CONTEXT.md 2>/dev/null; then
-    echo "PROJECT_SUMMARY=true" >> .apex_state
-    echo "# Key Architecture Points:" >> .apex_state
-    grep -A 2 "System Architecture Overview" PROJECT_CONTEXT.md | tail -2 | sed 's/^/# /' >> .apex_state
-    grep -A 3 "Technical Stack" PROJECT_CONTEXT.md | tail -3 | sed 's/^/# /' >> .apex_state
-    grep -A 3 "Key Features" PROJECT_CONTEXT.md | tail -3 | sed 's/^/# /' >> .apex_state
-else
-    echo "PROJECT_SUMMARY=false" >> .apex_state
-fi
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# Display project context for AI awareness
-if [ -f PROJECT_CONTEXT.md ] && grep -q "System Architecture Overview" PROJECT_CONTEXT.md 2>/dev/null; then
-    echo ""
-    echo "📋 Project Context Summary:"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    # Extract key sections
-    grep -A 2 "## 🏗️ System Architecture Overview" PROJECT_CONTEXT.md 2>/dev/null | tail -2 || true
-    echo ""
-    grep -A 5 "## 🔧 Technical Stack" PROJECT_CONTEXT.md 2>/dev/null | tail -5 || true
-    echo ""
-    grep -A 4 "## 🎯 Key Features" PROJECT_CONTEXT.md 2>/dev/null | tail -4 || true
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-fi
-
-echo ""
 echo "State saved to .apex_state"
 echo "AI should now implement based on MODE=$MODE and FOCUS=$NEXT_FOCUS"
 echo "After implementation, run: ./apex_complete.sh"

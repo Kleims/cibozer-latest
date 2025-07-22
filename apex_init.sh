@@ -1,9 +1,5 @@
 #!/bin/bash
-<<<<<<< Updated upstream
-# APEX v4.2 - Initialize project for first run or reset
-=======
 # APEX v4.1 - Initialize project for first run or reset
->>>>>>> Stashed changes
 
 echo "🚀 Initializing APEX for Cibozer project..."
 
