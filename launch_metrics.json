@@ -1,0 +1,23 @@
+{
+  "technical": {
+    "test_coverage": 32,
+    "page_load_time": null,
+    "error_rate": null,
+    "uptime": null,
+    "security_score": null
+  },
+  "user": {
+    "total_users": 0,
+    "day_1_retention": null,
+    "day_7_retention": null,
+    "day_30_retention": null,
+    "conversion_rate": null,
+    "churn_rate": null
+  },
+  "business": {
+    "mrr": 0,
+    "cac": null,
+    "ltv": null,
+    "ltv_cac_ratio": null
+  }
+}

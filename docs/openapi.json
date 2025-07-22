@@ -1,0 +1,232 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Cibozer API",
+    "description": "AI-powered meal planning and cooking video generation API",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Cibozer Support",
+      "email": "support@cibozer.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://cibozer.com",
+      "description": "Production server"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Home page - displays meal planning interface",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/generate_meal_plan": {
+      "post": {
+        "summary": "Generate personalized meal plan based on user preferences",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/generate_video": {
+      "post": {
+        "summary": "Generate cooking video for a specific recipe",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/save_meal_plan": {
+      "post": {
+        "summary": "Save meal plan to user account",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/export_grocery_list": {
+      "post": {
+        "summary": "Export grocery list as PDF",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "get": {
+        "summary": "User authentication endpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "User authentication endpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "get": {
+        "summary": "User registration endpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "User registration endpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/checkout": {
+      "post": {
+        "summary": "Process premium subscription payment",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "summary": "Health check endpoint for monitoring",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "MealPlan": {
+        "type": "object",
+        "properties": {
+          "meals": {
+            "type": "array"
+          },
+          "grocery_list": {
+            "type": "array"
+          },
+          "total_cost": {
+            "type": "number"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

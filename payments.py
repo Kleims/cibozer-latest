@@ -3,13 +3,18 @@ Stripe Payment Integration for Cibozer
 Handles subscriptions, payments, and credit purchases
 """
 
+# Standard library imports
+import logging
 import os
+from datetime import datetime, timedelta, timezone
+
+# Third-party imports
 from flask import Blueprint, request, jsonify, redirect, url_for, flash
 from flask_login import login_required, current_user
-from datetime import datetime, timedelta, timezone
-from models import db, User, Payment, PricingPlan
-import logging
+
+# Local application imports
 from app_config import get_app_config
+from models import db, User, Payment, PricingPlan
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -353,7 +358,10 @@ def deduct_credit(user, amount=1):
     """Deduct credits from user's balance"""
     # Check if user has active premium subscription (unlimited credits)
     if user.subscription_tier in ['pro', 'premium'] and user.subscription_status == 'active':
-        # Verify subscription hasn't expired
+        # If no end date, subscription is unlimited (e.g., admin users)
+        if user.subscription_end_date is None:
+            return True  # Unlimited credits for admin/unlimited subscribers
+        # If there is an end date, verify subscription hasn't expired
         if user.subscription_end_date and user.subscription_end_date > datetime.now(timezone.utc):
             return True  # Unlimited credits for active subscribers
         else:
