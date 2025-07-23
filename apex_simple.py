@@ -106,7 +106,7 @@ class APEXSimple:
         
         # Priority 1: Tests broken
         if metrics['tests']['percent'] < 70:
-            return 'FIX_TESTS', f"Tests only {metrics['tests']['percent']}% passing. That's not a test suite, it's a cry for help."
+            return 'FIX_TESTS', f"Tests only {metrics['tests']['percent']}% passing. Needs improvement."
         
         # Priority 2: Critical errors
         if metrics['errors_in_logs'] > 10:
