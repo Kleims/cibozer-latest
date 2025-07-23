@@ -105,6 +105,23 @@ class User(UserMixin, db.Model):
         self.reset_token = None
         self.reset_token_expires = None
     
+    def can_generate_plan(self):
+        """Check if user can generate a meal plan."""
+        if self.is_premium():
+            return True
+        return self.has_credits()
+    
+    def get_monthly_usage(self):
+        """Get usage count for current month."""
+        from datetime import datetime, timezone
+        from app.models.usage import UsageLog
+        start_of_month = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        return db.session.query(UsageLog).filter(
+            UsageLog.user_id == self.id,
+            UsageLog.created_at >= start_of_month,
+            UsageLog.action == 'meal_plan_generated'
+        ).count()
+    
     def __repr__(self):
         """String representation."""
         return f'<User {self.email}>'

@@ -6,7 +6,10 @@ Tests User model functionality and relationships
 import pytest
 from datetime import datetime, timedelta, timezone
 from app.extensions import db
-from models import User, UsageLog, Payment, SavedMealPlan
+from app.models.user import User
+from app.models.usage import UsageLog
+from app.models.payment import Payment
+from app.models.meal_plan import SavedMealPlan
 from app import create_app
 
 
@@ -181,24 +184,24 @@ class TestUserModel:
             # Add usage logs
             log1 = UsageLog(
                 user_id=user.id,
-                action_type='generate_plan',
+                action='meal_plan_generated',
                 credits_used=1
             )
             log2 = UsageLog(
                 user_id=user.id,
-                action_type='generate_plan',
+                action='meal_plan_generated',
                 credits_used=1
             )
             log3 = UsageLog(
                 user_id=user.id,
-                action_type='export_pdf',  # Different action type
+                action='pdf_exported',  # Different action type
                 credits_used=0
             )
             
             db.session.add_all([log1, log2, log3])
             db.session.commit()
             
-            # Should count only generate_plan actions
+            # Should count only meal_plan_generated actions
             assert user.get_monthly_usage() == 2
 
 
@@ -212,9 +215,9 @@ class TestUsageLog:
             
             log = UsageLog(
                 user_id=user.id,
-                action_type='generate_plan',
+                action='meal_plan_generated',
                 credits_used=1,
-                extra_data={'diet_type': 'balanced', 'calories': 2000}
+                usage_metadata={'diet_type': 'balanced', 'calories': 2000}
             )
             
             db.session.add(log)
@@ -223,10 +226,10 @@ class TestUsageLog:
             # Verify log was saved
             saved_log = db.session.query(UsageLog).filter_by(user_id=user.id).first()
             assert saved_log is not None
-            assert saved_log.action_type == 'generate_plan'
+            assert saved_log.action == 'meal_plan_generated'
             assert saved_log.credits_used == 1
-            assert saved_log.extra_data['diet_type'] == 'balanced'
-            assert saved_log.timestamp is not None
+            assert saved_log.usage_metadata['diet_type'] == 'balanced'
+            assert saved_log.created_at is not None
 
 
 class TestPayment:
@@ -240,10 +243,10 @@ class TestPayment:
             payment = Payment(
                 user_id=user.id,
                 stripe_payment_intent_id='pi_test_123',
-                amount=999,  # $9.99 in cents
-                currency='usd',
-                status='succeeded',
-                payment_type='subscription'
+                amount=9.99,  # Amount in dollars
+                currency='USD',
+                status='completed',
+                product_type='subscription'
             )
             
             db.session.add(payment)
@@ -252,8 +255,8 @@ class TestPayment:
             # Verify payment was saved
             saved_payment = db.session.query(Payment).filter_by(user_id=user.id).first()
             assert saved_payment is not None
-            assert saved_payment.amount == 999
-            assert saved_payment.status == 'succeeded'
+            assert saved_payment.amount == 9.99
+            assert saved_payment.status == 'completed'
 
 
 class TestSavedMealPlan:
