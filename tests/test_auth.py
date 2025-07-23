@@ -9,7 +9,8 @@ import os
 from flask import Flask
 from flask_login import LoginManager
 from app.extensions import db
-from models import User
+from app.models.user import User
+from app.routes import auth as auth_bp
 import auth
 from auth import rate_limit, record_attempt, clear_attempts, is_valid_email, validate_password
 
@@ -17,25 +18,11 @@ from auth import rate_limit, record_attempt, clear_attempts, is_valid_email, val
 @pytest.fixture
 def app():
     """Create test Flask app"""
-    app = Flask(__name__)
+    from app import create_app
+    app = create_app()
     app.config['TESTING'] = True
-    app.config['SECRET_KEY'] = 'test-secret-key'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF for testing
-    
-    # Initialize extensions
-    db.init_app(app)
-    login_manager = LoginManager()
-    login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
-    
-    @login_manager.user_loader
-    def load_user(user_id):
-        return User.query.get(int(user_id))
-    
-    # Register auth blueprint
-    app.register_blueprint(auth.auth_bp)
     
     with app.app_context():
         db.create_all()

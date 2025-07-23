@@ -4,6 +4,7 @@ import os
 import sys
 import time
 from datetime import datetime
+from typing import Dict
 from cibozer import CibozerVideoGenerator
 import json
 import random
