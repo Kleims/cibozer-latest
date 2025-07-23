@@ -27,7 +27,7 @@ def login():
             return render_template('auth/login.html')
         
         # Find user
-        user = User.query.filter_by(email=email).first()
+        user = db.session.query(User).filter_by(email=email).first()
         
         if user and user.check_password(password):
             if not user.is_active:
@@ -80,7 +80,7 @@ def register():
             errors.append('Please enter your full name.')
         
         # Check if user exists
-        if User.query.filter_by(email=email).first():
+        if db.session.query(User).filter_by(email=email).first():
             errors.append('An account with this email already exists.')
         
         if errors:
@@ -133,7 +133,7 @@ def forgot_password():
             flash('Please enter a valid email address.', 'error')
             return render_template('auth/forgot_password.html')
         
-        user = User.query.filter_by(email=email).first()
+        user = db.session.query(User).filter_by(email=email).first()
         if user:
             # Generate reset token
             token = user.generate_reset_token()
@@ -155,7 +155,7 @@ def reset_password(token):
         return redirect(url_for('main.dashboard'))
     
     # Find user with token
-    user = User.query.filter_by(reset_token=token).first()
+    user = db.session.query(User).filter_by(reset_token=token).first()
     
     if not user or not user.verify_reset_token(token):
         flash('Invalid or expired reset token.', 'error')

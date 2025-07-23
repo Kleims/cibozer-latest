@@ -5,7 +5,8 @@ User registration, login, and account management
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app as app, session
 from flask_login import login_user, logout_user, login_required, current_user
-from models import db, User, UsageLog
+from app.extensions import db
+from models import User, UsageLog
 from datetime import datetime, timedelta, timezone
 import re
 import time
@@ -126,7 +127,7 @@ def register():
             if password != password_confirm:
                 errors.append('Passwords do not match')
             
-            if User.query.filter_by(email=email).first():
+            if db.session.query(User).filter_by(email=email).first():
                 errors.append('Email already registered')
             
             if errors:
@@ -197,7 +198,7 @@ def login():
         
         identifier = request.remote_addr
         
-        user = User.query.filter_by(email=email).first()
+        user = db.session.query(User).filter_by(email=email).first()
         
         if user and user.check_password(password):
             if not user.is_active:
@@ -330,7 +331,7 @@ def forgot_password():
             flash('Please enter your email address', 'danger')
             return render_template('auth/forgot_password.html')
         
-        user = User.query.filter_by(email=email).first()
+        user = db.session.query(User).filter_by(email=email).first()
         
         if user:
             token = user.generate_reset_token()
@@ -353,7 +354,7 @@ def reset_password(token):
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     
-    user = User.query.filter_by(reset_token=token).first()
+    user = db.session.query(User).filter_by(reset_token=token).first()
     
     if not user or not user.verify_reset_token(token):
         flash('Invalid or expired reset token', 'danger')
