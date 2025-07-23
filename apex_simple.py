@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-APEX Simple - Lean Iteration System
-One command, consistent results, real progress
+APEX Simple - TARS Edition
+Honesty 90%, Humor 75%, Progress 100%
+I've seen things you wouldn't believe. Like your test coverage.
 """
 
 import subprocess
@@ -36,12 +37,12 @@ class APEXSimple:
     
     def assess(self):
         """Phase 1: Quick assessment of project health"""
-        print("ASSESSING PROJECT HEALTH...\n")
+        print("ASSESSING PROJECT HEALTH... Brace yourself.\n")
         
         metrics = {}
         
         # 1. Test health
-        print("Running tests...")
+        print("Running tests... Let's see how bad it really is.")
         test_result = subprocess.run(
             ['python', '-m', 'pytest', 'tests/', '-q', '--tb=no'],
             capture_output=True,
@@ -105,26 +106,26 @@ class APEXSimple:
         
         # Priority 1: Tests broken
         if metrics['tests']['percent'] < 70:
-            return 'FIX_TESTS', f"Tests only {metrics['tests']['percent']}% passing"
+            return 'FIX_TESTS', f"Tests only {metrics['tests']['percent']}% passing. That's not a test suite, it's a cry for help."
         
         # Priority 2: Critical errors
         if metrics['errors_in_logs'] > 10:
-            return 'FIX_ERRORS', f"{metrics['errors_in_logs']} errors in logs"
+            return 'FIX_ERRORS', f"{metrics['errors_in_logs']} errors in logs. Your app is screaming."
         
         # Priority 3: Missing critical files
         if not metrics['files_ok']:
-            return 'FIX_STRUCTURE', "Critical files missing"
+            return 'FIX_STRUCTURE', "Critical files missing. Can't fly without wings."
         
         # Priority 4: High tech debt
         if metrics['tech_debt'] > 20:
-            return 'CLEAN_DEBT', f"{metrics['tech_debt']} TODOs found"
+            return 'CLEAN_DEBT', f"{metrics['tech_debt']} TODOs found. Future you is going to hate current you."
         
         # Priority 5: Improve test coverage
         if metrics['tests']['percent'] < 90:
-            return 'IMPROVE_TESTS', f"Tests at {metrics['tests']['percent']}%"
+            return 'IMPROVE_TESTS', f"Tests at {metrics['tests']['percent']}%. Not terrible, but not great."
         
         # Everything good - build features
-        return 'BUILD_FEATURE', "All systems healthy"
+        return 'BUILD_FEATURE', "All systems healthy. I'm as surprised as you are."
     
     def gather_context(self):
         """Gather project context for better understanding"""
@@ -257,13 +258,13 @@ TASK:
         
         prompt += """
 
-RULES:
-- Make real improvements, no stubs
-- Every change must be tested
-- Focus on the task above
-- Report what was actually done
+GROUND RULES (non-negotiable):
+- Real fixes only. No duct tape.
+- Test everything. Hope is not a strategy.
+- Stay focused. This isn't a hackathon.
+- Report facts. I can handle the truth.
 
-Execute the task and report results."""
+Stop procrastinating. Start fixing. Go."""
         
         return prompt
     
@@ -283,7 +284,7 @@ Execute the task and report results."""
         # Decide focus
         focus, reason = self.decide_focus(metrics_before)
         
-        print(f"\nASSESSMENT COMPLETE")
+        print(f"\nASSESSMENT COMPLETE. Verdict: Needs work. (Shocker.)")
         print(f"Focus: {focus}")
         print(f"Reason: {reason}")
         
@@ -372,7 +373,7 @@ Execute the task and report results."""
         print(f"ITERATION #{iteration_num} RESULTS")
         print(f"{'='*50}")
         print(f"Focus: {history_entry['focus']}")
-        print(f"Success: {'[OK] YES' if success else '[FAIL] NO'}")
+        print(f"Success: {'[OK] YES - Even a broken clock is right twice a day.' if success else '[FAIL] NO - But A for effort. Well, C+.'}")
         print(f"\nCHANGES:")
         print(f"  Tests: {metrics_before['tests']['percent']}% → {metrics_after['tests']['percent']}% ({tests_improved:+.1f}%)")
         print(f"  Errors: {metrics_before['errors_in_logs']} → {metrics_after['errors_in_logs']} ({errors_reduced:+d})")
