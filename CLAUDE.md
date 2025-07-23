@@ -10,7 +10,7 @@ Cibozer is a production Flask application for AI-powered meal planning with prem
 - **Frontend**: Bootstrap 5, responsive design, clean UI
 
 ## Critical Information
-- User's livelihood depends on this app - quality is paramount
+- Quality is paramount - this is a production application
 - Focus on real implementations, no stubs or placeholders
 - All changes must be tested
 - Premium features: PDF export, video generation, unlimited plans
