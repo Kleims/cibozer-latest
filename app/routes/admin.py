@@ -64,7 +64,7 @@ def login():
 def logout():
     """Admin logout"""
     session.pop('is_admin', None)
-    return redirect(url_for('index'))
+    return redirect(url_for('main.index'))
 
 @admin_bp.route('/')
 @admin_required
