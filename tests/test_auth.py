@@ -151,7 +151,7 @@ def test_validate_password_error_handling():
 def test_register_success(client):
     """Test register GET request - handle template missing gracefully"""
     try:
-        response = client.get('/register')
+        response = client.get('/auth/register')
         # Accept 500 if template is missing, but should not crash completely
         assert response.status_code in [200, 500]
     except Exception as e:
@@ -165,7 +165,7 @@ def test_register_success(client):
 def test_register_error_handling(client):
     """Test register with invalid data"""
     try:
-        response = client.post('/register', data={
+        response = client.post('/auth/register', data={
             'email': 'invalid-email',  # Invalid email
             'password': '123',         # Too short password
             'full_name': ''           # Empty name
@@ -183,7 +183,7 @@ def test_register_error_handling(client):
 def test_login_success(client):
     """Test login GET request - handle template missing gracefully"""
     try:
-        response = client.get('/login')
+        response = client.get('/auth/login')
         # Accept 500 if template is missing, but should not crash completely
         assert response.status_code in [200, 500]
     except Exception as e:
@@ -197,7 +197,7 @@ def test_login_success(client):
 def test_login_error_handling(client):
     """Test login with invalid credentials"""
     try:
-        response = client.post('/login', data={
+        response = client.post('/auth/login', data={
             'email': 'nonexistent@example.com',
             'password': 'wrongpassword'
         })
@@ -213,25 +213,25 @@ def test_login_error_handling(client):
 
 def test_logout_success(client):
     """Test logout request"""
-    response = client.get('/logout')
+    response = client.get('/auth/logout')
     # Should redirect to login or home
     assert response.status_code in [200, 302]
 
 def test_logout_error_handling(client):
     """Test logout when not logged in"""
-    response = client.get('/logout')
+    response = client.get('/auth/logout')
     # Should handle gracefully
     assert response.status_code in [200, 302]
 
 def test_account_success(client, test_user):
     """Test account page when not logged in"""
-    response = client.get('/account')
+    response = client.get('/auth/profile')
     # Should redirect to login
     assert response.status_code in [302, 401]
 
 def test_account_error_handling(client):
     """Test account page access without login"""
-    response = client.get('/account')
+    response = client.get('/auth/profile')
     # Should redirect to login
     assert response.status_code in [302, 401]
 
@@ -249,13 +249,13 @@ def test_check_limits_error_handling(client):
 
 def test_upgrade_success(client):
     """Test upgrade page access"""
-    response = client.get('/upgrade')
+    response = client.get('/auth/upgrade')
     # Might require auth or return upgrade info
     assert response.status_code in [200, 302, 401]
 
 def test_upgrade_error_handling(client):
     """Test upgrade with invalid request"""
-    response = client.post('/upgrade', data={'invalid': 'data'})
+    response = client.post('/auth/upgrade', data={'invalid': 'data'})
     # Should handle gracefully
     assert response.status_code in [200, 400, 401, 405]
 
@@ -274,7 +274,7 @@ def test_user_stats_error_handling(client):
 def test_forgot_password_success(client):
     """Test forgot_password GET request - handle template missing gracefully"""
     try:
-        response = client.get('/forgot-password')
+        response = client.get('/auth/forgot-password')
         # Accept 500 if template is missing, but should not crash completely
         assert response.status_code in [200, 500]
     except Exception as e:
@@ -287,7 +287,7 @@ def test_forgot_password_success(client):
 
 def test_forgot_password_error_handling(client):
     """Test forgot_password with invalid email"""
-    response = client.post('/forgot-password', data={
+    response = client.post('/auth/forgot-password', data={
         'email': 'invalid-email-format'
     })
     # Should handle gracefully
@@ -295,13 +295,13 @@ def test_forgot_password_error_handling(client):
 
 def test_reset_password_success(client):
     """Test reset_password GET request with token"""
-    response = client.get('/reset-password/dummy-token')
+    response = client.get('/auth/reset-password/dummy-token')
     # Token might be invalid but should not crash
     assert response.status_code in [200, 302, 400, 404]
 
 def test_reset_password_error_handling(client):
     """Test reset_password with invalid token"""
-    response = client.post('/reset-password/invalid-token', data={
+    response = client.post('/auth/reset-password/invalid-token', data={
         'password': 'newpassword123',
         'confirm_password': 'newpassword123'
     })

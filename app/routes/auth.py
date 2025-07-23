@@ -204,3 +204,9 @@ def update_profile():
     
     flash('Your profile has been updated successfully.', 'success')
     return redirect(url_for('auth.profile'))
+
+
+@auth_bp.route('/upgrade')
+def upgrade():
+    """Upgrade subscription page"""
+    return render_template('auth/upgrade.html')
