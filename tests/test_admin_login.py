@@ -5,7 +5,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from app import create_app
 from app.extensions import db
-from models import User
+from app.models.user import User
 
 
 class TestAdminLogin:
@@ -43,7 +43,7 @@ class TestAdminLogin:
             db.session.commit()
             
             # Verify user was created
-            user = User.query.filter_by(email='admin@test.com').first()
+            user = db.session.query(User).filter_by(email='admin@test.com').first()
             assert user is not None
             assert user.full_name == 'Admin User'
             assert user.check_password('admin123')

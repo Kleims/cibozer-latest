@@ -224,11 +224,11 @@ def generate_video(meal_plan_id):
 @login_required
 def dashboard():
     """User dashboard."""
-    meal_plans = SavedMealPlan.query.filter_by(
+    meal_plans = db.session.query(SavedMealPlan).filter_by(
         user_id=current_user.id
     ).order_by(SavedMealPlan.created_at.desc()).limit(10).all()
     
-    return render_template('dashboard.html', meal_plans=meal_plans)
+    return render_template('index.html', meal_plans=meal_plans)
 
 @main_bp.route('/about')
 def about():

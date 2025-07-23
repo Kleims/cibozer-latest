@@ -96,7 +96,13 @@ class User(UserMixin, db.Model):
         """Verify password reset token."""
         if not self.reset_token or self.reset_token != token:
             return False
-        if self.reset_token_expires < datetime.now(timezone.utc):
+        
+        # Handle timezone comparison for SQLite compatibility
+        expires = self.reset_token_expires
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+        
+        if expires < datetime.now(timezone.utc):
             return False
         return True
     

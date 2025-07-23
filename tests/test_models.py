@@ -159,6 +159,9 @@ class TestUserModel:
             assert user.reset_token == token
             assert user.reset_token_expires is not None
             
+            # Commit the changes so the token is saved
+            db.session.commit()
+            
             # Refresh the user object to ensure we have the latest data
             db.session.refresh(user)
             
@@ -170,6 +173,7 @@ class TestUserModel:
             
             # Clear token
             user.clear_reset_token()
+            db.session.commit()
             assert user.reset_token is None
             assert user.reset_token_expires is None
     
