@@ -5,7 +5,8 @@ from flask import Flask
 from flask_login import LoginManager
 from werkzeug.security import generate_password_hash
 
-from models import db, User, PricingPlan
+from app.extensions import db
+from models import User, PricingPlan
 import auth
 
 

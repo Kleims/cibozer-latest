@@ -3,7 +3,8 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from flask import Flask
-from models import db, User, Payment
+from app.extensions import db
+from models import User, Payment
 from payments import (
     get_pricing_plans, create_checkout_session, cancel_subscription,
     stripe_webhook, check_user_credits, deduct_credit, add_credits

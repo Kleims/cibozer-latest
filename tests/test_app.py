@@ -5,30 +5,36 @@ Tests critical functionality and security
 
 import pytest
 import os
+import sys
 import tempfile
 import json
 import time
-from app import app, db
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from app import create_app
+from app.extensions import db
 from models import User, PricingPlan
 
 
 @pytest.fixture
 def client():
     """Create test client with temporary database"""
-    db_fd, app.config['DATABASE'] = tempfile.mkstemp()
-    app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['SECRET_KEY'] = 'test-secret-key'
-    app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF for testing
+    try:
+        from config.testing import TestingConfig
+        app = create_app(TestingConfig)
+    except ImportError:
+        app = create_app()
+        app.config['TESTING'] = True
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+        app.config['WTF_CSRF_ENABLED'] = False
     
     with app.test_client() as client:
         with app.app_context():
             db.create_all()
-            PricingPlan.seed_default_plans()
             yield client
-            
-    os.close(db_fd)
-    os.unlink(app.config['DATABASE'])
+            db.drop_all()
 
 
 def test_index_page(client):
@@ -70,6 +76,8 @@ def test_secret_key_configured():
 
 def test_user_creation():
     """Test user model creation"""
+    from config.testing import TestingConfig
+    app = create_app(TestingConfig)
     with app.app_context():
         db.create_all()
         user = User(email='test@example.com', full_name='Test User')
@@ -109,12 +117,24 @@ def test_security_headers(client):
 
 def test_database_models():
     """Test database models work correctly"""
+    from config.testing import TestingConfig
+    app = create_app(TestingConfig)
     with app.app_context():
+        # db is already initialized by create_app
         db.create_all()
         
-        # Test pricing plan seeding
+        # Test creating a pricing plan
+        plan = PricingPlan(
+            name='test_plan',
+            display_name='Test Plan',
+            price_monthly=9.99
+        )
+        db.session.add(plan)
+        db.session.commit()
+        
         plans = PricingPlan.query.all()
-        assert len(plans) > 0
+        assert len(plans) == 1
+        assert plans[0].name == 'test_plan'
         
         # Test user creation with unique email
         test_email = f'test_{int(time.time())}@example.com'

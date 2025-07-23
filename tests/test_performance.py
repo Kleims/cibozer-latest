@@ -3,7 +3,8 @@
 import pytest
 import time
 from app import create_app
-from models import db, User
+from app.extensions import db
+from models import User
 
 @pytest.fixture
 def app():

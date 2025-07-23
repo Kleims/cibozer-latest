@@ -1,6 +1,6 @@
 """Database utilities to reduce repetitive session management code"""
 
-from models import db
+from app.extensions import db
 
 
 class DatabaseHelper:

@@ -1,49 +1,71 @@
 """
-Test script to diagnose startup issues
+Tests for application startup and imports
 """
 
+import pytest
 import sys
 import os
+from unittest.mock import patch
 
-print("1. Starting test...")
 
-try:
-    print("2. Setting up environment...")
-    os.environ['FLASK_ENV'] = 'development'
+class TestStartup:
+    """Test application startup components"""
     
-    print("3. Importing Flask...")
-    from flask import Flask
+    def test_flask_import(self):
+        """Test that Flask can be imported"""
+        import flask
+        assert flask is not None
+        assert hasattr(flask, 'Flask')
     
-    print("4. Importing other modules...")
-    from dotenv import load_dotenv
-    load_dotenv()
+    def test_create_app_import(self):
+        """Test that create_app can be imported"""
+        from app import create_app
+        assert create_app is not None
+        assert callable(create_app)
     
-    print("5. Creating Flask app...")
-    test_app = Flask(__name__)
+    def test_app_creation(self):
+        """Test that app can be created"""
+        from app import create_app
+        app = create_app()
+        assert app is not None
+        assert app.name == 'app'
     
-    print("6. Importing database...")
-    from models import db
+    def test_database_import(self):
+        """Test that database models can be imported"""
+        from models import db, User
+        assert db is not None
+        assert User is not None
     
-    print("7. Importing app components...")
-    from admin import admin_bp
-    from auth import auth_bp
-    from payments import payments_bp
+    def test_blueprint_imports(self):
+        """Test that blueprints can be imported"""
+        try:
+            from app.routes.admin import admin_bp
+            assert admin_bp is not None
+        except ImportError:
+            # Try alternative import path
+            import admin
+            assert hasattr(admin, 'admin_bp')
+        
+        try:
+            from app.routes.auth import auth_bp
+            assert auth_bp is not None
+        except ImportError:
+            # Try alternative import path  
+            import auth
+            assert hasattr(auth, 'auth_bp')
     
-    print("8. Testing imports complete!")
+    def test_app_configuration(self):
+        """Test app configuration"""
+        from app import create_app
+        app = create_app()
+        
+        # Check essential config values exist
+        assert 'SECRET_KEY' in app.config
+        assert 'SQLALCHEMY_DATABASE_URI' in app.config
     
-    print("\n9. Now testing full app import...")
-    from app import app
-    
-    print("10. SUCCESS! App imported successfully")
-    
-    print("\nApp configuration:")
-    print(f"  - Debug mode: {app.debug}")
-    print(f"  - Database: {app.config.get('SQLALCHEMY_DATABASE_URI', 'Not set')}")
-    
-except Exception as e:
-    print(f"\nERROR at step: {e}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
-
-print("\nAll imports successful! The app should be able to start.")
+    def test_environment_setup(self):
+        """Test environment variable loading"""
+        with patch.dict(os.environ, {'FLASK_ENV': 'testing'}):
+            from app import create_app
+            app = create_app()
+            assert app.config.get('TESTING') is True

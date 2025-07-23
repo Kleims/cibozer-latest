@@ -5,21 +5,17 @@ Tests User model functionality and relationships
 
 import pytest
 from datetime import datetime, timedelta, timezone
-from models import db, User, UsageLog, Payment, SavedMealPlan
-from flask import Flask
-from app_config import get_app_config
+from app.extensions import db
+from models import User, UsageLog, Payment, SavedMealPlan
+from app import create_app
 
 
 @pytest.fixture
 def app():
     """Create test Flask app"""
-    app = Flask(__name__)
-    config = get_app_config()
-    app.config.update(config.to_flask_config())
+    app = create_app()
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     app.config['TESTING'] = True
-    
-    db.init_app(app)
     
     with app.app_context():
         db.create_all()
@@ -67,14 +63,14 @@ class TestUserModel:
             db.session.commit()
             
             # Verify user was saved
-            saved_user = User.query.filter_by(email='newuser@example.com').first()
+            saved_user = db.session.query(User).filter_by(email='newuser@example.com').first()
             assert saved_user is not None
             assert saved_user.check_password('SecurePassword123!')
     
     def test_password_hashing(self, app, test_user):
         """Test password hashing and verification"""
         with app.app_context():
-            user = User.query.filter_by(email='test@example.com').first()
+            user = db.session.query(User).filter_by(email='test@example.com').first()
             
             # Check correct password
             assert user.check_password('TestPassword123!') is True
@@ -89,7 +85,7 @@ class TestUserModel:
     def test_premium_subscription(self, app, test_user):
         """Test premium subscription checks"""
         with app.app_context():
-            user = User.query.filter_by(email='test@example.com').first()
+            user = db.session.query(User).filter_by(email='test@example.com').first()
             
             # Default user is not premium
             assert user.is_premium() is False
@@ -110,7 +106,7 @@ class TestUserModel:
     def test_credits_system(self, app, test_user):
         """Test credits usage and balance"""
         with app.app_context():
-            user = User.query.filter_by(email='test@example.com').first()
+            user = db.session.query(User).filter_by(email='test@example.com').first()
             
             # Check initial credits
             assert user.credits_balance == 3
@@ -132,7 +128,7 @@ class TestUserModel:
     def test_can_generate_plan(self, app, test_user):
         """Test meal plan generation permissions"""
         with app.app_context():
-            user = User.query.filter_by(email='test@example.com').first()
+            user = db.session.query(User).filter_by(email='test@example.com').first()
             
             # Free user with credits
             assert user.can_generate_plan() is True
@@ -151,7 +147,7 @@ class TestUserModel:
     def test_reset_token(self, app, test_user):
         """Test password reset token functionality"""
         with app.app_context():
-            user = User.query.filter_by(email='test@example.com').first()
+            user = db.session.query(User).filter_by(email='test@example.com').first()
             
             # Generate token
             token = user.generate_reset_token()
@@ -177,7 +173,7 @@ class TestUserModel:
     def test_monthly_usage(self, app, test_user):
         """Test monthly usage tracking"""
         with app.app_context():
-            user = User.query.filter_by(email='test@example.com').first()
+            user = db.session.query(User).filter_by(email='test@example.com').first()
             
             # No usage initially
             assert user.get_monthly_usage() == 0
@@ -212,7 +208,7 @@ class TestUsageLog:
     def test_usage_log_creation(self, app, test_user):
         """Test creating usage logs"""
         with app.app_context():
-            user = User.query.filter_by(email='test@example.com').first()
+            user = db.session.query(User).filter_by(email='test@example.com').first()
             
             log = UsageLog(
                 user_id=user.id,
@@ -225,7 +221,7 @@ class TestUsageLog:
             db.session.commit()
             
             # Verify log was saved
-            saved_log = UsageLog.query.filter_by(user_id=user.id).first()
+            saved_log = db.session.query(UsageLog).filter_by(user_id=user.id).first()
             assert saved_log is not None
             assert saved_log.action_type == 'generate_plan'
             assert saved_log.credits_used == 1
@@ -239,7 +235,7 @@ class TestPayment:
     def test_payment_creation(self, app, test_user):
         """Test creating payment records"""
         with app.app_context():
-            user = User.query.filter_by(email='test@example.com').first()
+            user = db.session.query(User).filter_by(email='test@example.com').first()
             
             payment = Payment(
                 user_id=user.id,
@@ -254,7 +250,7 @@ class TestPayment:
             db.session.commit()
             
             # Verify payment was saved
-            saved_payment = Payment.query.filter_by(user_id=user.id).first()
+            saved_payment = db.session.query(Payment).filter_by(user_id=user.id).first()
             assert saved_payment is not None
             assert saved_payment.amount == 999
             assert saved_payment.status == 'succeeded'
@@ -266,7 +262,7 @@ class TestSavedMealPlan:
     def test_meal_plan_creation(self, app, test_user):
         """Test creating saved meal plans"""
         with app.app_context():
-            user = User.query.filter_by(email='test@example.com').first()
+            user = db.session.query(User).filter_by(email='test@example.com').first()
             
             meal_plan = SavedMealPlan(
                 user_id=user.id,
@@ -282,7 +278,7 @@ class TestSavedMealPlan:
             db.session.commit()
             
             # Verify meal plan was saved
-            saved_plan = SavedMealPlan.query.filter_by(user_id=user.id).first()
+            saved_plan = db.session.query(SavedMealPlan).filter_by(user_id=user.id).first()
             assert saved_plan is not None
             assert saved_plan.name == 'Weekly Meal Plan'
             assert saved_plan.meal_plan_data['diet_type'] == 'balanced'

@@ -8,7 +8,8 @@ import os
 
 from flask import Flask
 from flask_login import LoginManager
-from models import db, User
+from app.extensions import db
+from models import User
 import auth
 from auth import rate_limit, record_attempt, clear_attempts, is_valid_email, validate_password
 

@@ -1,47 +1,90 @@
 """
-Test script to create admin user and test login
+Tests for admin login functionality
 """
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from app import app, db
+import pytest
+from unittest.mock import patch, MagicMock
+from app import create_app
+from app.extensions import db
 from models import User
 
-with app.app_context():
-    # Check if admin user exists
-    admin = User.query.filter_by(email='admin').first()
+
+class TestAdminLogin:
+    """Test admin login functionality"""
     
-    if not admin:
-        # Create admin user
-        admin = User(
-            email='admin',
-            full_name='Admin User',
-            subscription_tier='pro',
-            credits_balance=100
-        )
-        admin.set_password('admin')
-        db.session.add(admin)
-        db.session.commit()
-        print("Admin user created: admin / admin")
-    else:
-        print("Admin user already exists: admin")
-        # Update password to ensure it's 'admin'
-        admin.set_password('admin')
-        db.session.commit()
-        print("Admin password updated to: admin")
+    def setup_method(self):
+        """Set up test environment"""
+        self.app = create_app()
+        self.app.config['TESTING'] = True
+        self.app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+        self.app.config['WTF_CSRF_ENABLED'] = False
+        self.client = self.app.test_client()
         
-    # Test login functionality
-    print(f"Admin user ID: {admin.id}")
-    print(f"Admin credits: {admin.credits_balance}")
-    print(f"Admin tier: {admin.subscription_tier}")
+        with self.app.app_context():
+            db.create_all()
     
-    # Test password check
-    if admin.check_password('admin'):
-        print("[OK] Password check works")
-    else:
-        print("[ERROR] Password check failed")
+    def teardown_method(self):
+        """Clean up after tests"""
+        with self.app.app_context():
+            db.session.remove()
+            db.drop_all()
+    
+    def test_create_admin_user(self):
+        """Test creating an admin user"""
+        with self.app.app_context():
+            # Create admin user
+            admin = User(
+                email='admin@test.com',
+                full_name='Admin User',
+                subscription_tier='pro',
+                credits_balance=100
+            )
+            admin.set_password('admin123')
+            db.session.add(admin)
+            db.session.commit()
+            
+            # Verify user was created
+            user = User.query.filter_by(email='admin@test.com').first()
+            assert user is not None
+            assert user.full_name == 'Admin User'
+            assert user.check_password('admin123')
+    
+    def test_admin_login_success(self):
+        """Test successful admin login"""
+        with self.app.app_context():
+            # Create test admin user
+            admin = User(
+                email='admin@test.com',
+                full_name='Admin User'
+            )
+            admin.set_password('admin123')
+            db.session.add(admin)
+            db.session.commit()
         
-    print("\nTry logging in with:")
-    print("Username: admin")
-    print("Password: admin")
+        # Test login
+        response = self.client.post('/auth/login', data={
+            'email': 'admin@test.com',
+            'password': 'admin123'
+        }, follow_redirects=True)
+        
+        assert response.status_code == 200
+    
+    def test_admin_login_failure(self):
+        """Test failed admin login with wrong password"""
+        with self.app.app_context():
+            # Create test admin user
+            admin = User(
+                email='admin@test.com',
+                full_name='Admin User'
+            )
+            admin.set_password('admin123')
+            db.session.add(admin)
+            db.session.commit()
+        
+        # Test login with wrong password
+        response = self.client.post('/auth/login', data={
+            'email': 'admin@test.com',
+            'password': 'wrongpassword'
+        })
+        
+        assert response.status_code == 200  # Stays on login page
+        assert b'Invalid email or password' in response.data or b'error' in response.data.lower()

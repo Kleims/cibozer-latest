@@ -3,7 +3,8 @@ Tests for meal plan sharing functionality
 """
 
 import pytest
-from app import app, db
+from app import create_app
+from app.extensions import db
 from models import User, SharedMealPlan
 from datetime import datetime, timedelta, timezone
 import json
@@ -13,6 +14,7 @@ import bcrypt
 @pytest.fixture
 def client():
     """Test client fixture"""
+    app = create_app()
     app.config['TESTING'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     app.config['WTF_CSRF_ENABLED'] = False
@@ -25,7 +27,16 @@ def client():
 
 
 @pytest.fixture
-def authenticated_user(client):
+def app():
+    """Create test app"""
+    app = create_app()
+    app.config['TESTING'] = True
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    return app
+
+
+@pytest.fixture
+def authenticated_user(client, app):
     """Create and authenticate a test user"""
     with app.app_context():
         # Create test user
@@ -47,9 +58,10 @@ def authenticated_user(client):
         return user
 
 
-def test_shared_meal_plan_model():
+def test_shared_meal_plan_model(app):
     """Test SharedMealPlan model functionality"""
     with app.app_context():
+        db.create_all()
         # Create a shared meal plan
         meal_data = {
             'meals': [
@@ -86,7 +98,7 @@ def test_shared_meal_plan_model():
         assert shared_plan.is_expired() is True
 
 
-def test_create_share_endpoint(client, authenticated_user):
+def test_create_share_endpoint(client, authenticated_user, app):
     """Test creating a shareable meal plan"""
     meal_plan_data = {
         'day1': {
@@ -116,7 +128,7 @@ def test_create_share_endpoint(client, authenticated_user):
     assert data['share_url'].endswith(data['share_code'])
 
 
-def test_create_share_with_password(client, authenticated_user):
+def test_create_share_with_password(client, authenticated_user, app):
     """Test creating a password-protected share"""
     response = client.post('/share/create',
                           json={
@@ -136,7 +148,7 @@ def test_create_share_with_password(client, authenticated_user):
         assert shared_plan.verify_password('wrongpass') is False
 
 
-def test_view_shared_plan(client):
+def test_view_shared_plan(client, app):
     """Test viewing a shared meal plan"""
     with app.app_context():
         # Create a shared plan
@@ -159,7 +171,7 @@ def test_view_shared_plan(client):
         assert shared_plan.view_count == 1
 
 
-def test_expired_share_access(client):
+def test_expired_share_access(client, app):
     """Test accessing an expired share"""
     with app.app_context():
         # Create an expired share
@@ -176,7 +188,7 @@ def test_expired_share_access(client):
     assert b'expired' in response.data
 
 
-def test_copy_shared_plan(client, authenticated_user):
+def test_copy_shared_plan(client, authenticated_user, app):
     """Test copying a shared meal plan"""
     with app.app_context():
         # Create a shared plan
@@ -204,7 +216,7 @@ def test_copy_shared_plan(client, authenticated_user):
         assert shared_plan.copy_count == 1
 
 
-def test_copy_disabled(client, authenticated_user):
+def test_copy_disabled(client, authenticated_user, app):
     """Test copying when disabled"""
     with app.app_context():
         shared_plan = SharedMealPlan(
@@ -222,7 +234,7 @@ def test_copy_disabled(client, authenticated_user):
     assert 'cannot be copied' in data['error']
 
 
-def test_my_shares_page(client, authenticated_user):
+def test_my_shares_page(client, authenticated_user, app):
     """Test viewing user's shared plans"""
     with app.app_context():
         # Create multiple shares for the user
@@ -242,7 +254,7 @@ def test_my_shares_page(client, authenticated_user):
     assert b'Plan 2' in response.data
 
 
-def test_delete_share(client, authenticated_user):
+def test_delete_share(client, authenticated_user, app):
     """Test deleting a shared plan"""
     with app.app_context():
         shared_plan = SharedMealPlan(
@@ -263,7 +275,7 @@ def test_delete_share(client, authenticated_user):
         assert deleted_plan is None
 
 
-def test_delete_unauthorized(client, authenticated_user):
+def test_delete_unauthorized(client, authenticated_user, app):
     """Test deleting someone else's share"""
     with app.app_context():
         # Create share owned by different user
@@ -279,7 +291,7 @@ def test_delete_unauthorized(client, authenticated_user):
     assert response.status_code == 404
 
 
-def test_share_code_uniqueness():
+def test_share_code_uniqueness(app):
     """Test that share codes are unique"""
     with app.app_context():
         codes = set()
@@ -289,7 +301,7 @@ def test_share_code_uniqueness():
             codes.add(code)
 
 
-def test_password_verification(client):
+def test_password_verification(client, app):
     """Test password verification for protected shares"""
     with app.app_context():
         # Create password-protected share

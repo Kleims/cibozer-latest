@@ -1,0 +1,266 @@
+[
+  {
+    "iteration": 1,
+    "timestamp": "2025-07-23T12:08:57.505526",
+    "focus": "FIX_TESTS",
+    "reason": "Tests only 64.1% passing",
+    "metrics_before": {
+      "tests": {
+        "total": 64,
+        "passing": 41,
+        "failing": 23,
+        "percent": 64.1
+      },
+      "files_ok": true,
+      "errors_in_logs": 2361,
+      "tech_debt": 25
+    },
+    "completed": true,
+    "metrics_after": {
+      "tests": {
+        "total": 64,
+        "passing": 41,
+        "failing": 23,
+        "percent": 64.1
+      },
+      "files_ok": true,
+      "errors_in_logs": 2361,
+      "tech_debt": 25
+    },
+    "success": false,
+    "improvements": {
+      "tests": 0.0,
+      "errors": 0,
+      "debt": 0
+    }
+  },
+  {
+    "iteration": 2,
+    "timestamp": "2025-07-23T12:20:37.857173",
+    "focus": "FIX_TESTS",
+    "reason": "Tests only 64.1% passing",
+    "metrics_before": {
+      "tests": {
+        "total": 64,
+        "passing": 41,
+        "failing": 23,
+        "percent": 64.1
+      },
+      "files_ok": true,
+      "errors_in_logs": 2361,
+      "tech_debt": 25
+    },
+    "completed": false
+  },
+  {
+    "iteration": 3,
+    "timestamp": "2025-07-23T12:29:55.254393",
+    "focus": "FIX_TESTS",
+    "reason": "Tests only 64.1% passing",
+    "metrics_before": {
+      "tests": {
+        "total": 64,
+        "passing": 41,
+        "failing": 23,
+        "percent": 64.1
+      },
+      "files_ok": true,
+      "errors_in_logs": 2361,
+      "tech_debt": 10
+    },
+    "completed": false
+  },
+  {
+    "iteration": 4,
+    "timestamp": "2025-07-23T12:31:34.547624",
+    "focus": "FIX_TESTS",
+    "reason": "Tests only 64.1% passing",
+    "metrics_before": {
+      "tests": {
+        "total": 64,
+        "passing": 41,
+        "failing": 23,
+        "percent": 64.1
+      },
+      "files_ok": true,
+      "errors_in_logs": 2361,
+      "tech_debt": 10
+    },
+    "completed": true,
+    "metrics_after": {
+      "tests": {
+        "total": 64,
+        "passing": 41,
+        "failing": 23,
+        "percent": 64.1
+      },
+      "files_ok": true,
+      "errors_in_logs": 2365,
+      "tech_debt": 10
+    },
+    "success": false,
+    "improvements": {
+      "tests": 0.0,
+      "errors": -4,
+      "debt": 0
+    }
+  },
+  {
+    "iteration": 5,
+    "timestamp": "2025-07-23T12:41:16.425213",
+    "focus": "FIX_TESTS",
+    "reason": "Tests only 64.1% passing",
+    "metrics_before": {
+      "tests": {
+        "total": 64,
+        "passing": 41,
+        "failing": 23,
+        "percent": 64.1
+      },
+      "files_ok": true,
+      "errors_in_logs": 2365,
+      "tech_debt": 10
+    },
+    "completed": false
+  },
+  {
+    "iteration": 6,
+    "timestamp": "2025-07-23T13:03:48.246090",
+    "focus": "FIX_TESTS",
+    "reason": "Tests only 64.1% passing",
+    "metrics_before": {
+      "tests": {
+        "total": 64,
+        "passing": 41,
+        "failing": 23,
+        "percent": 64.1
+      },
+      "files_ok": true,
+      "errors_in_logs": 2365,
+      "tech_debt": 10
+    },
+    "completed": true,
+    "metrics_after": {
+      "tests": {
+        "total": 64,
+        "passing": 41,
+        "failing": 23,
+        "percent": 64.1
+      },
+      "files_ok": true,
+      "errors_in_logs": 2365,
+      "tech_debt": 10
+    },
+    "success": false,
+    "improvements": {
+      "tests": 0.0,
+      "errors": 0,
+      "debt": 0
+    }
+  },
+  {
+    "iteration": 7,
+    "timestamp": "2025-07-23T13:44:42.762938",
+    "focus": "FIX_TESTS",
+    "reason": "Tests only 64.1% passing",
+    "metrics_before": {
+      "tests": {
+        "total": 64,
+        "passing": 41,
+        "failing": 23,
+        "percent": 64.1
+      },
+      "files_ok": true,
+      "errors_in_logs": 2365,
+      "tech_debt": 10
+    },
+    "completed": true,
+    "metrics_after": {
+      "tests": {
+        "total": 64,
+        "passing": 41,
+        "failing": 23,
+        "percent": 64.1
+      },
+      "files_ok": true,
+      "errors_in_logs": 2365,
+      "tech_debt": 10
+    },
+    "success": false,
+    "improvements": {
+      "tests": 0.0,
+      "errors": 0,
+      "debt": 0
+    }
+  },
+  {
+    "iteration": 8,
+    "timestamp": "2025-07-23T13:56:01.599793",
+    "focus": "FIX_TESTS",
+    "reason": "Tests only 64.1% passing",
+    "metrics_before": {
+      "tests": {
+        "total": 64,
+        "passing": 41,
+        "failing": 23,
+        "percent": 64.1
+      },
+      "files_ok": true,
+      "errors_in_logs": 2365,
+      "tech_debt": 10
+    },
+    "completed": true,
+    "metrics_after": {
+      "tests": {
+        "total": 64,
+        "passing": 41,
+        "failing": 23,
+        "percent": 64.1
+      },
+      "files_ok": true,
+      "errors_in_logs": 2365,
+      "tech_debt": 10
+    },
+    "success": false,
+    "improvements": {
+      "tests": 0.0,
+      "errors": 0,
+      "debt": 0
+    }
+  },
+  {
+    "iteration": 9,
+    "timestamp": "2025-07-23T14:35:17.395141",
+    "focus": "FIX_TESTS",
+    "reason": "Tests only 64.1% passing",
+    "metrics_before": {
+      "tests": {
+        "total": 64,
+        "passing": 41,
+        "failing": 23,
+        "percent": 64.1
+      },
+      "files_ok": true,
+      "errors_in_logs": 2365,
+      "tech_debt": 10
+    },
+    "completed": true,
+    "metrics_after": {
+      "tests": {
+        "total": 64,
+        "passing": 41,
+        "failing": 23,
+        "percent": 64.1
+      },
+      "files_ok": true,
+      "errors_in_logs": 2365,
+      "tech_debt": 10
+    },
+    "success": false,
+    "improvements": {
+      "tests": 0.0,
+      "errors": 0,
+      "debt": 0
+    }
+  }
+]
