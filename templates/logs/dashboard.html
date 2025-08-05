@@ -1,0 +1,540 @@
+{% extends "base.html" %}
+
+{% block title %}Log Analysis Dashboard - Cibozer{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.log-metric-card {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.log-entry {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 5px;
+    border-left: 4px solid;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+.log-entry.ERROR { border-color: #dc3545; background-color: #f8d7da; }
+.log-entry.WARNING { border-color: #ffc107; background-color: #fff3cd; }
+.log-entry.INFO { border-color: #17a2b8; background-color: #d1ecf1; }
+.log-entry.DEBUG { border-color: #6c757d; background-color: #e2e3e5; }
+
+.log-entry:hover {
+    background-color: #f0f0f0;
+    cursor: pointer;
+}
+
+.error-pattern-item {
+    padding: 0.5rem;
+    border-radius: 5px;
+    margin-bottom: 0.25rem;
+    background-color: #f8f9fa;
+    border-left: 3px solid #dc3545;
+}
+
+.logger-stat-item {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 5px;
+    margin-bottom: 0.25rem;
+    background-color: #f8f9fa;
+}
+
+.live-log-container {
+    max-height: 400px;
+    overflow-y: auto;
+    background: #000;
+    color: #00ff00;
+    padding: 1rem;
+    border-radius: 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+}
+
+.search-filters {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.log-level-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.refresh-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.refresh-indicator.show {
+    opacity: 1;
+}
+
+.live-updates {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-file-alt"></i> Log Analysis Dashboard</h1>
+        <div>
+            <button class="btn btn-outline-primary me-2" onclick="refreshDashboard()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button class="btn btn-outline-secondary me-2" onclick="toggleLiveUpdates()">
+                <i class="fas fa-play" id="live-icon"></i> <span id="live-text">Start Live</span>
+            </button>
+            <a href="/logs/viewer" class="btn btn-outline-info">
+                <i class="fas fa-search"></i> Log Viewer
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="log-metric-card">
+                <div class="metric-value">{{ data.error_summary.total_errors }}</div>
+                <div class="metric-label">
+                    <i class="fas fa-exclamation-triangle"></i> Errors (24h)
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="log-metric-card">
+                <div class="metric-value">{{ "%.1f"|format(data.error_summary.error_rate_per_hour) }}</div>
+                <div class="metric-label">
+                    <i class="fas fa-chart-line"></i> Errors/Hour
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="log-metric-card">
+                <div class="metric-value">{{ data.patterns.total_logs }}</div>
+                <div class="metric-label">
+                    <i class="fas fa-list"></i> Total Logs (24h)
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="log-metric-card">
+                <div class="metric-value">{{ data.patterns.unique_loggers }}</div>
+                <div class="metric-label">
+                    <i class="fas fa-code"></i> Active Loggers
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Error Analysis -->
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="fas fa-bug"></i> Error Analysis</h5>
+                <canvas id="errorChart" height="200"></canvas>
+                
+                <div class="mt-3">
+                    <h6>Top Error Sources</h6>
+                    <div id="error-sources">
+                        {% for source, count in data.error_summary.top_error_sources.items() %}
+                        <div class="error-pattern-item">
+                            <div class="d-flex justify-content-between">
+                                <span class="small">{{ source }}</span>
+                                <span class="badge bg-danger">{{ count }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logger Statistics -->
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="fas fa-layer-group"></i> Logger Activity</h5>
+                <div style="max-height: 300px; overflow-y: auto;">
+                    {% for logger_name, stats in data.logger_stats.items() %}
+                    <div class="logger-stat-item">
+                        <div>
+                            <strong>{{ logger_name.replace('cibozer.', '') }}</strong>
+                            <div class="small text-muted">
+                                {% for level, count in stats.levels.items() %}
+                                <span class="badge log-level-badge bg-{{ 'danger' if level == 'ERROR' else 'warning' if level == 'WARNING' else 'info' if level == 'INFO' else 'secondary' }}">
+                                    {{ level }}: {{ count }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold">{{ stats.total_logs }}</div>
+                            <small class="text-muted">total</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hourly Breakdown -->
+    <div class="row">
+        <div class="col-12">
+            <div class="chart-container">
+                <h5><i class="fas fa-clock"></i> Hourly Log Distribution</h5>
+                <canvas id="hourlyChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Errors and Live Feed -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="fas fa-exclamation-circle"></i> Recent Errors</h5>
+                <div id="recent-errors" style="max-height: 400px; overflow-y: auto;">
+                    {% for error in data.error_summary.recent_errors %}
+                    <div class="log-entry ERROR" onclick="showErrorDetails('{{ error.message }}', '{{ error.timestamp }}')">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>{{ error.module }}.{{ error.function }}</strong>
+                                <div class="mt-1">{{ error.message[:100] }}{% if error.message|length > 100 %}...{% endif %}</div>
+                                {% if error.user_id %}
+                                <small class="text-muted">User: {{ error.user_id }}</small>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">{{ error.timestamp }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="fas fa-stream"></i> Live Log Feed</h5>
+                <div id="live-logs" class="live-log-container">
+                    <div class="text-center text-muted">
+                        Click "Start Live" to begin real-time log monitoring
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Details Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Error Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="error-modal-content">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Refresh Indicator -->
+<div id="refresh-indicator" class="refresh-indicator">
+    <i class="fas fa-sync-alt"></i> Updated
+</div>
+
+<!-- Live Updates Toggle -->
+<div class="live-updates">
+    <div class="badge bg-secondary" id="live-status" style="display: none;">
+        <i class="fas fa-circle text-success"></i> Live Updates
+    </div>
+</div>
+
+<script>
+let dashboardData = {{ data | tojson }};
+let liveUpdatesActive = false;
+let liveUpdateInterval = null;
+let charts = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+});
+
+function initializeCharts() {
+    // Error types chart
+    const errorTypes = dashboardData.error_summary.error_types;
+    if (Object.keys(errorTypes).length > 0) {
+        const errorCtx = document.getElementById('errorChart').getContext('2d');
+        charts.error = new Chart(errorCtx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(errorTypes).map(key => key.substring(0, 30) + '...'),
+                datasets: [{
+                    data: Object.values(errorTypes),
+                    backgroundColor: [
+                        '#dc3545', '#fd7e14', '#ffc107', '#20c997', '#6f42c1',
+                        '#e83e8c', '#6c757d', '#007bff', '#28a745', '#17a2b8'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            font: { size: 10 }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Hourly distribution chart
+    const hourlyData = dashboardData.patterns.hourly_breakdown;
+    if (Object.keys(hourlyData).length > 0) {
+        const hours = Object.keys(hourlyData).sort();
+        const errorCounts = hours.map(hour => hourlyData[hour].ERROR || 0);
+        const warningCounts = hours.map(hour => hourlyData[hour].WARNING || 0);
+        const infoCounts = hours.map(hour => hourlyData[hour].INFO || 0);
+
+        const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+        charts.hourly = new Chart(hourlyCtx, {
+            type: 'line',
+            data: {
+                labels: hours.map(hour => hour.split(' ')[1]),
+                datasets: [
+                    {
+                        label: 'Errors',
+                        data: errorCounts,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        fill: true
+                    },
+                    {
+                        label: 'Warnings',
+                        data: warningCounts,
+                        borderColor: '#ffc107',
+                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                        fill: true
+                    },
+                    {
+                        label: 'Info',
+                        data: infoCounts,
+                        borderColor: '#17a2b8',
+                        backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        stacked: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    }
+}
+
+function refreshDashboard() {
+    fetch('/logs/api/errors?hours=24')
+        .then(response => response.json())
+        .then(data => {
+            updateErrorSummary(data.summary);
+            showRefreshIndicator();
+        })
+        .catch(error => console.error('Error refreshing dashboard:', error));
+    
+    fetch('/logs/api/patterns?hours=24')
+        .then(response => response.json())
+        .then(data => {
+            updatePatterns(data.patterns);
+        })
+        .catch(error => console.error('Error refreshing patterns:', error));
+}
+
+function updateErrorSummary(errorSummary) {
+    // Update metrics
+    const metricValues = document.querySelectorAll('.log-metric-card .metric-value');
+    metricValues[0].textContent = errorSummary.total_errors;
+    metricValues[1].textContent = errorSummary.error_rate_per_hour.toFixed(1);
+    
+    // Update recent errors
+    const errorsContainer = document.getElementById('recent-errors');
+    errorsContainer.innerHTML = errorSummary.recent_errors.map(error => `
+        <div class="log-entry ERROR" onclick="showErrorDetails('${error.message}', '${error.timestamp}')">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <strong>${error.module}.${error.function}</strong>
+                    <div class="mt-1">${error.message.substring(0, 100)}${error.message.length > 100 ? '...' : ''}</div>
+                    ${error.user_id ? `<small class="text-muted">User: ${error.user_id}</small>` : ''}
+                </div>
+                <small class="text-muted">${new Date(error.timestamp).toLocaleString()}</small>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updatePatterns(patterns) {
+    const metricValues = document.querySelectorAll('.log-metric-card .metric-value');
+    metricValues[2].textContent = patterns.total_logs;
+    metricValues[3].textContent = patterns.unique_loggers;
+}
+
+function toggleLiveUpdates() {
+    const icon = document.getElementById('live-icon');
+    const text = document.getElementById('live-text');
+    const status = document.getElementById('live-status');
+    
+    if (liveUpdatesActive) {
+        // Stop live updates
+        clearInterval(liveUpdateInterval);
+        liveUpdatesActive = false;
+        icon.className = 'fas fa-play';
+        text.textContent = 'Start Live';
+        status.style.display = 'none';
+    } else {
+        // Start live updates
+        liveUpdatesActive = true;
+        icon.className = 'fas fa-stop';
+        text.textContent = 'Stop Live';
+        status.style.display = 'block';
+        
+        // Update immediately and then every 5 seconds
+        updateLiveLogs();
+        liveUpdateInterval = setInterval(updateLiveLogs, 5000);
+    }
+}
+
+function updateLiveLogs() {
+    fetch('/logs/api/live')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('live-logs');
+            const logs = data.logs.slice(0, 20); // Show last 20 logs
+            
+            container.innerHTML = logs.map(log => {
+                const levelColor = log.level === 'ERROR' ? '#ff4444' : 
+                                 log.level === 'WARNING' ? '#ffaa00' : 
+                                 log.level === 'INFO' ? '#00aaff' : '#888888';
+                
+                return `<div style="margin-bottom: 2px;">
+                    <span style="color: #666;">${new Date(log.timestamp).toLocaleTimeString()}</span>
+                    <span style="color: ${levelColor}; font-weight: bold;">[${log.level}]</span>
+                    <span style="color: #00aa00;">${log.logger}</span>
+                    <span style="color: #ffffff;">${log.message}</span>
+                </div>`;
+            }).join('');
+            
+            // Auto-scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        })
+        .catch(error => console.error('Error updating live logs:', error));
+}
+
+function showErrorDetails(message, timestamp) {
+    const modal = new bootstrap.Modal(document.getElementById('errorModal'));
+    const content = document.getElementById('error-modal-content');
+    
+    content.innerHTML = `
+        <div class="mb-3">
+            <strong>Timestamp:</strong> ${new Date(timestamp).toLocaleString()}
+        </div>
+        <div class="mb-3">
+            <strong>Message:</strong><br>
+            <pre class="bg-light p-2 rounded">${message}</pre>
+        </div>
+        <div class="mb-3">
+            <button class="btn btn-sm btn-outline-primary" onclick="searchSimilarErrors('${message.substring(0, 50)}')">
+                <i class="fas fa-search"></i> Find Similar Errors
+            </button>
+        </div>
+    `;
+    
+    modal.show();
+}
+
+function searchSimilarErrors(query) {
+    window.open(`/logs/viewer?q=${encodeURIComponent(query)}`, '_blank');
+}
+
+function showRefreshIndicator() {
+    const indicator = document.getElementById('refresh-indicator');
+    indicator.classList.add('show');
+    setTimeout(() => {
+        indicator.classList.remove('show');
+    }, 2000);
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (liveUpdateInterval) {
+        clearInterval(liveUpdateInterval);
+    }
+});
+</script>
+{% endblock %}

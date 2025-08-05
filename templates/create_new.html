@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Create Meal Plan - Cibozer{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="form-card">
+                <h2 class="mb-4 text-center">
+                    <i class="fas fa-magic me-2"></i>Create Your Meal Plan (NEW VERSION)
+                </h2>
+                
+                <form id="mealPlanFormNew" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <div class="mb-3">
+                        <label for="diet" class="form-label">Diet Type</label>
+                        <select class="form-control" id="diet" name="diet" required>
+                            <option value="standard">Standard</option>
+                            <option value="keto">Keto</option>
+                            <option value="paleo">Paleo</option>
+                            <option value="vegan">Vegan</option>
+                            <option value="vegetarian">Vegetarian</option>
+                            <option value="high_protein">High Protein</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="calories" class="form-label">Daily Calories</label>
+                        <input type="number" class="form-control" id="calories" name="calories" 
+                               min="800" max="6000" value="2000" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="days" class="form-label">Number of Days</label>
+                        <select class="form-control" id="days" name="days" required>
+                            <option value="1">1 Day</option>
+                            <option value="3">3 Days</option>
+                            <option value="7" selected>7 Days</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="meal_structure" class="form-label">Meal Structure</label>
+                        <select class="form-control" id="meal_structure" name="meal_structure" required>
+                            <option value="standard">Standard (3 meals + snacks)</option>
+                            <option value="3_plus_2">3 Meals + 2 Snacks</option>
+                            <option value="5_small">5 Small Meals</option>
+                            <option value="16_8_if">Intermittent Fasting (16:8)</option>
+                            <option value="18_6_if">Intermittent Fasting (18:6)</option>
+                            <option value="omad">OMAD (One Meal a Day)</option>
+                            <option value="2_meals">2 Meals</option>
+                        </select>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-magic me-2"></i>Generate Meal Plan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="result"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('mealPlanFormNew').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Remove CSRF token from data
+    const csrfToken = data.csrf_token;
+    delete data.csrf_token;
+    
+    console.log('NEW FORM - Sending data:', data);
+    
+    try {
+        const response = await fetch('/api/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        console.log('NEW FORM - Response:', result);
+        
+        if (response.ok && result.success) {
+            document.getElementById('result').innerHTML = `
+                <div class="alert alert-success mt-4">
+                    <h4>Success!</h4>
+                    <pre>${JSON.stringify(result.meal_plan, null, 2)}</pre>
+                </div>
+            `;
+        } else {
+            document.getElementById('result').innerHTML = `
+                <div class="alert alert-danger mt-4">
+                    <h4>Error</h4>
+                    <p>${result.error || 'Unknown error'}</p>
+                    ${result.details ? '<pre>' + JSON.stringify(result.details, null, 2) + '</pre>' : ''}
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('NEW FORM - Error:', error);
+        document.getElementById('result').innerHTML = `
+            <div class="alert alert-danger mt-4">
+                <h4>Error</h4>
+                <p>${error.message}</p>
+            </div>
+        `;
+    }
+});
+</script>
+{% endblock %}

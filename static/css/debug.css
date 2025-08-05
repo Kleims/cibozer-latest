@@ -1,0 +1,74 @@
+/* Debug CSS - Minimal styles to test functionality */
+
+/* Reset any problematic styles */
+* {
+    pointer-events: auto !important;
+}
+
+/* Ensure body is clickable */
+body {
+    position: relative;
+    z-index: 0;
+}
+
+/* Fix any overlay issues */
+.hero-section::before,
+.hero-section::after,
+*::before,
+*::after {
+    pointer-events: none !important;
+}
+
+/* Ensure buttons are clickable */
+button,
+a,
+input,
+select,
+textarea,
+.btn,
+.nav-link,
+[role="button"] {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto !important;
+}
+
+/* Debug styles to see what's happening */
+button:hover,
+a:hover {
+    outline: 2px solid red !important;
+}
+
+/* Fix notification container */
+.notification,
+#notification-container {
+    pointer-events: none !important;
+}
+
+.notification > *,
+#notification-container > * {
+    pointer-events: auto !important;
+}
+
+/* Ensure alerts don't block */
+.alert {
+    position: relative;
+    z-index: 1;
+}
+
+/* Debug overlay visualization */
+.debug-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 0, 0, 0.1);
+    pointer-events: none;
+    z-index: 9999;
+    display: none;
+}
+
+body.debug-mode .debug-overlay {
+    display: block;
+}

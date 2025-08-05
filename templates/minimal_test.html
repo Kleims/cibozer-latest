@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Test - No JavaScript</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔬 Minimal Test Page</h1>
+    <p><strong>This page has ZERO JavaScript. Testing basic HTML functionality.</strong></p>
+    
+    <div class="test-section">
+        <h2>Test 1: Basic Links</h2>
+        <p>Click these links to test basic navigation:</p>
+        <a href="/" class="btn">Home</a>
+        <a href="/about" class="btn">About</a>
+        <a href="/test" class="btn">Test Page</a>
+        <a href="#section2" class="btn">Anchor Link</a>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Form Submission</h2>
+        <p>This form will submit without JavaScript:</p>
+        <form action="/minimal-test" method="post">
+            <input type="text" name="test_input" placeholder="Type something..." required>
+            <button type="submit" class="btn">Submit Form</button>
+        </form>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Button Clicks</h2>
+        <p>These buttons should be clickable (they won't do anything, but cursor should change):</p>
+        <button class="btn" onclick="return false;">Button 1</button>
+        <button class="btn" onclick="return false;">Button 2</button>
+        <button class="btn" onclick="return false;">Button 3</button>
+    </div>
+    
+    <div class="test-section" id="section2">
+        <h2>Test 4: Anchor Target</h2>
+        <p class="success">✅ If you can see this section after clicking "Anchor Link", basic navigation works!</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 5: Auth Links</h2>
+        <p>Test the actual auth links that are causing problems:</p>
+        <a href="{{ url_for('auth.login') }}" class="btn">Sign In</a>
+        <a href="{{ url_for('auth.register') }}" class="btn">Get Started</a>
+    </div>
+    
+    <div class="test-section">
+        <h2>Instructions</h2>
+        <p><strong>If ANY of these don't work:</strong></p>
+        <ul>
+            <li>The issue is NOT JavaScript-related</li>
+            <li>It might be server-side, CSS, or browser-specific</li>
+            <li>Try different browsers or incognito mode</li>
+        </ul>
+        <p><strong>If these work but the main site doesn't:</strong></p>
+        <ul>
+            <li>The issue IS JavaScript-related</li>
+            <li>Or CSS conflicts on the main site</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>Debug Info</h2>
+        <p>Current URL: <span id="current-url">Check browser address bar</span></p>
+        <p>User Agent: <span id="user-agent">Check browser developer tools</span></p>
+        <p>Time: <span id="time">Check system clock</span></p>
+    </div>
+    
+    <script>
+        // Only minimal JavaScript for debug info
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('user-agent').textContent = navigator.userAgent.substring(0, 50) + '...';
+        document.getElementById('time').textContent = new Date().toLocaleString();
+    </script>
+</body>
+</html>

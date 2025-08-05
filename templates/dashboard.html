@@ -1,0 +1,580 @@
+{% extends "base.html" %}
+
+{% block title %}Your Dashboard - Cibozer{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="mb-1">Welcome back, {{ current_user.full_name }}! 👋</h1>
+                        <p class="text-muted mb-0">Ready to create some amazing meal plans?</p>
+                    </div>
+                    <div class="user-credits">
+                        {% if current_user.is_premium() %}
+                            <span class="badge bg-premium fs-6">✨ Premium Member</span>
+                        {% else %}
+                            <span class="badge bg-success fs-6">{{ current_user.credits_balance }} credits left</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Tracking Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="progress-section">
+                <h3 class="mb-3">🎯 Your Progress</h3>
+                
+                <!-- Progress Overview -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="progress-card">
+                            <div class="progress-icon">
+                                <i class="fas fa-user-check text-success"></i>
+                            </div>
+                            <div class="progress-content">
+                                <h4>Account Setup</h4>
+                                <p class="text-success">✅ Complete</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="progress-card" id="onboardingCard">
+                            <div class="progress-icon">
+                                <i class="fas fa-graduation-cap" id="onboardingIcon"></i>
+                            </div>
+                            <div class="progress-content">
+                                <h4>Onboarding</h4>
+                                <p id="onboardingStatus">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="progress-card" id="firstPlanCard">
+                            <div class="progress-icon">
+                                <i class="fas fa-utensils" id="firstPlanIcon"></i>
+                            </div>
+                            <div class="progress-content">
+                                <h4>First Meal Plan</h4>
+                                <p id="firstPlanStatus">{{ 'Complete' if user_stats.total_plans > 0 else 'Pending' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="progress-card" id="streakCard">
+                            <div class="progress-icon">
+                                <i class="fas fa-fire text-warning"></i>
+                            </div>
+                            <div class="progress-content">
+                                <h4>Weekly Streak</h4>
+                                <p>{{ user_stats.weekly_streak }} week(s)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Progress Bar -->
+                <div class="overall-progress mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5>Overall Progress</h5>
+                        <span class="progress-percentage">{{ user_stats.progress_percentage }}%</span>
+                    </div>
+                    <div class="progress" style="height: 12px;">
+                        <div class="progress-bar bg-gradient-success" role="progressbar" style="width: {{ user_stats.progress_percentage }}%"></div>
+                    </div>
+                    <div class="progress-milestones mt-2">
+                        <small class="text-muted">Next milestone: {{ user_stats.next_milestone }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions & Recent Activity -->
+    <div class="row mb-4">
+        <!-- Quick Actions -->
+        <div class="col-lg-8">
+            <div class="quick-actions-section">
+                <h3 class="mb-3">⚡ Quick Actions</h3>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <a href="{{ url_for('main.create_meal_plan') }}" class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-plus-circle text-primary"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Create New Plan</h4>
+                                <p>Generate a personalized meal plan</p>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    {% if recent_plans %}
+                    <div class="col-md-6">
+                        <a href="#recentPlans" class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-history text-success"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>View Recent Plans</h4>
+                                <p>Access your saved meal plans</p>
+                            </div>
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if not current_user.is_premium() %}
+                    <div class="col-md-6">
+                        <a href="{{ url_for('auth.upgrade') }}" class="action-card premium-upgrade">
+                            <div class="action-icon">
+                                <i class="fas fa-star text-warning"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Upgrade to Premium</h4>
+                                <p>Unlimited plans + PDF export</p>
+                            </div>
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="col-md-6">
+                        <a href="{{ url_for('main.onboarding') }}" class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-book text-info"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Tutorial</h4>
+                                <p>Review how Cibozer works</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Sidebar -->
+        <div class="col-lg-4">
+            <div class="stats-sidebar">
+                <h3 class="mb-3">📊 Your Stats</h3>
+                
+                <div class="stat-item-dashboard">
+                    <div class="stat-icon">
+                        <i class="fas fa-utensils text-primary"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ user_stats.total_plans }}</div>
+                        <div class="stat-label">Meal Plans Created</div>
+                    </div>
+                </div>
+                
+                <div class="stat-item-dashboard">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar text-success"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ user_stats.total_days }}</div>
+                        <div class="stat-label">Days Planned</div>
+                    </div>
+                </div>
+                
+                <div class="stat-item-dashboard">
+                    <div class="stat-icon">
+                        <i class="fas fa-fire text-warning"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ user_stats.calories_planned }}</div>
+                        <div class="stat-label">Total Calories Planned</div>
+                    </div>
+                </div>
+                
+                {% if current_user.is_premium() %}
+                <div class="stat-item-dashboard">
+                    <div class="stat-icon">
+                        <i class="fas fa-download text-info"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ user_stats.pdfs_generated }}</div>
+                        <div class="stat-label">PDFs Generated</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Meal Plans -->
+    {% if recent_plans %}
+    <div class="row mb-4" id="recentPlans">
+        <div class="col-12">
+            <div class="recent-plans-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3>🍽️ Recent Meal Plans</h3>
+                    <a href="#" class="btn btn-outline-primary btn-sm">View All</a>
+                </div>
+                
+                <div class="row g-3">
+                    {% for plan in recent_plans %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="meal-plan-card">
+                            <div class="card-header">
+                                <h5 class="mb-1">{{ plan.name|e }}</h5>
+                                <small class="text-muted">{{ plan.created_at.strftime('%b %d, %Y') }}</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="plan-stats">
+                                    <span class="badge bg-light text-dark">{{ plan.days }} day(s)</span>
+                                    <span class="badge bg-light text-dark">{{ plan.diet_type|title }}</span>
+                                    {% if plan.total_calories %}
+                                    <span class="badge bg-light text-dark">{{ plan.total_calories }} cal</span>
+                                    {% endif %}
+                                </div>
+                                <div class="plan-actions mt-3">
+                                    <button class="btn btn-primary btn-sm" onclick="viewPlan({{ plan.id }})">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                    {% if current_user.is_premium() %}
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="exportPDF({{ plan.id }})">
+                                        <i class="fas fa-file-pdf"></i> PDF
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Achievements & Gamification -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="achievements-section">
+                <h3 class="mb-3">🏆 Achievements</h3>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="achievement-badge {{ 'earned' if user_stats.total_plans >= 1 else 'locked' }}">
+                            <div class="achievement-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="achievement-content">
+                                <h5>First Plan</h5>
+                                <p>Create your first meal plan</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="achievement-badge {{ 'earned' if user_stats.total_plans >= 5 else 'locked' }}">
+                            <div class="achievement-icon">
+                                <i class="fas fa-medal"></i>
+                            </div>
+                            <div class="achievement-content">
+                                <h5>Meal Master</h5>
+                                <p>Create 5 meal plans</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="achievement-badge {{ 'earned' if user_stats.weekly_streak >= 1 else 'locked' }}">
+                            <div class="achievement-icon">
+                                <i class="fas fa-fire"></i>
+                            </div>
+                            <div class="achievement-content">
+                                <h5>Consistent</h5>
+                                <p>1 week streak</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="achievement-badge {{ 'earned' if current_user.is_premium() else 'locked' }}">
+                            <div class="achievement-icon">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <div class="achievement-content">
+                                <h5>Premium</h5>
+                                <p>Upgraded to Premium</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard-header {
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.1) 0%, rgba(52, 152, 219, 0.1) 100%);
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px solid rgba(46, 204, 113, 0.2);
+}
+
+.bg-premium {
+    background: linear-gradient(135deg, #FFD700, #FFA500) !important;
+}
+
+.progress-section, .quick-actions-section, .stats-sidebar, .recent-plans-section, .achievements-section {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+.progress-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid #f8f9fa;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.progress-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.progress-card.completed {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.05);
+}
+
+.progress-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.progress-content h4 {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+
+.progress-content p {
+    margin-bottom: 0;
+    font-weight: 500;
+}
+
+.overall-progress .progress-bar {
+    transition: width 1s ease-in-out;
+}
+
+.progress-percentage {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.action-card {
+    display: block;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid #f8f9fa;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.action-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: inherit;
+}
+
+.action-card.premium-upgrade {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.1));
+    border-color: rgba(255, 215, 0, 0.3);
+}
+
+.action-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.action-content h4 {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+
+.action-content p {
+    margin-bottom: 0;
+    color: #666;
+}
+
+.stat-item-dashboard {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.stat-item-dashboard:last-child {
+    border-bottom: none;
+}
+
+.stat-icon {
+    font-size: 1.5rem;
+    margin-right: 15px;
+    width: 40px;
+    text-align: center;
+}
+
+.stat-content .stat-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.stat-content .stat-label {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.meal-plan-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.meal-plan-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.meal-plan-card .card-header {
+    background: #f8f9fa;
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.meal-plan-card .card-body {
+    padding: 15px;
+}
+
+.plan-stats .badge {
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+
+.achievement-badge {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 2px solid #f8f9fa;
+}
+
+.achievement-badge.earned {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.05);
+}
+
+.achievement-badge.locked {
+    opacity: 0.5;
+}
+
+.achievement-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: #28a745;
+}
+
+.achievement-badge.locked .achievement-icon {
+    color: #6c757d;
+}
+
+.achievement-content h5 {
+    font-size: 1rem;
+    margin-bottom: 5px;
+}
+
+.achievement-content p {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .dashboard-header .d-flex {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .user-credits {
+        margin-top: 15px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check onboarding status
+    const onboardingSeen = localStorage.getItem('cibozer_onboarding_seen');
+    const onboardingCard = document.getElementById('onboardingCard');
+    const onboardingIcon = document.getElementById('onboardingIcon');
+    const onboardingStatus = document.getElementById('onboardingStatus');
+    
+    if (onboardingSeen) {
+        onboardingCard.classList.add('completed');
+        onboardingIcon.classList.remove('text-muted');
+        onboardingIcon.classList.add('text-success');
+        onboardingStatus.innerHTML = '<span class="text-success">✅ Complete</span>';
+    } else {
+        onboardingIcon.classList.add('text-muted');
+        onboardingStatus.innerHTML = '<span class="text-warning">⏳ In Progress</span>';
+    }
+    
+    // Update first plan status
+    const firstPlanCard = document.getElementById('firstPlanCard');
+    const firstPlanIcon = document.getElementById('firstPlanIcon');
+    const firstPlanStatus = document.getElementById('firstPlanStatus');
+    
+    {% if user_stats.total_plans > 0 %}
+    firstPlanCard.classList.add('completed');
+    firstPlanIcon.classList.add('text-success');
+    firstPlanStatus.innerHTML = '<span class="text-success">✅ Complete</span>';
+    {% else %}
+    firstPlanIcon.classList.add('text-muted');
+    firstPlanStatus.innerHTML = '<span class="text-warning">⏳ Pending</span>';
+    {% endif %}
+    
+    // Animate progress bar
+    setTimeout(() => {
+        const progressBar = document.querySelector('.progress-bar');
+        if (progressBar) {
+            progressBar.style.width = '{{ user_stats.progress_percentage }}%';
+        }
+    }, 500);
+});
+
+function viewPlan(planId) {
+    // Implement plan viewing logic
+    window.location.href = `/api/load-meal-plan/${planId}`;
+}
+
+function exportPDF(planId) {
+    // Implement PDF export logic
+    window.location.href = `/api/export-pdf/${planId}`;
+}
+</script>
+{% endblock %}

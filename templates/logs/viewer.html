@@ -1,0 +1,540 @@
+{% extends "base.html" %}
+
+{% block title %}Log Viewer - Cibozer{% endblock %}
+
+{% block head %}
+<style>
+.log-viewer-container {
+    height: calc(100vh - 200px);
+    display: flex;
+    flex-direction: column;
+}
+
+.search-controls {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.log-results {
+    flex: 1;
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.log-list {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 0.5rem;
+}
+
+.log-entry {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 5px;
+    border-left: 4px solid;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.log-entry:hover {
+    background-color: #f0f0f0;
+    transform: translateX(2px);
+}
+
+.log-entry.ERROR { border-color: #dc3545; background-color: #fff5f5; }
+.log-entry.WARNING { border-color: #ffc107; background-color: #fffbf0; }
+.log-entry.INFO { border-color: #17a2b8; background-color: #f0f8ff; }
+.log-entry.DEBUG { border-color: #6c757d; background-color: #f8f9fa; }
+
+.log-meta {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.log-message {
+    margin-top: 0.5rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.filter-badge {
+    margin: 0.1rem;
+    cursor: pointer;
+}
+
+.filter-badge:hover {
+    opacity: 0.8;
+}
+
+.export-options {
+    margin-left: auto;
+}
+
+.search-stats {
+    background: #e9ecef;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.log-level-filter {
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.log-level-filter input[type="checkbox"] {
+    margin-right: 0.25rem;
+}
+
+.loading-indicator {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+.no-results {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.trace-link {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 0.8rem;
+}
+
+.trace-link:hover {
+    text-decoration: underline;
+}
+
+.user-link {
+    color: #28a745;
+    text-decoration: none;
+    font-size: 0.8rem;
+}
+
+.user-link:hover {
+    text-decoration: underline;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid log-viewer-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1><i class="fas fa-search"></i> Log Viewer</h1>
+        <a href="/logs/dashboard" class="btn btn-outline-primary">
+            <i class="fas fa-chart-bar"></i> Dashboard
+        </a>
+    </div>
+
+    <!-- Search Controls -->
+    <div class="search-controls">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="search-query" 
+                           placeholder="Search logs..." value="">
+                    <button class="btn btn-primary" onclick="searchLogs()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <select class="form-select" id="time-range">
+                    <option value="1">Last 1 hour</option>
+                    <option value="6">Last 6 hours</option>
+                    <option value="24" selected>Last 24 hours</option>
+                    <option value="168">Last 7 days</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <input type="number" class="form-control" id="limit" placeholder="Limit" value="100" min="10" max="1000">
+            </div>
+            
+            <div class="col-md-2">
+                <select class="form-select" id="logger-filter">
+                    <option value="">All Loggers</option>
+                    <option value="cibozer.security">Security</option>
+                    <option value="cibozer.performance">Performance</option>
+                    <option value="cibozer.business">Business</option>
+                    <option value="cibozer.api">API</option>
+                    <option value="cibozer.monitoring">Monitoring</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2 export-options">
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="exportLogs('json')">JSON</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="exportLogs('csv')">CSV</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Level Filters -->
+        <div class="row mt-2">
+            <div class="col-12">
+                <label class="form-label small">Log Levels:</label>
+                <div class="log-level-filter">
+                    <input type="checkbox" id="level-error" value="ERROR" checked>
+                    <label for="level-error" class="badge bg-danger">ERROR</label>
+                </div>
+                <div class="log-level-filter">
+                    <input type="checkbox" id="level-warning" value="WARNING" checked>
+                    <label for="level-warning" class="badge bg-warning">WARNING</label>
+                </div>
+                <div class="log-level-filter">
+                    <input type="checkbox" id="level-info" value="INFO" checked>
+                    <label for="level-info" class="badge bg-info">INFO</label>
+                </div>
+                <div class="log-level-filter">
+                    <input type="checkbox" id="level-debug" value="DEBUG">
+                    <label for="level-debug" class="badge bg-secondary">DEBUG</label>
+                </div>
+                
+                <button class="btn btn-sm btn-outline-secondary ms-3" onclick="clearFilters()">
+                    <i class="fas fa-times"></i> Clear Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Stats -->
+    <div id="search-stats" class="search-stats" style="display: none;">
+        <!-- Stats will be populated by JavaScript -->
+    </div>
+
+    <!-- Log Results -->
+    <div class="log-results">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5>Log Entries</h5>
+            <div>
+                <button class="btn btn-sm btn-outline-primary" onclick="refreshLogs()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+        
+        <div class="log-list" id="log-list">
+            <div class="loading-indicator">
+                <i class="fas fa-search fa-2x mb-3"></i>
+                <p>Enter a search query or adjust filters to view logs</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Detail Modal -->
+<div class="modal fade" id="logDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Log Entry Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="log-detail-content">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentLogs = [];
+let currentFilters = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Get query parameter if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const query = urlParams.get('q');
+    if (query) {
+        document.getElementById('search-query').value = query;
+        searchLogs();
+    }
+    
+    // Setup search on enter
+    document.getElementById('search-query').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchLogs();
+        }
+    });
+    
+    // Auto-search when filters change
+    document.getElementById('time-range').addEventListener('change', searchLogs);
+    document.getElementById('logger-filter').addEventListener('change', searchLogs);
+    
+    // Level filter changes
+    document.querySelectorAll('input[type="checkbox"][id^="level-"]').forEach(checkbox => {
+        checkbox.addEventListener('change', searchLogs);
+    });
+});
+
+function searchLogs() {
+    const query = document.getElementById('search-query').value;
+    const timeRange = document.getElementById('time-range').value;
+    const limit = document.getElementById('limit').value || 100;
+    const logger = document.getElementById('logger-filter').value;
+    
+    // Get selected levels
+    const levels = [];
+    document.querySelectorAll('input[type="checkbox"][id^="level-"]:checked').forEach(checkbox => {
+        levels.push(checkbox.value);
+    });
+    
+    // Build filters
+    const filters = {
+        hours: timeRange,
+        limit: limit,
+        logger: logger
+    };
+    
+    currentFilters = filters;
+    
+    // Show loading
+    document.getElementById('log-list').innerHTML = `
+        <div class="loading-indicator">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Searching...</span>
+            </div>
+            <p>Searching logs...</p>
+        </div>
+    `;
+    
+    let endpoint = '/logs/api/recent';
+    let params = new URLSearchParams(filters);
+    
+    // If there's a query, use search endpoint
+    if (query.trim()) {
+        endpoint = '/logs/api/search';
+        params.append('q', query);
+    }
+    
+    fetch(`${endpoint}?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            currentLogs = data.logs || [];
+            
+            // Filter by selected levels
+            if (levels.length > 0) {
+                currentLogs = currentLogs.filter(log => levels.includes(log.level));
+            }
+            
+            displayLogs(currentLogs);
+            updateSearchStats(data, query);
+        })
+        .catch(error => {
+            console.error('Error searching logs:', error);
+            document.getElementById('log-list').innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-3 text-warning"></i>
+                    <p>Error loading logs. Please try again.</p>
+                </div>
+            `;
+        });
+}
+
+function displayLogs(logs) {
+    const container = document.getElementById('log-list');
+    
+    if (logs.length === 0) {
+        container.innerHTML = `
+            <div class="no-results">
+                <i class="fas fa-search fa-2x mb-3"></i>
+                <p>No logs found matching your criteria.</p>
+                <small class="text-muted">Try adjusting your search query or filters.</small>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = logs.map(log => {
+        const timestamp = new Date(log.timestamp).toLocaleString();
+        const traceLink = log.trace_id ? 
+            `<a href="/tracing/trace/${log.trace_id}" class="trace-link" target="_blank">Trace: ${log.trace_id.substring(0, 8)}</a>` : '';
+        const userLink = log.user_id ? 
+            `<a href="#" class="user-link" onclick="filterByUser('${log.user_id}')">User: ${log.user_id}</a>` : '';
+        
+        return `
+            <div class="log-entry ${log.level}" onclick="showLogDetails(${JSON.stringify(log).replace(/"/g, '&quot;')})">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-${log.level === 'ERROR' ? 'danger' : log.level === 'WARNING' ? 'warning' : log.level === 'INFO' ? 'info' : 'secondary'} me-2">
+                                ${log.level}
+                            </span>
+                            <strong>${log.logger.replace('cibozer.', '')}</strong>
+                            <span class="text-muted ms-2">${log.module}.${log.function}:${log.line}</span>
+                        </div>
+                        <div class="log-message">${log.message}</div>
+                        <div class="log-meta">
+                            ${timestamp}
+                            ${traceLink ? ' • ' + traceLink : ''}
+                            ${userLink ? ' • ' + userLink : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateSearchStats(data, query) {
+    const statsElement = document.getElementById('search-stats');
+    const totalLogs = data.total_found || data.total_count || currentLogs.length;
+    
+    statsElement.innerHTML = `
+        <i class="fas fa-info-circle"></i>
+        Found <strong>${totalLogs}</strong> log entries
+        ${query ? ` matching "<strong>${query}</strong>"` : ''}
+        ${currentFilters.hours ? ` in the last ${currentFilters.hours} hours` : ''}
+        ${currentFilters.logger ? ` from logger <strong>${currentFilters.logger}</strong>` : ''}
+    `;
+    statsElement.style.display = 'block';
+}
+
+function showLogDetails(log) {
+    const modal = new bootstrap.Modal(document.getElementById('logDetailModal'));
+    const content = document.getElementById('log-detail-content');
+    
+    const timestamp = new Date(log.timestamp).toLocaleString();
+    const extraFields = Object.keys(log.extra_fields || {}).length > 0 ? 
+        JSON.stringify(log.extra_fields, null, 2) : 'None';
+    
+    content.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Basic Information</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Timestamp:</strong></td><td>${timestamp}</td></tr>
+                    <tr><td><strong>Level:</strong></td><td><span class="badge bg-${log.level === 'ERROR' ? 'danger' : log.level === 'WARNING' ? 'warning' : log.level === 'INFO' ? 'info' : 'secondary'}">${log.level}</span></td></tr>
+                    <tr><td><strong>Logger:</strong></td><td>${log.logger}</td></tr>
+                    <tr><td><strong>Module:</strong></td><td>${log.module}</td></tr>
+                    <tr><td><strong>Function:</strong></td><td>${log.function}</td></tr>
+                    <tr><td><strong>Line:</strong></td><td>${log.line}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Context Information</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>User ID:</strong></td><td>${log.user_id || 'N/A'}</td></tr>
+                    <tr><td><strong>Session ID:</strong></td><td>${log.session_id || 'N/A'}</td></tr>
+                    <tr><td><strong>Trace ID:</strong></td><td>
+                        ${log.trace_id ? `<a href="/tracing/trace/${log.trace_id}" target="_blank">${log.trace_id}</a>` : 'N/A'}
+                    </td></tr>
+                    <tr><td><strong>Span ID:</strong></td><td>${log.span_id || 'N/A'}</td></tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <h6>Message</h6>
+                <pre class="bg-light p-3 rounded">${log.message}</pre>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <h6>Extra Fields</h6>
+                <pre class="bg-light p-3 rounded" style="max-height: 300px; overflow-y: auto;">${extraFields}</pre>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <button class="btn btn-sm btn-outline-primary me-2" onclick="searchSimilarLogs('${log.message.substring(0, 50)}')">
+                <i class="fas fa-search"></i> Find Similar
+            </button>
+            ${log.user_id ? `
+            <button class="btn btn-sm btn-outline-success me-2" onclick="filterByUser('${log.user_id}')">
+                <i class="fas fa-user"></i> View User Logs
+            </button>
+            ` : ''}
+            ${log.trace_id ? `
+            <button class="btn btn-sm btn-outline-info" onclick="viewTraceDetails('${log.trace_id}')">
+                <i class="fas fa-project-diagram"></i> View Trace
+            </button>
+            ` : ''}
+        </div>
+    `;
+    
+    modal.show();
+}
+
+function refreshLogs() {
+    searchLogs();
+}
+
+function clearFilters() {
+    document.getElementById('search-query').value = '';
+    document.getElementById('time-range').value = '24';
+    document.getElementById('limit').value = '100';
+    document.getElementById('logger-filter').value = '';
+    
+    // Reset level checkboxes
+    document.querySelectorAll('input[type="checkbox"][id^="level-"]').forEach(checkbox => {
+        checkbox.checked = ['level-error', 'level-warning', 'level-info'].includes(checkbox.id);
+    });
+    
+    // Clear results
+    document.getElementById('log-list').innerHTML = `
+        <div class="loading-indicator">
+            <i class="fas fa-search fa-2x mb-3"></i>
+            <p>Enter a search query or adjust filters to view logs</p>
+        </div>
+    `;
+    
+    document.getElementById('search-stats').style.display = 'none';
+}
+
+function exportLogs(format) {
+    const params = new URLSearchParams(currentFilters);
+    params.append('format', format);
+    
+    const query = document.getElementById('search-query').value;
+    if (query.trim()) {
+        params.append('q', query);
+    }
+    
+    window.open(`/logs/api/export?${params}`, '_blank');
+}
+
+function searchSimilarLogs(message) {
+    document.getElementById('search-query').value = message;
+    searchLogs();
+    bootstrap.Modal.getInstance(document.getElementById('logDetailModal')).hide();
+}
+
+function filterByUser(userId) {
+    window.open(`/logs/api/user/${userId}`, '_blank');
+}
+
+function viewTraceDetails(traceId) {
+    window.open(`/tracing/trace/${traceId}`, '_blank');
+}
+</script>
+{% endblock %}

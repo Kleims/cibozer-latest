@@ -1,0 +1,696 @@
+{% extends "base.html" %}
+
+{% block title %}Create Meal Plan - Cibozer{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="form-card">
+                <h2 class="mb-4 text-center">
+                    <i class="fas fa-magic me-2"></i>Create Your Meal Plan
+                </h2>
+                
+                <form id="mealPlanForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="calories" class="form-label">
+                                    Daily Calories
+                                    <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" 
+                                       title="Average adult needs 1800-2400 calories. Higher for active people, lower for weight loss."></i>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="calories" name="calories" 
+                                           min="800" max="6000" value="2000" required>
+                                    <button type="button" class="btn btn-outline-secondary" id="calcCalories">
+                                        <i class="fas fa-calculator"></i> Calculate
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted">
+                                    <strong>Quick guide:</strong> Sedentary: 1600-1800 | Active: 2000-2200 | Very Active: 2400+
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="days" class="form-label">Number of Days</label>
+                                <select class="form-select" id="days" name="days" required>
+                                    <option value="1">1 Day</option>
+                                    <option value="3">3 Days</option>
+                                    <option value="7" selected>7 Days</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            Diet Type
+                            <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" 
+                               title="Choose the diet that best matches your eating preferences and health goals."></i>
+                        </label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="diet" id="standard" value="standard" checked>
+                                    <label class="form-check-label" for="standard">
+                                        Standard
+                                        <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" 
+                                           title="Balanced diet with all food groups. 45% carbs, 25% protein, 30% fat."></i>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="diet" id="keto" value="keto">
+                                    <label class="form-check-label" for="keto">
+                                        Keto
+                                        <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" 
+                                           title="Very low carb, high fat diet. 5% carbs, 25% protein, 70% fat. May help with weight loss."></i>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="diet" id="paleo" value="paleo">
+                                    <label class="form-check-label" for="paleo">
+                                        Paleo
+                                        <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" 
+                                           title="Whole foods only: meat, fish, eggs, vegetables, fruits, nuts. No grains or dairy."></i>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="diet" id="vegan" value="vegan">
+                                    <label class="form-check-label" for="vegan">
+                                        Vegan
+                                        <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" 
+                                           title="Plant-based only: no meat, dairy, eggs, or animal products. Rich in fiber and antioxidants."></i>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="diet" id="vegetarian" value="vegetarian">
+                                    <label class="form-check-label" for="vegetarian">
+                                        Vegetarian
+                                        <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" 
+                                           title="No meat or fish, but includes dairy and eggs. Good for heart health."></i>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="diet" id="high_protein" value="high_protein">
+                                    <label class="form-check-label" for="high_protein">
+                                        High Protein
+                                        <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" 
+                                           title="40% protein for muscle building and satiety. Ideal for athletes and fitness goals."></i>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="meal_structure" class="form-label">
+                                    Meal Structure
+                                    <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" 
+                                       title="Choose how you prefer to distribute your daily calories across meals."></i>
+                                </label>
+                                <select class="form-select" id="meal_structure" name="meal_structure" required>
+                                    <option value="standard" selected>Standard (3 meals + snacks)</option>
+                                    <option value="3_plus_2">3 Meals + 2 Snacks</option>
+                                    <option value="5_small">5 Small Meals</option>
+                                    <option value="16_8_if">Intermittent Fasting (16:8)</option>
+                                    <option value="18_6_if">Intermittent Fasting (18:6)</option>
+                                    <option value="omad">OMAD (One Meal a Day)</option>
+                                    <option value="2_meals">2 Meals</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="measurement_system" class="form-label">Measurements</label>
+                                <select class="form-select" id="measurement_system" name="measurement_system" required>
+                                    <option value="US" selected>Imperial (cups, tbsp, oz)</option>
+                                    <option value="Metric">Metric (ml, g, kg)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="button" class="btn btn-outline-info me-3" onclick="startWizard()">
+                            <i class="fas fa-question-circle me-2"></i>Need Help?
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-magic me-2"></i>Generate Meal Plan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body p-4">
+                <h5 class="text-center mb-4">
+                    <i class="fas fa-magic me-2 text-primary"></i>
+                    Generating Your Meal Plan...
+                </h5>
+                
+                <div class="skeleton-preview">
+                    <div class="skeleton skeleton-title mb-3"></div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="skeleton skeleton-card"></div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="skeleton skeleton-card"></div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="skeleton skeleton-card"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton skeleton-text"></div>
+                    <div class="skeleton skeleton-text" style="width: 80%;"></div>
+                    <div class="skeleton skeleton-text" style="width: 60%;"></div>
+                </div>
+                
+                <p class="text-center text-muted mt-3 mb-0">
+                    <small>Creating a personalized meal plan just for you...</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Modal -->
+<div class="modal fade" id="resultsModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Your Meal Plan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="mealPlanResults">
+                <!-- Results will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="window.print()">Print</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Setup Wizard Modal -->
+<div class="modal fade" id="setupWizard" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-magic me-2"></i>Meal Planning Wizard
+                    <small class="text-muted ms-2">Step <span id="wizardStep">1</span> of 4</small>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="wizardContent">
+                <!-- Wizard steps will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Skip Wizard</button>
+                <button type="button" class="btn btn-outline-primary" id="wizardPrev" onclick="previousWizardStep()" style="display: none;">Previous</button>
+                <button type="button" class="btn btn-primary" id="wizardNext" onclick="nextWizardStep()">Next</button>
+                <button type="button" class="btn btn-success" id="wizardComplete" onclick="completeWizard()" style="display: none;">Complete Setup</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Clean, simple form handler
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('mealPlanForm');
+    
+    if (!form) {
+        console.error('Form not found');
+        return;
+    }
+    
+    form.addEventListener('submit', handleFormSubmit);
+});
+
+async function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    console.log('🎯 Form submitted');
+    
+    // Show loading modal
+    showLoading();
+    
+    // Get form data
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    delete data.csrf_token; // Remove from data, send in header
+    
+    console.log('📋 Form data:', data);
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('[name="csrf_token"]').value;
+    
+    try {
+        console.log('🌐 Making API request...');
+        
+        const response = await fetch('/api/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken
+            },
+            body: JSON.stringify(data)
+        });
+        
+        console.log('📡 Response:', response.status, response.statusText);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `HTTP ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('✅ Success:', result.success);
+        
+        hideLoading();
+        
+        if (result.success && result.meal_plan) {
+            showResults(result.meal_plan);
+        } else {
+            throw new Error(result.error || 'No meal plan received');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error:', error.message);
+        hideLoading();
+        showError(error.message);
+    }
+}
+
+function showLoading() {
+    const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    modal.show();
+}
+
+function hideLoading() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('loadingModal'));
+    if (modal) modal.hide();
+}
+
+function showResults(mealPlan) {
+    let html = '<div class="alert alert-success"><h4>✅ Success!</h4><p>Your meal plan has been generated.</p></div>';
+    
+    if (mealPlan.days) {
+        for (const day of mealPlan.days) {
+            html += `<div class="mb-4"><h5 class="text-primary">Day ${day.day}</h5><div class="row">`;
+            
+            for (const meal of day.meals) {
+                html += `
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">${getMealTypeLabel(meal.meal_type) || 'Meal'}</h6>
+                            </div>
+                            <div class="card-body">
+                                <h6>${meal.name}</h6>
+                                <p><strong>Calories:</strong> ${Math.round(meal.calories)}</p>
+                                <h6>Ingredients:</h6>
+                                <ul>${meal.ingredients ? meal.ingredients.map(ing => `<li>${formatIngredient(ing)}</li>`).join('') : ''}</ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += '</div></div>';
+        }
+    }
+    
+    document.getElementById('mealPlanResults').innerHTML = html;
+    
+    const modal = new bootstrap.Modal(document.getElementById('resultsModal'));
+    modal.show();
+}
+
+function showError(message) {
+    alert('Error: ' + message);
+}
+
+function getMealTypeLabel(mealType) {
+    const labels = {
+        'breakfast': 'Breakfast',
+        'lunch': 'Lunch', 
+        'dinner': 'Dinner',
+        'snack': 'Snack'
+    };
+    return labels[mealType] || 'Meal';
+}
+
+function formatIngredient(ing) {
+    if (typeof ing === 'string') return ing;
+    if (typeof ing === 'object' && ing.item) {
+        const item = prettifyItemName(ing.item || '');
+        
+        // Use kitchen measurement if available
+        if (ing.kitchen_measurement) {
+            // Check if kitchen measurement already includes the item name
+            const measurement = ing.kitchen_measurement;
+            if (measurement.toLowerCase().includes(item.toLowerCase()) || 
+                measurement.includes('medium') || measurement.includes('large') || measurement.includes('small')) {
+                return `${measurement} ${item}`.trim();
+            } else {
+                return `${measurement} ${item}`.trim();
+            }
+        } else {
+            // Fall back to original amount
+            const amount = ing.amount ? Math.round(ing.amount * 10) / 10 : '';
+            const unit = ing.unit || '';
+            return `${amount}${unit} ${item}`.trim();
+        }
+    }
+    return String(ing);
+}
+
+function prettifyItemName(item) {
+    return item
+        .replace(/_/g, ' ')  // bell_pepper -> bell pepper
+        .replace(/\b\w/g, l => l.toUpperCase()); // capitalize first letters
+}
+
+// ==== GUIDANCE SYSTEM FUNCTIONS ====
+
+// Calorie calculator function
+function calculateCalories() {
+    // Simple calorie calculator modal
+    const calculatorHTML = `
+        <div class="modal fade" id="calorieCalculator" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fas fa-calculator me-2"></i>Calorie Calculator</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Age</label>
+                                    <input type="number" class="form-control" id="calcAge" min="10" max="100" value="30">
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Weight (lbs)</label>
+                                    <input type="number" class="form-control" id="calcWeight" min="50" max="500" value="150">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Height (inches)</label>
+                                    <input type="number" class="form-control" id="calcHeight" min="36" max="96" value="66">
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Gender</label>
+                                    <select class="form-select" id="calcGender">
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="form-label">Activity Level</label>
+                            <select class="form-select" id="calcActivity">
+                                <option value="1.2">Sedentary (little/no exercise)</option>
+                                <option value="1.375" selected>Lightly active (light exercise 1-3 days/week)</option>
+                                <option value="1.55">Moderately active (moderate exercise 3-5 days/week)</option>
+                                <option value="1.725">Very active (hard exercise 6-7 days/week)</option>
+                                <option value="1.9">Extra active (very hard exercise, physical job)</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="form-label">Goal</label>
+                            <select class="form-select" id="calcGoal">
+                                <option value="-500">Lose weight (1 lb/week)</option>
+                                <option value="-250">Lose weight slowly (0.5 lb/week)</option>
+                                <option value="0" selected>Maintain weight</option>
+                                <option value="250">Gain weight slowly (0.5 lb/week)</option>
+                                <option value="500">Gain weight (1 lb/week)</option>
+                            </select>
+                        </div>
+                        <div class="alert alert-info" id="calcResult" style="display: none;">
+                            <h6>Recommended Daily Calories:</h6>
+                            <div class="h4 text-primary" id="calcCalories">0</div>
+                            <small class="text-muted">Based on Mifflin-St Jeor equation</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="performCalcuation()">Calculate</button>
+                        <button type="button" class="btn btn-success" onclick="useCalculatedCalories()" id="useCalcBtn" style="display: none;">Use This Amount</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing calculator if present
+    const existing = document.getElementById('calorieCalculator');
+    if (existing) existing.remove();
+    
+    // Add calculator to page
+    document.body.insertAdjacentHTML('beforeend', calculatorHTML);
+    
+    // Show calculator
+    const calculator = new bootstrap.Modal(document.getElementById('calorieCalculator'));
+    calculator.show();
+}
+
+// Perform calorie calculation
+function performCalcuation() {
+    const age = parseInt(document.getElementById('calcAge').value);
+    const weight = parseInt(document.getElementById('calcWeight').value);
+    const height = parseInt(document.getElementById('calcHeight').value);
+    const gender = document.getElementById('calcGender').value;
+    const activity = parseFloat(document.getElementById('calcActivity').value);
+    const goal = parseInt(document.getElementById('calcGoal').value);
+    
+    // Mifflin-St Jeor equation
+    let bmr;
+    if (gender === 'male') {
+        bmr = (10 * (weight * 0.453592)) + (6.25 * (height * 2.54)) - (5 * age) + 5;
+    } else {
+        bmr = (10 * (weight * 0.453592)) + (6.25 * (height * 2.54)) - (5 * age) - 161;
+    }
+    
+    const tdee = bmr * activity;
+    const targetCalories = Math.round(tdee + goal);
+    
+    document.getElementById('calcCalories').textContent = targetCalories;
+    document.getElementById('calcResult').style.display = 'block';
+    document.getElementById('useCalcBtn').style.display = 'inline-block';
+    
+    // Store calculated value
+    window.calculatedCalories = targetCalories;
+}
+
+// Use calculated calories in main form
+function useCalculatedCalories() {
+    if (window.calculatedCalories) {
+        document.getElementById('calories').value = window.calculatedCalories;
+        bootstrap.Modal.getInstance(document.getElementById('calorieCalculator')).hide();
+    }
+}
+
+// Wizard functionality
+let currentWizardStep = 1;
+const wizardData = {};
+
+const wizardSteps = {
+    1: {
+        title: "Tell us about your goals",
+        content: `
+            <div class="text-center mb-4">
+                <i class="fas fa-bullseye fa-3x text-primary mb-3"></i>
+                <h4>What's your main goal?</h4>
+                <p class="text-muted">This helps us recommend the right approach for you.</p>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="card goal-card" data-goal="weight_loss">
+                        <div class="card-body text-center">
+                            <i class="fas fa-weight fa-2x text-success mb-2"></i>
+                            <h5>Lose Weight</h5>
+                            <p class="small text-muted">Reduce calories, focus on nutrition</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card goal-card" data-goal="muscle_gain">
+                        <div class="card-body text-center">
+                            <i class="fas fa-dumbbell fa-2x text-primary mb-2"></i>
+                            <h5>Build Muscle</h5>
+                            <p class="small text-muted">High protein, adequate calories</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card goal-card" data-goal="maintain">
+                        <div class="card-body text-center">
+                            <i class="fas fa-balance-scale fa-2x text-info mb-2"></i>
+                            <h5>Maintain Weight</h5>
+                            <p class="small text-muted">Balanced nutrition, stable calories</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card goal-card" data-goal="health">
+                        <div class="card-body text-center">
+                            <i class="fas fa-heart fa-2x text-danger mb-2"></i>
+                            <h5>Improve Health</h5>
+                            <p class="small text-muted">Focus on whole foods, nutrients</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `
+    },
+    2: {
+        title: "Your eating preferences",
+        content: `
+            <div class="text-center mb-4">
+                <i class="fas fa-utensils fa-3x text-primary mb-3"></i>
+                <h4>Any dietary preferences or restrictions?</h4>
+                <p class="text-muted">We'll make sure your meal plan fits your lifestyle.</p>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Dietary Preferences:</h6>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="wiz_vegetarian" value="vegetarian">
+                        <label class="form-check-label" for="wiz_vegetarian">Vegetarian</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="wiz_vegan" value="vegan">
+                        <label class="form-check-label" for="wiz_vegan">Vegan</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="wiz_keto" value="keto">
+                        <label class="form-check-label" for="wiz_keto">Keto/Low Carb</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="wiz_paleo" value="paleo">
+                        <label class="form-check-label" for="wiz_paleo">Paleo</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6>Food Allergies/Restrictions:</h6>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="wiz_gluten" value="gluten">
+                        <label class="form-check-label" for="wiz_gluten">Gluten-free</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="wiz_dairy" value="dairy">
+                        <label class="form-check-label" for="wiz_dairy">Dairy-free</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="wiz_nuts" value="nuts">
+                        <label class="form-check-label" for="wiz_nuts">Nut-free</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="wiz_eggs" value="eggs">
+                        <label class="form-check-label" for="wiz_eggs">Egg-free</label>
+                    </div>
+                </div>
+            </div>
+        `
+    },
+    3: { title: "Activity Level", content: `<div class="text-center mb-4"><h4>How active are you?</h4></div>` },
+    4: { title: "Recommendations", content: `<div class="text-center mb-4"><h4>Your personalized plan</h4></div>` }
+};
+
+function startWizard() {
+    currentWizardStep = 1;
+    showWizardStep(1);
+    const wizard = new bootstrap.Modal(document.getElementById('setupWizard'));
+    wizard.show();
+}
+
+function showWizardStep(step) {
+    const stepData = wizardSteps[step];
+    document.getElementById('wizardStep').textContent = step;
+    document.getElementById('wizardContent').innerHTML = stepData.content;
+    
+    document.getElementById('wizardPrev').style.display = step > 1 ? 'inline-block' : 'none';
+    document.getElementById('wizardNext').style.display = step < 4 ? 'inline-block' : 'none';
+    document.getElementById('wizardComplete').style.display = step === 4 ? 'inline-block' : 'none';
+    
+    if (step === 1) {
+        setTimeout(() => {
+            document.querySelectorAll('.goal-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    document.querySelectorAll('.goal-card').forEach(c => c.classList.remove('border-primary', 'bg-light'));
+                    this.classList.add('border-primary', 'bg-light');
+                    wizardData.goal = this.dataset.goal;
+                });
+            });
+        }, 100);
+    }
+}
+
+function nextWizardStep() {
+    if (currentWizardStep < 4) {
+        currentWizardStep++;
+        showWizardStep(currentWizardStep);
+    }
+}
+
+function previousWizardStep() {
+    if (currentWizardStep > 1) {
+        currentWizardStep--;
+        showWizardStep(currentWizardStep);
+    }
+}
+
+function completeWizard() {
+    // Pre-fill form with basic recommendations
+    if (wizardData.goal === 'muscle_gain') {
+        document.getElementById('high_protein').checked = true;
+        document.getElementById('calories').value = 2400;
+    } else if (wizardData.goal === 'weight_loss') {
+        document.getElementById('calories').value = 1600;
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('setupWizard')).hide();
+}
+
+// Initialize tooltips and event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltips.forEach(tooltip => {
+        new bootstrap.Tooltip(tooltip);
+    });
+    
+    // Add calculator button event
+    const calcButton = document.getElementById('calcCalories');
+    if (calcButton) {
+        calcButton.addEventListener('click', calculateCalories);
+    }
+});
+</script>
+{% endblock %}

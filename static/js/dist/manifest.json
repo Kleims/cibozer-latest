@@ -1,0 +1,107 @@
+{
+  "generated_at": "2025-07-31T10:01:00.967140",
+  "bundle": {
+    "filename": "cibozer.min.js",
+    "original_size": 59542,
+    "minified_size": 32905,
+    "compression_ratio": 44.73648852910551,
+    "files_included": [
+      "error-handling.js",
+      "touch-gestures.js",
+      "keyboard-navigation.js",
+      "cibozer-clean.js"
+    ]
+  },
+  "individual_files": [
+    {
+      "original": "app.js",
+      "minified": "app.min.js",
+      "original_size": 12630,
+      "minified_size": 6644,
+      "compression_ratio": 47.3950910530483
+    },
+    {
+      "original": "app_safe.js",
+      "minified": "app_safe.min.js",
+      "original_size": 5571,
+      "minified_size": 3234,
+      "compression_ratio": 41.94938072159397
+    },
+    {
+      "original": "auth-fix.js",
+      "minified": "auth-fix.min.js",
+      "original_size": 2689,
+      "minified_size": 1477,
+      "compression_ratio": 45.072517664559314
+    },
+    {
+      "original": "click-fix.js",
+      "minified": "click-fix.min.js",
+      "original_size": 3589,
+      "minified_size": 2122,
+      "compression_ratio": 40.87489551407077
+    },
+    {
+      "original": "debug-logger.js",
+      "minified": "debug-logger.min.js",
+      "original_size": 2199,
+      "minified_size": 1222,
+      "compression_ratio": 44.42928603910868
+    },
+    {
+      "original": "diagnostic.js",
+      "minified": "diagnostic.min.js",
+      "original_size": 2759,
+      "minified_size": 1757,
+      "compression_ratio": 36.317506342877856
+    },
+    {
+      "original": "emergency-fix.js",
+      "minified": "emergency-fix.min.js",
+      "original_size": 3306,
+      "minified_size": 1969,
+      "compression_ratio": 40.44162129461585
+    },
+    {
+      "original": "logger.js",
+      "minified": "logger.min.js",
+      "original_size": 9746,
+      "minified_size": 5176,
+      "compression_ratio": 46.89103221834599
+    },
+    {
+      "original": "logger_simple.js",
+      "minified": "logger_simple.min.js",
+      "original_size": 1805,
+      "minified_size": 942,
+      "compression_ratio": 47.81163434903047
+    },
+    {
+      "original": "minimal.js",
+      "minified": "minimal.min.js",
+      "original_size": 542,
+      "minified_size": 333,
+      "compression_ratio": 38.56088560885609
+    },
+    {
+      "original": "performance.js",
+      "minified": "performance.min.js",
+      "original_size": 6872,
+      "minified_size": 3850,
+      "compression_ratio": 43.9755529685681
+    },
+    {
+      "original": "ux-enhancements.js",
+      "minified": "ux-enhancements.min.js",
+      "original_size": 20169,
+      "minified_size": 11986,
+      "compression_ratio": 40.57216520402598
+    }
+  ],
+  "total_stats": {
+    "files_processed": 4,
+    "original_size": 59542,
+    "minified_size": 32905,
+    "compression_ratio": 44.73648852910551
+  }
+}

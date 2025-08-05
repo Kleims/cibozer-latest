@@ -1,0 +1,410 @@
+{% extends "base.html" %}
+
+{% block title %}System Monitoring - Cibozer Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">System Monitoring Dashboard</h1>
+    
+    <!-- Real-time Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Active Users</h5>
+                    <h2 class="text-primary" id="activeUsers">-</h2>
+                    <small class="text-muted">Last 5 minutes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Request Rate</h5>
+                    <h2 class="text-success" id="requestRate">-</h2>
+                    <small class="text-muted">Requests/min</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Error Rate</h5>
+                    <h2 class="text-danger" id="errorRate">-</h2>
+                    <small class="text-muted">Errors/min</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Avg Response Time</h5>
+                    <h2 class="text-warning" id="avgResponseTime">-</h2>
+                    <small class="text-muted">Milliseconds</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Health -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">System Health</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Database</span>
+                                <span class="badge" id="dbHealth">Checking...</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Redis Cache</span>
+                                <span class="badge" id="redisHealth">Checking...</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Email Service</span>
+                                <span class="badge" id="emailHealth">Checking...</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Stripe API</span>
+                                <span class="badge" id="stripeHealth">Checking...</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label>CPU Usage</label>
+                                <div class="progress">
+                                    <div class="progress-bar" id="cpuUsage" role="progressbar" style="width: 0%">0%</div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label>Memory Usage</label>
+                                <div class="progress">
+                                    <div class="progress-bar" id="memoryUsage" role="progressbar" style="width: 0%">0%</div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label>Disk Usage</label>
+                                <div class="progress">
+                                    <div class="progress-bar" id="diskUsage" role="progressbar" style="width: 0%">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Performance Metrics -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Performance Metrics (Last Hour)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Business Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Business Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-8">Meal Plans Today</dt>
+                        <dd class="col-sm-4" id="mealPlansToday">-</dd>
+                        
+                        <dt class="col-sm-8">New Users Today</dt>
+                        <dd class="col-sm-4" id="newUsersToday">-</dd>
+                        
+                        <dt class="col-sm-8">Credits Used Today</dt>
+                        <dd class="col-sm-4" id="creditsUsedToday">-</dd>
+                        
+                        <dt class="col-sm-8">Revenue Today</dt>
+                        <dd class="col-sm-4" id="revenueToday">-</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Errors -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Errors</h5>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="refreshErrors()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Type</th>
+                                    <th>Message</th>
+                                    <th>User</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="errorsList">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alerts Configuration -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Alert Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form id="alertConfig">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="errorAlerts" checked>
+                                    <label class="form-check-label" for="errorAlerts">
+                                        Error Rate > 10/min
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="perfAlerts" checked>
+                                    <label class="form-check-label" for="perfAlerts">
+                                        Response Time > 1s
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="cpuAlerts" checked>
+                                    <label class="form-check-label" for="cpuAlerts">
+                                        CPU Usage > 80%
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="healthAlerts" checked>
+                                    <label class="form-check-label" for="healthAlerts">
+                                        Service Health Issues
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js for performance graphs -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Initialize performance chart
+const ctx = document.getElementById('performanceChart').getContext('2d');
+const performanceChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [{
+            label: 'Response Time (ms)',
+            data: [],
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+        }, {
+            label: 'Requests/min',
+            data: [],
+            borderColor: 'rgb(54, 162, 235)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Update metrics every 5 seconds
+let metricsInterval;
+
+function updateMetrics() {
+    fetch('/api/monitoring/metrics')
+        .then(response => response.json())
+        .then(data => {
+            // Update counters
+            document.getElementById('activeUsers').textContent = data.activeUsers || 0;
+            document.getElementById('requestRate').textContent = data.requestRate || 0;
+            document.getElementById('errorRate').textContent = data.errorRate || 0;
+            document.getElementById('avgResponseTime').textContent = data.avgResponseTime ? data.avgResponseTime.toFixed(0) + 'ms' : '-';
+            
+            // Update system health
+            updateHealthStatus('dbHealth', data.health.database);
+            updateHealthStatus('redisHealth', data.health.redis);
+            updateHealthStatus('emailHealth', data.health.email);
+            updateHealthStatus('stripeHealth', data.health.stripe);
+            
+            // Update resource usage
+            updateProgressBar('cpuUsage', data.system.cpu);
+            updateProgressBar('memoryUsage', data.system.memory);
+            updateProgressBar('diskUsage', data.system.disk);
+            
+            // Update business metrics
+            document.getElementById('mealPlansToday').textContent = data.business.mealPlansToday || 0;
+            document.getElementById('newUsersToday').textContent = data.business.newUsersToday || 0;
+            document.getElementById('creditsUsedToday').textContent = data.business.creditsUsedToday || 0;
+            document.getElementById('revenueToday').textContent = '$' + (data.business.revenueToday || 0).toFixed(2);
+            
+            // Update chart
+            updatePerformanceChart(data.performance);
+            
+            // Check for alerts
+            checkAlerts(data);
+        })
+        .catch(error => {
+            console.error('Failed to fetch metrics:', error);
+        });
+}
+
+function updateHealthStatus(elementId, status) {
+    const element = document.getElementById(elementId);
+    element.textContent = status ? 'Healthy' : 'Unhealthy';
+    element.className = status ? 'badge bg-success' : 'badge bg-danger';
+}
+
+function updateProgressBar(elementId, percentage) {
+    const element = document.getElementById(elementId);
+    const value = percentage || 0;
+    element.style.width = value + '%';
+    element.textContent = value + '%';
+    
+    // Change color based on usage
+    if (value > 80) {
+        element.className = 'progress-bar bg-danger';
+    } else if (value > 60) {
+        element.className = 'progress-bar bg-warning';
+    } else {
+        element.className = 'progress-bar bg-success';
+    }
+}
+
+function updatePerformanceChart(performanceData) {
+    if (!performanceData || !performanceData.history) return;
+    
+    // Update chart data
+    performanceChart.data.labels = performanceData.history.map(p => p.time);
+    performanceChart.data.datasets[0].data = performanceData.history.map(p => p.responseTime);
+    performanceChart.data.datasets[1].data = performanceData.history.map(p => p.requestRate);
+    performanceChart.update();
+}
+
+function refreshErrors() {
+    fetch('/api/monitoring/errors')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('errorsList');
+            
+            if (data.errors && data.errors.length > 0) {
+                tbody.innerHTML = data.errors.map(error => `
+                    <tr>
+                        <td>${new Date(error.timestamp).toLocaleTimeString()}</td>
+                        <td><span class="badge bg-danger">${error.type}</span></td>
+                        <td>${error.message}</td>
+                        <td>${error.userId || 'Anonymous'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewError('${error.id}')">
+                                View
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No recent errors</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Failed to fetch errors:', error);
+        });
+}
+
+function viewError(errorId) {
+    // Open error details modal
+    window.open(`/admin/error/${errorId}`, '_blank');
+}
+
+function checkAlerts(data) {
+    const alerts = [];
+    
+    if (document.getElementById('errorAlerts').checked && data.errorRate > 10) {
+        alerts.push(`High error rate: ${data.errorRate} errors/min`);
+    }
+    
+    if (document.getElementById('perfAlerts').checked && data.avgResponseTime > 1000) {
+        alerts.push(`Slow response time: ${data.avgResponseTime}ms`);
+    }
+    
+    if (document.getElementById('cpuAlerts').checked && data.system.cpu > 80) {
+        alerts.push(`High CPU usage: ${data.system.cpu}%`);
+    }
+    
+    if (document.getElementById('healthAlerts').checked) {
+        Object.entries(data.health).forEach(([service, healthy]) => {
+            if (!healthy) {
+                alerts.push(`${service} service is down`);
+            }
+        });
+    }
+    
+    // Show alerts (in production, send to notification service)
+    if (alerts.length > 0) {
+        console.warn('Monitoring alerts:', alerts);
+    }
+}
+
+// Start monitoring
+document.addEventListener('DOMContentLoaded', () => {
+    updateMetrics();
+    refreshErrors();
+    
+    // Update every 5 seconds
+    metricsInterval = setInterval(updateMetrics, 5000);
+    
+    // Refresh errors every 30 seconds
+    setInterval(refreshErrors, 30000);
+});
+
+// Clean up on page unload
+window.addEventListener('beforeunload', () => {
+    if (metricsInterval) {
+        clearInterval(metricsInterval);
+    }
+});
+</script>
+{% endblock %}

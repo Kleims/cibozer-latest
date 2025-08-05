@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}{{ shared_plan.title or 'Shared Meal Plan' }} - Cibozer{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Share Header -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">{{ (shared_plan.title or 'Shared Meal Plan')|e }}</h2>
+                    {% if shared_plan.description %}
+                    <p class="text-muted">{{ shared_plan.description|e }}</p>
+                    {% endif %}
+                    
+                    <div class="row mt-3">
+                        <div class="col-sm-6">
+                            <small class="text-muted">
+                                <i class="fas fa-user"></i> Shared by {{ creator.full_name or creator.email.split('@')[0] }}
+                            </small>
+                        </div>
+                        <div class="col-sm-6 text-sm-end">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar"></i> {{ shared_plan.created_at.strftime('%B %d, %Y') }}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Meal Plan Stats -->
+                    <div class="mt-3 p-3 bg-light rounded">
+                        <div class="row text-center">
+                            {% if shared_plan.calorie_target %}
+                            <div class="col">
+                                <h5 class="mb-0">{{ shared_plan.calorie_target }}</h5>
+                                <small class="text-muted">Daily Calories</small>
+                            </div>
+                            {% endif %}
+                            {% if shared_plan.diet_type %}
+                            <div class="col">
+                                <h5 class="mb-0">{{ shared_plan.diet_type|title }}</h5>
+                                <small class="text-muted">Diet Type</small>
+                            </div>
+                            {% endif %}
+                            {% if shared_plan.days_count %}
+                            <div class="col">
+                                <h5 class="mb-0">{{ shared_plan.days_count }}</h5>
+                                <small class="text-muted">Days</small>
+                            </div>
+                            {% endif %}
+                            <div class="col">
+                                <h5 class="mb-0">{{ shared_plan.view_count }}</h5>
+                                <small class="text-muted">Views</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    {% if current_user.is_authenticated and shared_plan.allow_copying %}
+                    <div class="mt-3">
+                        <button class="btn btn-primary" onclick="copyMealPlan()">
+                            <i class="fas fa-copy"></i> Copy to My Plans
+                        </button>
+                    </div>
+                    {% elif not current_user.is_authenticated and shared_plan.allow_copying %}
+                    <div class="mt-3">
+                        <a href="{{ url_for('auth.login', next=request.url) }}" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> Login to Copy Plan
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Meal Plan Content -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h3 class="mb-0">Meal Plan Details</h3>
+                </div>
+                <div class="card-body">
+                    <div id="meal-plan-content">
+                        <!-- Meal plan will be rendered here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Share Link -->
+            <div class="mt-4 text-center">
+                <p class="text-muted">Share this meal plan:</p>
+                <div class="input-group" style="max-width: 500px; margin: 0 auto;">
+                    <input type="text" class="form-control" id="share-url" value="{{ request.url|e }}" readonly>
+                    <button class="btn btn-outline-secondary" onclick="copyShareLink()">
+                        <i class="fas fa-copy"></i> Copy Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Render meal plan data
+const mealPlanData = {{ meal_plan|tojson|safe }};
+
+function renderMealPlan() {
+    const container = document.getElementById('meal-plan-content');
+    let html = '';
+    
+    // Check if meal plan is organized by days
+    if (mealPlanData.day1 || mealPlanData.Day1) {
+        // Render day-by-day format
+        Object.keys(mealPlanData).forEach(day => {
+            const dayData = mealPlanData[day];
+            const dayNumber = day.replace(/[^0-9]/g, '');
+            
+            html += `<div class="mb-4">
+                <h4>Day ${dayNumber}</h4>
+                <div class="row">`;
+            
+            ['breakfast', 'lunch', 'dinner', 'snacks'].forEach(mealType => {
+                if (dayData[mealType]) {
+                    const meal = dayData[mealType];
+                    html += `
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">${mealType.charAt(0).toUpperCase() + mealType.slice(1)}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-1"><strong>${meal.name || meal.meal || 'Meal'}</strong></p>
+                                    <p class="mb-0 text-muted">${meal.calories || 0} calories</p>
+                                    ${meal.description ? `<p class="mt-2 small">${meal.description}</p>` : ''}
+                                </div>
+                            </div>
+                        </div>`;
+                }
+            });
+            
+            html += '</div></div>';
+        });
+    } else if (mealPlanData.meals) {
+        // Render simple meal list format
+        html += '<div class="list-group">';
+        mealPlanData.meals.forEach(meal => {
+            html += `
+                <div class="list-group-item">
+                    <h6 class="mb-1">${meal.name}</h6>
+                    <p class="mb-1">${meal.calories} calories</p>
+                    ${meal.items ? `<small class="text-muted">${meal.items.join(', ')}</small>` : ''}
+                </div>`;
+        });
+        html += '</div>';
+    } else {
+        // Render raw JSON as fallback
+        html = '<pre class="bg-light p-3 rounded">' + JSON.stringify(mealPlanData, null, 2) + '</pre>';
+    }
+    
+    container.innerHTML = html;
+}
+
+// Copy meal plan to user's account
+async function copyMealPlan() {
+    try {
+        const response = await fetch(`/share/{{ shared_plan.share_code }}/copy`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Meal plan copied successfully! You can now find it in your dashboard.');
+            window.location.href = '/dashboard';
+        } else {
+            alert(data.error || 'Failed to copy meal plan');
+        }
+    } catch (error) {
+        alert('Error copying meal plan: ' + error.message);
+    }
+}
+
+// Copy share link to clipboard
+function copyShareLink() {
+    const shareUrl = document.getElementById('share-url');
+    shareUrl.select();
+    document.execCommand('copy');
+    
+    // Show feedback
+    const button = event.target.closest('button');
+    const originalHtml = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    button.classList.remove('btn-outline-secondary');
+    button.classList.add('btn-success');
+    
+    setTimeout(() => {
+        button.innerHTML = originalHtml;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-outline-secondary');
+    }, 2000);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', renderMealPlan);
+</script>
+{% endblock %}

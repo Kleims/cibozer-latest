@@ -1,0 +1,475 @@
+{% extends "base.html" %}
+
+{% block title %}Trace Detail - Cibozer{% endblock %}
+
+{% block head %}
+<style>
+.trace-timeline {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.span-item {
+    position: relative;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 5px;
+    border-left: 4px solid;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.span-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(5px);
+}
+
+.span-item.ok { border-color: #28a745; }
+.span-item.error { border-color: #dc3545; }
+.span-item.timeout { border-color: #ffc107; }
+
+.span-bar {
+    height: 8px;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    position: relative;
+}
+
+.span-bar.ok { background-color: #28a745; }
+.span-bar.error { background-color: #dc3545; }
+.span-bar.timeout { background-color: #ffc107; }
+
+.span-details {
+    background: #f8f9fa;
+    border-radius: 5px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    display: none;
+}
+
+.timeline-axis {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(to right, #e9ecef 0%, #e9ecef 100%);
+    border-radius: 5px;
+    margin-bottom: 1rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: #6c757d;
+}
+
+.timeline-label {
+    position: absolute;
+    top: 35px;
+    font-size: 0.8rem;
+    color: #6c757d;
+    transform: translateX(-50%);
+}
+
+.trace-info-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.tag-item {
+    display: inline-block;
+    background: rgba(0,0,0,0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    margin: 0.1rem;
+    font-size: 0.8rem;
+}
+
+.log-entry {
+    padding: 0.5rem;
+    margin-bottom: 0.25rem;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+.log-entry.info { background: #d1ecf1; }
+.log-entry.warn { background: #fff3cd; }
+.log-entry.error { background: #f8d7da; }
+
+.duration-display {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.span-level-0 { margin-left: 0; }
+.span-level-1 { margin-left: 20px; }
+.span-level-2 { margin-left: 40px; }
+.span-level-3 { margin-left: 60px; }
+.span-level-4 { margin-left: 80px; }
+
+.waterfall-view {
+    position: relative;
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+.back-button {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <button class="btn btn-outline-primary back-button" onclick="window.history.back()">
+        <i class="fas fa-arrow-left"></i> Back
+    </button>
+
+    <!-- Trace Information -->
+    <div class="trace-info-card">
+        <div class="row">
+            <div class="col-md-8">
+                <h2 id="trace-operation">Loading...</h2>
+                <p class="mb-2" id="trace-service">Service: Loading...</p>
+                <p class="mb-0" id="trace-id">Trace ID: {{ trace_id }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="duration-display" id="trace-duration">0ms</div>
+                <div id="trace-status" class="mt-2">
+                    <span class="badge bg-secondary">Loading...</span>
+                </div>
+                <div class="mt-2">
+                    <small id="trace-timestamps">Loading...</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <strong>Spans:</strong> <span id="span-count">0</span>
+            </div>
+            <div class="col-md-6">
+                <strong>Errors:</strong> <span id="error-count">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Toggle -->
+    <div class="mb-3">
+        <div class="btn-group" role="group">
+            <input type="radio" class="btn-check" name="view-mode" id="timeline-view" autocomplete="off" checked>
+            <label class="btn btn-outline-primary" for="timeline-view">
+                <i class="fas fa-chart-line"></i> Timeline View
+            </label>
+            
+            <input type="radio" class="btn-check" name="view-mode" id="waterfall-view" autocomplete="off">
+            <label class="btn btn-outline-primary" for="waterfall-view">
+                <i class="fas fa-bars"></i> Waterfall View
+            </label>
+        </div>
+        
+        <div class="float-end">
+            <button class="btn btn-outline-secondary me-2" onclick="exportTrace()">
+                <i class="fas fa-download"></i> Export
+            </button>
+            <button class="btn btn-outline-primary" onclick="refreshTrace()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Timeline View -->
+    <div id="timeline-container">
+        <div class="waterfall-view">
+            <h5><i class="fas fa-chart-line"></i> Span Timeline</h5>
+            <div id="timeline-axis" class="timeline-axis"></div>
+            <div id="spans-container" style="margin-top: 50px;">
+                <div class="text-center py-4">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading trace details...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Span Details Modal -->
+    <div class="modal fade" id="spanModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="spanModalTitle">Span Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="span-modal-content">
+                        <!-- Content will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let traceData = null;
+let traceId = '{{ trace_id }}';
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadTraceDetails();
+    
+    // Setup view mode toggles
+    document.querySelectorAll('input[name="view-mode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                renderTrace();
+            }
+        });
+    });
+});
+
+function loadTraceDetails() {
+    fetch(`/tracing/api/trace/${traceId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Trace not found');
+            }
+            return response.json();
+        })
+        .then(data => {
+            traceData = data;
+            updateTraceInfo(data.trace);
+            renderTrace();
+        })
+        .catch(error => {
+            console.error('Error loading trace:', error);
+            document.getElementById('spans-container').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    Error loading trace: ${error.message}
+                </div>
+            `;
+        });
+}
+
+function updateTraceInfo(trace) {
+    document.getElementById('trace-operation').textContent = trace.operation_name;
+    document.getElementById('trace-service').textContent = `Service: ${trace.service_name}`;
+    document.getElementById('trace-duration').textContent = `${trace.duration_ms.toFixed(1)}ms`;
+    document.getElementById('span-count').textContent = trace.span_count;
+    document.getElementById('error-count').textContent = trace.error_count;
+    
+    // Status badge
+    const statusElement = document.getElementById('trace-status');
+    const statusClass = trace.status === 'ok' ? 'bg-success' : 
+                       trace.status === 'error' ? 'bg-danger' : 'bg-warning';
+    statusElement.innerHTML = `<span class="badge ${statusClass}">${trace.status.toUpperCase()}</span>`;
+    
+    // Timestamps
+    const startTime = new Date(trace.start_time).toLocaleString();
+    const endTime = trace.end_time ? new Date(trace.end_time).toLocaleString() : 'Ongoing';
+    document.getElementById('trace-timestamps').textContent = `${startTime} - ${endTime}`;
+}
+
+function renderTrace() {
+    if (!traceData) return;
+    
+    const isTimelineView = document.getElementById('timeline-view').checked;
+    
+    if (isTimelineView) {
+        renderTimelineView();
+    } else {
+        renderWaterfallView();
+    }
+}
+
+function renderTimelineView() {
+    const spans = traceData.spans;
+    const trace = traceData.trace;
+    const container = document.getElementById('spans-container');
+    
+    // Build span hierarchy
+    const spanMap = new Map();
+    const rootSpans = [];
+    
+    spans.forEach(span => {
+        spanMap.set(span.span_id, {...span, children: []});
+    });
+    
+    spans.forEach(span => {
+        if (span.parent_span_id && spanMap.has(span.parent_span_id)) {
+            spanMap.get(span.parent_span_id).children.push(spanMap.get(span.span_id));
+        } else {
+            rootSpans.push(spanMap.get(span.span_id));
+        }
+    });
+    
+    // Render timeline axis
+    renderTimelineAxis(trace);
+    
+    // Render spans
+    container.innerHTML = '';
+    rootSpans.forEach(span => {
+        renderSpanHierarchy(span, container, trace, 0);
+    });
+}
+
+function renderTimelineAxis(trace) {
+    const axis = document.getElementById('timeline-axis');
+    const duration = trace.duration_ms;
+    
+    // Create time markers
+    const markers = [];
+    const markerCount = 5;
+    
+    for (let i = 0; i <= markerCount; i++) {
+        const percent = (i / markerCount) * 100;
+        const time = (duration * i / markerCount).toFixed(1);
+        
+        markers.push(`
+            <div class="timeline-marker" style="left: ${percent}%"></div>
+            <div class="timeline-label" style="left: ${percent}%">${time}ms</div>
+        `);
+    }
+    
+    axis.innerHTML = markers.join('');
+}
+
+function renderSpanHierarchy(span, container, trace, level) {
+    const spanElement = createSpanElement(span, trace, level);
+    container.appendChild(spanElement);
+    
+    // Render children (sorted by start time)
+    span.children.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+    span.children.forEach(child => {
+        renderSpanHierarchy(child, container, trace, level + 1);
+    });
+}
+
+function createSpanElement(span, trace, level) {
+    const div = document.createElement('div');
+    div.className = `span-item ${span.status} span-level-${Math.min(level, 4)}`;
+    div.onclick = () => showSpanDetails(span);
+    
+    // Calculate position and width for timeline bar
+    const traceStart = new Date(trace.start_time).getTime();
+    const spanStart = new Date(span.start_time).getTime();
+    const startPercent = ((spanStart - traceStart) / trace.duration_ms) * 100;
+    const widthPercent = (span.duration_ms / trace.duration_ms) * 100;
+    
+    div.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>${span.operation_name}</strong>
+                ${span.error_message ? `<span class="badge bg-danger ms-2">Error</span>` : ''}
+                ${Object.keys(span.tags).length > 0 ? `<span class="badge bg-info ms-2">${Object.keys(span.tags).length} tags</span>` : ''}
+                ${span.logs.length > 0 ? `<span class="badge bg-secondary ms-2">${span.logs.length} logs</span>` : ''}
+            </div>
+            <div class="duration-display">
+                ${span.duration_ms ? span.duration_ms.toFixed(1) + 'ms' : 'Ongoing'}
+            </div>
+        </div>
+        <div class="span-bar ${span.status}" style="margin-left: ${startPercent}%; width: ${widthPercent}%; max-width: ${100 - startPercent}%;"></div>
+    `;
+    
+    return div;
+}
+
+function renderWaterfallView() {
+    // Similar to timeline but with different layout
+    renderTimelineView(); // For now, use same implementation
+}
+
+function showSpanDetails(span) {
+    const modal = new bootstrap.Modal(document.getElementById('spanModal'));
+    document.getElementById('spanModalTitle').textContent = span.operation_name;
+    
+    const content = document.getElementById('span-modal-content');
+    content.innerHTML = `
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <strong>Span ID:</strong> ${span.span_id}<br>
+                <strong>Parent:</strong> ${span.parent_span_id || 'None'}<br>
+                <strong>Status:</strong> <span class="badge bg-${span.status === 'ok' ? 'success' : 'danger'}">${span.status}</span>
+            </div>
+            <div class="col-md-6">
+                <strong>Duration:</strong> ${span.duration_ms ? span.duration_ms.toFixed(1) + 'ms' : 'Ongoing'}<br>
+                <strong>Start:</strong> ${new Date(span.start_time).toLocaleString()}<br>
+                <strong>End:</strong> ${span.end_time ? new Date(span.end_time).toLocaleString() : 'Ongoing'}
+            </div>
+        </div>
+        
+        ${span.error_message ? `
+            <div class="alert alert-danger">
+                <strong>Error:</strong> ${span.error_message}
+            </div>
+        ` : ''}
+        
+        ${Object.keys(span.tags).length > 0 ? `
+            <h6>Tags</h6>
+            <div class="mb-3">
+                ${Object.entries(span.tags).map(([key, value]) => 
+                    `<div class="tag-item"><strong>${key}:</strong> ${value}</div>`
+                ).join('')}
+            </div>
+        ` : ''}
+        
+        ${span.logs.length > 0 ? `
+            <h6>Logs</h6>
+            <div class="mb-3">
+                ${span.logs.map(log => `
+                    <div class="log-entry ${log.level}">
+                        <small class="text-muted">${new Date(log.timestamp).toLocaleString()}</small>
+                        <strong>[${log.level.toUpperCase()}]</strong> ${log.message}
+                        ${Object.keys(log.fields).length > 0 ? 
+                            '<br><small>' + JSON.stringify(log.fields, null, 2) + '</small>' : ''}
+                    </div>
+                `).join('')}
+            </div>
+        ` : ''}
+    `;
+    
+    modal.show();
+}
+
+function refreshTrace() {
+    loadTraceDetails();
+}
+
+function exportTrace() {
+    if (!traceData) return;
+    
+    const dataStr = JSON.stringify(traceData, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `trace-${traceId}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}

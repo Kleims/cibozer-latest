@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Debug 415 Error - Step by Step</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        button { margin: 10px; padding: 10px; font-size: 14px; }
+        pre { background: #f0f0f0; padding: 10px; overflow-x: auto; max-height: 400px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Debug 415 Error - Step by Step Testing</h1>
+    
+    <div>
+        <button onclick="testSimple()">1. Test Simple Endpoint (no decorators)</button>
+        <button onclick="testWithCSRF()">2. Test with CSRF</button>
+        <button onclick="testGenerate()">3. Test Generate Endpoint</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <h2>Test Results:</h2>
+    <pre id="results"></pre>
+    
+    <script>
+    const resultsEl = document.getElementById('results');
+    
+    function log(msg, type = '') {
+        const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+        const className = type ? ` class="${type}"` : '';
+        resultsEl.innerHTML += `<span${className}>[${timestamp}] ${msg}</span>\n`;
+        console.log(msg);
+    }
+    
+    function clearResults() {
+        resultsEl.innerHTML = '';
+    }
+    
+    async function testSimple() {
+        log('\n=== Testing Simple Endpoint (no decorators) ===', 'info');
+        
+        const data = { test: 'simple', calories: 2000 };
+        
+        try {
+            log('Sending request to /api/test-simple...');
+            log('Data: ' + JSON.stringify(data));
+            
+            const response = await fetch('/api/test-simple', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            log(`Response status: ${response.status} ${response.statusText}`, 
+                response.ok ? 'success' : 'error');
+            
+            const text = await response.text();
+            log('Response: ' + text);
+            
+            if (response.status === 415) {
+                log('❌ STILL GETTING 415 ERROR! This means the issue is NOT in our decorators.', 'error');
+            } else if (response.ok) {
+                log('✅ Simple endpoint works! The issue is specific to decorated endpoints.', 'success');
+            }
+            
+        } catch (error) {
+            log('❌ ERROR: ' + error.message, 'error');
+        }
+    }
+    
+    async function testWithCSRF() {
+        log('\n=== Testing with CSRF Token ===', 'info');
+        
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfToken = csrfMeta ? csrfMeta.content : 'NO-TOKEN';
+        log('CSRF Token: ' + csrfToken);
+        
+        const data = { test: 'csrf', calories: 2000 };
+        
+        try {
+            const response = await fetch('/api/test-simple', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify(data)
+            });
+            
+            log(`Response status: ${response.status} ${response.statusText}`, 
+                response.ok ? 'success' : 'error');
+            
+            const text = await response.text();
+            log('Response: ' + text);
+            
+        } catch (error) {
+            log('❌ ERROR: ' + error.message, 'error');
+        }
+    }
+    
+    async function testGenerate() {
+        log('\n=== Testing Generate Endpoint ===', 'info');
+        
+        const data = {
+            calories: "2000",
+            days: "1",
+            diet: "standard",
+            meal_structure: "standard"
+        };
+        
+        try {
+            log('Sending request to /api/generate...');
+            log('Data: ' + JSON.stringify(data));
+            
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            log(`Response status: ${response.status} ${response.statusText}`, 
+                response.ok ? 'success' : 'error');
+            
+            const text = await response.text();
+            log('Response (first 300 chars): ' + text.substring(0, 300));
+            
+            if (response.status === 415) {
+                log('❌ GENERATE ENDPOINT STILL FAILS!', 'error');
+                log('This means the issue is with the decorators or Flask configuration.', 'error'); 
+            } else if (response.ok) {
+                log('✅ Generate endpoint works!', 'success');
+            }
+            
+        } catch (error) {
+            log('❌ ERROR: ' + error.message, 'error');
+        }
+    }
+    
+    // Auto-run first test
+    window.addEventListener('load', () => {
+        log('Browser: ' + navigator.userAgent);
+        log('Ready. Click buttons to test step by step.');
+    });
+    </script>
+</body>
+</html>

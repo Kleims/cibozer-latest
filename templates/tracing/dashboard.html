@@ -1,0 +1,581 @@
+{% extends "base.html" %}
+
+{% block title %}Distributed Tracing - Cibozer{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<style>
+.tracing-metric-card {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.trace-status-ok { color: #28a745; }
+.trace-status-error { color: #dc3545; }
+.trace-status-timeout { color: #ffc107; }
+
+.trace-item {
+    border-left: 4px solid;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0 5px 5px 0;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.trace-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(5px);
+}
+
+.trace-item.ok { border-color: #28a745; }
+.trace-item.error { border-color: #dc3545; }
+.trace-item.timeout { border-color: #ffc107; }
+
+.operation-stats-table {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.service-map-container {
+    height: 400px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+}
+
+.search-filters {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.duration-badge {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+.refresh-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.refresh-indicator.show {
+    opacity: 1;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-project-diagram"></i> Distributed Tracing</h1>
+        <div>
+            <button class="btn btn-outline-primary me-2" onclick="refreshDashboard()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button class="btn btn-outline-secondary me-2" onclick="showConfigModal()">
+                <i class="fas fa-cog"></i> Config
+            </button>
+            <span class="text-muted small">Last updated: <span id="last-updated">{{ data.timestamp }}</span></span>
+        </div>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="tracing-metric-card">
+                <div class="metric-value">{{ data.summary.total_traces }}</div>
+                <div class="metric-label">
+                    <i class="fas fa-route"></i> Total Traces
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="tracing-metric-card">
+                <div class="metric-value">{{ "%.1f"|format(data.summary.error_rate_percent) }}%</div>
+                <div class="metric-label">
+                    <i class="fas fa-exclamation-triangle"></i> Error Rate
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="tracing-metric-card">
+                <div class="metric-value">{{ "%.1f"|format(data.summary.avg_spans_per_trace) }}</div>
+                <div class="metric-label">
+                    <i class="fas fa-layer-group"></i> Avg Spans/Trace
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="tracing-metric-card">
+                <div class="metric-value">{{ data.summary.active_traces }}</div>
+                <div class="metric-label">
+                    <i class="fas fa-play-circle"></i> Active Traces
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Duration Percentiles -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-chart-bar"></i> Response Time Distribution</h5>
+                    <canvas id="durationChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Map -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-sitemap"></i> Service Dependencies</h5>
+                    <div id="service-map" class="service-map-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="search-filters">
+                <div class="row">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" id="search-query" placeholder="Search traces...">
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="status-filter">
+                            <option value="">All Status</option>
+                            <option value="ok">OK</option>
+                            <option value="error">Error</option>
+                            <option value="timeout">Timeout</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" class="form-control" id="min-duration" placeholder="Min duration (ms)">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" class="form-control" id="limit-traces" placeholder="Limit" value="50">
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary me-2" onclick="searchTraces()">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Traces -->
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-list"></i> Recent Traces
+                        <span class="badge bg-secondary" id="trace-count">{{ data.recent_traces|length }}</span>
+                    </h5>
+                    <div id="traces-list" style="max-height: 600px; overflow-y: auto;">
+                        {% for trace in data.recent_traces %}
+                        <div class="trace-item {{ trace.status }}" onclick="viewTrace('{{ trace.trace_id }}')">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ trace.operation_name }}</h6>
+                                    <small class="text-muted">{{ trace.service_name }}</small>
+                                    <div class="mt-1">
+                                        <span class="badge bg-light text-dark">{{ trace.span_count }} spans</span>
+                                        {% if trace.error_count > 0 %}
+                                        <span class="badge bg-danger">{{ trace.error_count }} errors</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="duration-badge">
+                                        {{ "%.1f"|format(trace.duration_ms) }}ms
+                                    </div>
+                                    <small class="text-muted d-block">{{ trace.start_time }}</small>
+                                    <i class="fas fa-{{ 'check-circle trace-status-ok' if trace.status == 'ok' else 'times-circle trace-status-error' if trace.status == 'error' else 'clock trace-status-timeout' }}"></i>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Operation Statistics -->
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-tachometer-alt"></i> Operation Performance</h5>
+                    <div class="operation-stats-table">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Operation</th>
+                                    <th>Avg (ms)</th>
+                                    <th>Count</th>
+                                    <th>Errors</th>
+                                </tr>
+                            </thead>
+                            <tbody id="operation-stats-body">
+                                {% for op_name, stats in data.operation_stats.items() %}
+                                <tr>
+                                    <td>
+                                        <small>{{ op_name.split('.')[-1] if '.' in op_name else op_name }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="duration-badge">{{ "%.1f"|format(stats.avg_duration_ms) }}</span>
+                                    </td>
+                                    <td>{{ stats.count }}</td>
+                                    <td>
+                                        {% if stats.error_count > 0 %}
+                                        <span class="text-danger">{{ stats.error_count }}</span>
+                                        {% else %}
+                                        <span class="text-success">0</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configuration Modal -->
+<div class="modal fade" id="configModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tracing Configuration</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="config-form">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="tracing-enabled">
+                            <label class="form-check-label" for="tracing-enabled">
+                                Enable Distributed Tracing
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sample-rate" class="form-label">Sample Rate (0.0 - 1.0)</label>
+                        <input type="number" class="form-control" id="sample-rate" min="0" max="1" step="0.1">
+                        <div class="form-text">Percentage of requests to trace</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="max-trace-duration" class="form-label">Max Trace Duration (ms)</label>
+                        <input type="number" class="form-control" id="max-trace-duration" min="1000">
+                        <div class="form-text">Maximum time before a trace times out</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveConfig()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Refresh Indicator -->
+<div id="refresh-indicator" class="refresh-indicator">
+    <i class="fas fa-sync-alt"></i> Updated
+</div>
+
+<script>
+let dashboardData = {{ data | tojson }};
+let serviceMap = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    loadServiceMap();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(refreshDashboard, 30000);
+    
+    // Setup search on enter
+    document.getElementById('search-query').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchTraces();
+        }
+    });
+});
+
+function initializeCharts() {
+    // Duration percentiles chart
+    const durationCtx = document.getElementById('durationChart').getContext('2d');
+    const percentiles = dashboardData.summary.duration_percentiles;
+    
+    new Chart(durationCtx, {
+        type: 'bar',
+        data: {
+            labels: ['P50', 'P95', 'P99'],
+            datasets: [{
+                label: 'Response Time (ms)',
+                data: [
+                    percentiles.p50 || 0,
+                    percentiles.p95 || 0,
+                    percentiles.p99 || 0
+                ],
+                backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Milliseconds'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function loadServiceMap() {
+    fetch('/tracing/api/services')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('service-map');
+            const nodes = new vis.DataSet(data.nodes);
+            const edges = new vis.DataSet(data.edges);
+            
+            const networkData = { nodes: nodes, edges: edges };
+            const options = {
+                layout: {
+                    hierarchical: {
+                        direction: 'UD',
+                        sortMethod: 'directed'
+                    }
+                },
+                edges: {
+                    arrows: 'to',
+                    color: '#666666'
+                },
+                nodes: {
+                    shape: 'box',
+                    margin: 10,
+                    font: { size: 12 },
+                    color: {
+                        background: '#4facfe',
+                        border: '#0066cc'
+                    }
+                },
+                physics: false
+            };
+            
+            serviceMap = new vis.Network(container, networkData, options);
+        })
+        .catch(error => console.error('Error loading service map:', error));
+}
+
+function refreshDashboard() {
+    fetch('/tracing/api/summary')
+        .then(response => response.json())
+        .then(data => {
+            updateSummaryMetrics(data);
+            loadRecentTraces();
+            loadOperationStats();
+            showRefreshIndicator();
+        })
+        .catch(error => console.error('Error refreshing dashboard:', error));
+}
+
+function updateSummaryMetrics(summary) {
+    const metrics = document.querySelectorAll('.tracing-metric-card .metric-value');
+    metrics[0].textContent = summary.total_traces;
+    metrics[1].textContent = summary.error_rate_percent.toFixed(1) + '%';
+    metrics[2].textContent = summary.avg_spans_per_trace.toFixed(1);
+    metrics[3].textContent = summary.active_traces;
+    
+    document.getElementById('last-updated').textContent = new Date().toLocaleString();
+}
+
+function loadRecentTraces() {
+    fetch('/tracing/api/traces?limit=20')
+        .then(response => response.json())
+        .then(data => {
+            updateTracesList(data.traces);
+        })
+        .catch(error => console.error('Error loading traces:', error));
+}
+
+function loadOperationStats() {
+    fetch('/tracing/api/operations')
+        .then(response => response.json())
+        .then(data => {
+            updateOperationStats(data.operations);
+        })
+        .catch(error => console.error('Error loading operation stats:', error));
+}
+
+function updateTracesList(traces) {
+    const container = document.getElementById('traces-list');
+    const count = document.getElementById('trace-count');
+    
+    container.innerHTML = traces.map(trace => `
+        <div class="trace-item ${trace.status}" onclick="viewTrace('${trace.trace_id}')">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="mb-1">${trace.operation_name}</h6>
+                    <small class="text-muted">${trace.service_name}</small>
+                    <div class="mt-1">
+                        <span class="badge bg-light text-dark">${trace.span_count} spans</span>
+                        ${trace.error_count > 0 ? `<span class="badge bg-danger">${trace.error_count} errors</span>` : ''}
+                    </div>
+                </div>
+                <div class="text-end">
+                    <div class="duration-badge">${trace.duration_ms.toFixed(1)}ms</div>
+                    <small class="text-muted d-block">${new Date(trace.start_time).toLocaleString()}</small>
+                    <i class="fas fa-${trace.status === 'ok' ? 'check-circle trace-status-ok' : 
+                                       trace.status === 'error' ? 'times-circle trace-status-error' : 
+                                       'clock trace-status-timeout'}"></i>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    count.textContent = traces.length;
+}
+
+function updateOperationStats(operations) {
+    const tbody = document.getElementById('operation-stats-body');
+    
+    tbody.innerHTML = operations.map(op => `
+        <tr>
+            <td>
+                <small>${op.operation_name.split('.').pop()}</small>
+            </td>
+            <td>
+                <span class="duration-badge">${op.stats.avg_duration_ms.toFixed(1)}</span>
+            </td>
+            <td>${op.stats.count}</td>
+            <td>
+                ${op.stats.error_count > 0 ? 
+                  `<span class="text-danger">${op.stats.error_count}</span>` : 
+                  '<span class="text-success">0</span>'}
+            </td>
+        </tr>
+    `).join('');
+}
+
+function searchTraces() {
+    const query = document.getElementById('search-query').value;
+    const status = document.getElementById('status-filter').value;
+    const minDuration = document.getElementById('min-duration').value;
+    const limit = document.getElementById('limit-traces').value || 50;
+    
+    const params = new URLSearchParams();
+    if (query) params.append('q', query);
+    if (status) params.append('status', status);
+    if (minDuration) params.append('min_duration', minDuration);
+    params.append('limit', limit);
+    
+    fetch(`/tracing/api/search?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            updateTracesList(data.traces);
+        })
+        .catch(error => console.error('Error searching traces:', error));
+}
+
+function clearFilters() {
+    document.getElementById('search-query').value = '';
+    document.getElementById('status-filter').value = '';
+    document.getElementById('min-duration').value = '';
+    document.getElementById('limit-traces').value = '50';
+    loadRecentTraces();
+}
+
+function viewTrace(traceId) {
+    window.open(`/tracing/trace/${traceId}`, '_blank');
+}
+
+function showConfigModal() {
+    fetch('/tracing/api/config')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('tracing-enabled').checked = data.enabled;
+            document.getElementById('sample-rate').value = data.sample_rate;
+            document.getElementById('max-trace-duration').value = data.max_trace_duration_ms;
+            
+            new bootstrap.Modal(document.getElementById('configModal')).show();
+        })
+        .catch(error => console.error('Error loading config:', error));
+}
+
+function saveConfig() {
+    const config = {
+        enabled: document.getElementById('tracing-enabled').checked,
+        sample_rate: parseFloat(document.getElementById('sample-rate').value),
+        max_trace_duration: parseInt(document.getElementById('max-trace-duration').value)
+    };
+    
+    fetch('/tracing/api/config', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(config)
+    })
+    .then(response => response.json())
+    .then(data => {
+        bootstrap.Modal.getInstance(document.getElementById('configModal')).hide();
+        showRefreshIndicator();
+    })
+    .catch(error => console.error('Error saving config:', error));
+}
+
+function showRefreshIndicator() {
+    const indicator = document.getElementById('refresh-indicator');
+    indicator.classList.add('show');
+    setTimeout(() => {
+        indicator.classList.remove('show');
+    }, 2000);
+}
+</script>
+{% endblock %}

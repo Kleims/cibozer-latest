@@ -1,0 +1,36 @@
+PLACEHOLDER VIDEO FILE
+{
+  "title": "My Meal Plan",
+  "platform": "youtube_shorts",
+  "scenes": [
+    {
+      "type": "intro",
+      "duration": 3,
+      "title": "My Meal Plan",
+      "subtitle": "standard Diet Plan"
+    },
+    {
+      "type": "meal",
+      "duration": 4,
+      "meal_name": "Breakfast Bowl",
+      "meal_type": "meal",
+      "calories": 400,
+      "ingredients": [],
+      "image": null
+    },
+    {
+      "type": "meal",
+      "duration": 4,
+      "meal_name": "Lunch Salad",
+      "meal_type": "meal",
+      "calories": 600,
+      "ingredients": [],
+      "image": null
+    },
+    {
+      "type": "outro",
+      "duration": 3,
+      "call_to_action": "Start your healthy journey today!"
+    }
+  ]
+}

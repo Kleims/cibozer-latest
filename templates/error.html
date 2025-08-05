@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Error - Cibozer{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="text-center">
+                <div class="error-icon mb-4">
+                    <i class="fas fa-exclamation-triangle fa-5x text-danger"></i>
+                </div>
+                <h1 class="display-4 text-danger">Oops! Something went wrong</h1>
+                <p class="lead text-muted mb-4">We encountered an error while processing your request.</p>
+                
+                {% if error %}
+                <div class="alert alert-danger text-start">
+                    <h5>Error Details:</h5>
+                    <pre><code>{{ error }}</code></pre>
+                </div>
+                {% endif %}
+                
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                    <a href="/" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i>Go Home
+                    </a>
+                    <a href="/login" class="btn btn-outline-primary">
+                        <i class="fas fa-sign-in-alt me-2"></i>Try Again
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

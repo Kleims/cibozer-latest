@@ -1,0 +1,1186 @@
+/* Cibozer Custom Styles */
+
+:root {
+    /* Health-focused color palette */
+    --primary-color: #2ECC71;        /* Fresh green */
+    --primary-dark: #27AE60;         /* Darker green */
+    --primary-light: #52E893;        /* Lighter green */
+    --secondary-color: #3498DB;      /* Trust blue */
+    --accent-color: #FF6B6B;         /* Energetic coral */
+    --success-color: #2ECC71;        /* Same as primary */
+    --warning-color: #F39C12;        /* Warm orange */
+    --danger-color: #E74C3C;         /* Softer red */
+    --light-color: #F8F9FA;
+    --dark-color: #2C3E50;
+    --text-primary: #2C3E50;
+    --text-secondary: #7F8C8D;
+    
+    /* Updated gradients */
+    --gradient-primary: linear-gradient(135deg, #2ECC71 0%, #27AE60 100%);
+    --gradient-secondary: linear-gradient(135deg, #3498DB 0%, #2980B9 100%);
+    --gradient-accent: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%);
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.1);
+    --shadow-xl: 0 20px 40px rgba(0,0,0,0.12);
+    
+    /* Transitions */
+    --transition-fast: all 0.2s ease;
+    --transition-base: all 0.3s ease;
+    --transition-slow: all 0.5s ease;
+}
+
+/* Global Styles */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: #FAFBFC;
+    position: relative;
+}
+
+/* Subtle background pattern */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(46, 204, 113, 0.02) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(52, 152, 219, 0.02) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 107, 107, 0.01) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+.bg-gradient-primary {
+    background: var(--gradient-primary);
+}
+
+.bg-gradient-secondary {
+    background: var(--gradient-secondary);
+}
+
+.bg-gradient-accent {
+    background: var(--gradient-accent);
+}
+
+/* Text colors */
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.text-secondary {
+    color: var(--secondary-color) !important;
+}
+
+/* Hero Section */
+/* Enhanced Hero Section */
+.hero-section {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>'),
+        linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.02) 50%, transparent 100%);
+    background-size: 100px 100px, cover;
+    animation: subtle-shift 20s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes subtle-shift {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-10px, -10px); }
+}
+
+.hero-icon {
+    font-size: 15rem;
+    opacity: 0.1;
+    animation: float 3s ease-in-out infinite;
+}
+
+/* Responsive hero icon */
+@media (max-width: 768px) {
+    .hero-icon {
+        font-size: 8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-icon {
+        font-size: 5rem;
+    }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+}
+
+/* Feature Cards with Enhanced Hover */
+.feature-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition-base);
+    height: 100%;
+    border: 1px solid rgba(46, 204, 113, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 300%;
+    height: 300%;
+    background: radial-gradient(circle, rgba(46, 204, 113, 0.05) 0%, transparent 70%);
+    transition: var(--transition-slow);
+    pointer-events: none;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl);
+    border-color: rgba(46, 204, 113, 0.2);
+}
+
+.feature-card:hover::before {
+    top: -50%;
+    left: -50%;
+}
+
+.feature-icon {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Enhanced Diet Badges */
+.diet-badge {
+    background: white;
+    border: 2px solid rgba(46, 204, 113, 0.2);
+    border-radius: 16px;
+    padding: 18px;
+    text-align: center;
+    font-weight: 600;
+    transition: var(--transition-base);
+    margin-bottom: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.diet-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--gradient-primary);
+    transition: var(--transition-base);
+    z-index: 0;
+}
+
+.diet-badge:hover::before {
+    left: 0;
+}
+
+.diet-badge:hover {
+    color: white;
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: var(--shadow-lg);
+    border-color: transparent;
+}
+
+.diet-badge i {
+    margin-right: 8px;
+    font-size: 1.2em;
+    position: relative;
+    z-index: 1;
+}
+
+.diet-badge span {
+    position: relative;
+    z-index: 1;
+}
+
+/* Enhanced Section Backgrounds */
+.stats-section {
+    position: relative;
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.05) 0%, rgba(52, 152, 219, 0.05) 100%);
+    overflow: hidden;
+}
+
+.stats-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60"><circle cx="30" cy="30" r="2" fill="rgba(46,204,113,0.03)"/></svg>');
+    background-size: 60px 60px;
+    animation: float-pattern 20s linear infinite;
+}
+
+@keyframes float-pattern {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(60px, 60px); }
+}
+
+/* Features section background */
+.features-section {
+    position: relative;
+    background: #FAFBFC;
+}
+
+.features-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 30% 50%, rgba(46, 204, 113, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 70% 50%, rgba(52, 152, 219, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+/* CTA section enhancement */
+.cta-section {
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-section::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: rotate-slow 30s linear infinite;
+}
+
+@keyframes rotate-slow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.stat-item {
+    text-align: center;
+    padding: 20px;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.stat-label {
+    font-size: 1.1rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Form Styles */
+.form-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+/* Enhanced Form Elements */
+.form-control,
+.form-select {
+    border: 2px solid rgba(46, 204, 113, 0.15);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 16px;
+    background-color: rgba(255, 255, 255, 0.9);
+    transition: var(--transition-fast);
+    position: relative;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(46, 204, 113, 0.1);
+    background-color: white;
+    outline: none;
+}
+
+.form-control:hover:not(:focus),
+.form-select:hover:not(:focus) {
+    border-color: rgba(46, 204, 113, 0.3);
+}
+
+/* Form label animation */
+.form-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    transition: var(--transition-fast);
+}
+
+.form-control:focus ~ .form-label,
+.form-select:focus ~ .form-label {
+    color: var(--primary-color);
+}
+}
+
+/* Button Styles */
+.btn {
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+/* Custom Button Styles */
+.btn {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    transition: var(--transition-base);
+    position: relative;
+    overflow: hidden;
+    border: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-primary {
+    background: var(--gradient-primary);
+    border: none;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--gradient-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(46, 204, 113, 0.3);
+    color: white;
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.2);
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--text-primary);
+    border: 2px solid var(--light-color);
+}
+
+.btn-secondary:hover {
+    background: var(--light-color);
+    border-color: var(--secondary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-success {
+    background: var(--gradient-accent);
+    border: none;
+    color: white;
+}
+
+.btn-success:hover {
+    background: var(--gradient-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+    color: white;
+}
+
+/* Skeleton Loaders */
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    background-color: #E3E3E3;
+    border-radius: 8px;
+}
+
+.skeleton::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0,
+        rgba(255, 255, 255, 0.2) 20%,
+        rgba(255, 255, 255, 0.5) 60%,
+        rgba(255, 255, 255, 0)
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.skeleton-text {
+    height: 16px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+}
+
+.skeleton-title {
+    height: 24px;
+    width: 60%;
+    margin-bottom: 16px;
+}
+
+.skeleton-card {
+    height: 200px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.skeleton-button {
+    height: 48px;
+    width: 150px;
+    border-radius: 8px;
+}
+
+/* Loading Spinner (keeping for compatibility) */
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(46, 204, 113, 0.1);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+/* Mobile Performance Optimizations */
+@media (max-width: 768px) {
+    /* Reduce animations on mobile for better performance */
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .btn-primary:hover,
+    .btn-success:hover {
+        transform: translateY(-1px);
+    }
+    
+    /* Improve form usability on mobile */
+    .form-control,
+    .form-select {
+        min-height: 48px; /* Better touch targets */
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+    
+    .hero-section {
+        min-height: 60vh; /* Reduce height on mobile */
+        padding: 2rem 0;
+    }
+    
+    .display-4 {
+        font-size: 2rem; /* Scale down large text */
+    }
+    
+    .display-5 {
+        font-size: 1.75rem;
+    }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Meal Plan Results */
+.meal-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: transform 0.3s ease;
+}
+
+.meal-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.meal-card.enhanced {
+    padding: 25px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.meal-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.meal-image-container {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.meal-image-placeholder {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.meal-image-placeholder i {
+    color: var(--primary-color);
+    opacity: 0.8;
+}
+
+.meal-time-badge {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary-color);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
+
+.nutrition-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.nutrition-item {
+    text-align: center;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    min-width: 60px;
+    flex: 1;
+    transition: all 0.3s ease;
+}
+
+.nutrition-item:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.nutrition-item:hover .nutrition-value,
+.nutrition-item:hover .nutrition-label {
+    color: white;
+}
+
+.nutrition-value {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.nutrition-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-transform: uppercase;
+}
+
+/* Ingredients List */
+.ingredients-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ingredients-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ingredients-list li:last-child {
+    border-bottom: none;
+}
+
+.ingredients-list.enhanced li {
+    padding: 10px 0;
+    transition: background-color 0.3s ease;
+}
+
+.ingredients-list.enhanced li:hover {
+    background-color: rgba(0,123,255,0.05);
+    padding-left: 10px;
+    margin-left: -10px;
+    padding-right: 10px;
+    margin-right: -10px;
+}
+
+.ingredient-name {
+    font-weight: 500;
+    color: #333;
+    text-transform: capitalize;
+}
+
+.ingredient-amount {
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Instructions List */
+.instructions-list {
+    font-size: 0.95rem;
+    line-height: 1.8;
+}
+
+.instructions-list li {
+    margin-bottom: 8px;
+}
+
+/* Macro Chart */
+.macro-chart {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.macro-chart canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-section {
+        min-height: 60vh;
+        padding: 40px 0;
+    }
+    
+    .hero-icon {
+        font-size: 8rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .nutrition-info {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .nutrition-item {
+        flex: 1;
+        min-width: 60px;
+    }
+    
+    /* Form adjustments */
+    .form-card {
+        padding: 20px;
+    }
+    
+    .diet-option label {
+        font-size: 0.9rem;
+        padding: 15px;
+    }
+    
+    /* Modal adjustments */
+    .modal-dialog {
+        margin: 10px;
+    }
+    
+    .modal-footer {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .modal-footer .btn {
+        flex: 1 1 45%;
+        margin: 2px;
+    }
+    
+    /* Meal card adjustments */
+    .meal-card.enhanced .row {
+        flex-direction: column;
+    }
+    
+    .meal-image-container {
+        margin-bottom: 20px;
+    }
+    
+    .nutrition-info.compact {
+        justify-content: center;
+    }
+    
+    .nutrition-badge {
+        font-size: 0.8rem;
+        padding: 3px 8px;
+    }
+    
+    /* Navigation tabs */
+    .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .nav-tabs .nav-link {
+        white-space: nowrap;
+        font-size: 0.9rem;
+        padding: 8px 12px;
+    }
+    
+    /* Week summary */
+    .week-summary {
+        padding: 15px;
+    }
+    
+    .week-summary .row {
+        gap: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Extra small devices */
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .display-5 {
+        font-size: 1.5rem;
+    }
+    
+    .btn-lg {
+        padding: 10px 20px;
+        font-size: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+    }
+    
+    /* Feature cards stack */
+    .feature-card {
+        margin-bottom: 15px;
+    }
+    
+    /* Form elements */
+    .form-control,
+    .form-select {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    /* Meal cards compact */
+    .meal-card.compact {
+        padding: 10px;
+    }
+    
+    .meal-icon-compact i {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Ingredients compact */
+    .ingredients-compact {
+        font-size: 0.85rem;
+    }
+    
+    .ingredient-tag {
+        font-size: 0.8rem;
+        padding: 1px 6px;
+    }
+    
+    /* Table responsiveness */
+    table {
+        font-size: 0.9rem;
+    }
+    
+    /* Buttons in results modal */
+    #resultsModal .modal-footer .btn {
+        flex: 1 1 100%;
+        margin: 2px 0;
+    }
+    
+    /* Macro chart smaller on mobile */
+    #macroChart {
+        width: 120px !important;
+        height: 120px !important;
+    }
+}
+
+/* Touch-friendly enhancements */
+@media (hover: none) {
+    .btn {
+        -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+    }
+    
+    .form-check-input {
+        width: 20px;
+        height: 20px;
+        margin-top: 0;
+    }
+    
+    .diet-option label:active {
+        transform: scale(0.95);
+    }
+    
+    .meal-card:hover {
+        transform: none;
+    }
+    
+    .feature-card:hover {
+        transform: none;
+    }
+}
+
+/* Landscape mode adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+    .hero-section {
+        min-height: 50vh;
+    }
+    
+    .modal-dialog {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+}
+
+/* Animations */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in {
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+
+/* Progress Bar */
+.progress-custom {
+    height: 8px;
+    border-radius: 4px;
+    background: #e9ecef;
+    overflow: hidden;
+}
+
+.progress-custom .progress-bar {
+    background: var(--gradient-primary);
+    transition: width 0.3s ease;
+}
+
+/* Notification Styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    min-width: 300px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    padding: 20px;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification-success {
+    border-left: 4px solid var(--success-color);
+}
+
+.notification-error {
+    border-left: 4px solid var(--danger-color);
+}
+
+.notification-warning {
+    border-left: 4px solid var(--warning-color);
+}
+
+/* Footer */
+footer {
+    background: var(--dark-color) !important;
+    margin-top: auto;
+}
+
+/* Utilities */
+.text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.shadow-custom {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+}
+
+.border-radius-custom {
+    border-radius: 15px !important;
+}
+
+/* Weekly Plan Styles */
+.week-summary {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.meal-card.compact {
+    padding: 15px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.meal-icon-compact {
+    margin-bottom: 5px;
+}
+
+.meal-name-compact {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+}
+
+.nutrition-info.compact {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.nutrition-badge {
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.1) 0%, rgba(52, 152, 219, 0.1) 100%);
+    padding: 6px 14px;
+    border-radius: 25px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid rgba(46, 204, 113, 0.2);
+    display: inline-block;
+    transition: var(--transition-fast);
+    position: relative;
+}
+
+.nutrition-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.2) 0%, rgba(52, 152, 219, 0.2) 100%);
+}
+
+.ingredients-compact {
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.ingredient-tag {
+    background: #e9ecef;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    margin-right: 5px;
+    display: inline-block;
+    margin-bottom: 5px;
+}
+
+.day-totals {
+    font-size: 0.95rem;
+}
+
+.day-totals i {
+    color: var(--primary-color);
+}
+
+/* Enhanced Navigation */
+.navbar {
+    background: white !important;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--primary-color) !important;
+}
+
+.nav-link {
+    color: var(--text-primary) !important;
+    font-weight: 500;
+    transition: var(--transition-fast);
+    position: relative;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--primary-color);
+    transform: translateX(-50%);
+    transition: var(--transition-fast);
+}
+
+.nav-link:hover::after {
+    width: 80%;
+}
+
+/* Tab navigation */
+.nav-tabs .nav-link {
+    color: var(--text-secondary);
+    font-weight: 500;
+    border-radius: 12px 12px 0 0;
+    border: none;
+    background: transparent;
+    transition: var(--transition-fast);
+}
+
+.nav-tabs .nav-link.active {
+    background: var(--gradient-primary);
+    color: white;
+    border-color: transparent;
+}
+
+.nav-tabs .nav-link:hover:not(.active) {
+    background: rgba(46, 204, 113, 0.1);
+    color: var(--primary-color);
+}
+
+/* Enhanced Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-color: #52E893;
+        --primary-dark: #2ECC71;
+        --primary-light: #7EFFA5;
+        --secondary-color: #5DADE2;
+        --accent-color: #FF8787;
+        --text-primary: #E8E8E8;
+        --text-secondary: #B8B8B8;
+        --light-color: #1A1A1A;
+        --dark-color: #f8f9fa;
+        
+        /* Adjusted shadows for dark mode */
+        --shadow-sm: 0 2px 4px rgba(0,0,0,0.3);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+        --shadow-lg: 0 10px 30px rgba(0,0,0,0.5);
+        --shadow-xl: 0 20px 40px rgba(0,0,0,0.6);
+    }
+    
+    body {
+        background-color: #121212;
+        color: #ffffff;
+    }
+    
+    .form-card,
+    .meal-card,
+    .feature-card {
+        background-color: #1e1e1e;
+        border-color: #333;
+    }
+    
+    .form-control {
+        background-color: #2d2d2d;
+        border-color: #404040;
+        color: #ffffff;
+    }
+    
+    .form-control:focus {
+        background-color: #2d2d2d;
+        border-color: var(--primary-color);
+        color: #ffffff;
+    }
+}

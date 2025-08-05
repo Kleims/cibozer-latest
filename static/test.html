@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>STATIC TEST - NO FLASK</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .btn { 
+            background: #007bff; 
+            color: white; 
+            padding: 15px 30px; 
+            border: none; 
+            cursor: pointer; 
+            margin: 10px; 
+            font-size: 16px; 
+            border-radius: 5px;
+        }
+        .btn:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🚨 STATIC HTML TEST (NO FLASK)</h1>
+    <p><strong>This is a static HTML file - no Flask, no server processing</strong></p>
+    
+    <button class="btn" onclick="alert('Button 1 clicked!')">TEST BUTTON 1</button>
+    <button class="btn" onclick="alert('Button 2 clicked!')">TEST BUTTON 2</button>
+    <button class="btn" onclick="window.location.href='https://google.com'">GO TO GOOGLE</button>
+    
+    <p>If these buttons don't work, the issue is with your browser or system, NOT the Flask app.</p>
+    
+    <script>
+        console.log('Static HTML JavaScript loaded');
+        alert('Static HTML page loaded successfully!');
+    </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Create Meal Plan - Cibozer{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="form-card">
+                <h2 class="mb-4 text-center">
+                    <i class="fas fa-magic me-2"></i>Create Your Meal Plan
+                </h2>
+                
+                <form id="mealPlanForm" method="POST" action="/api/generate">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="calories" class="form-label">Daily Calories</label>
+                                <input type="number" class="form-control" id="calories" name="calories" 
+                                       min="800" max="6000" value="2000" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="days" class="form-label">Number of Days</label>
+                                <select class="form-select" id="days" name="days" required>
+                                    <option value="1">1 Day</option>
+                                    <option value="3">3 Days</option>
+                                    <option value="7" selected>7 Days</option>
+                                    <option value="14">14 Days</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Diet Type</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="diet_type" id="standard" value="standard" checked>
+                                    <label class="form-check-label" for="standard">Standard</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="diet_type" id="keto" value="keto">
+                                    <label class="form-check-label" for="keto">Keto</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="diet_type" id="paleo" value="paleo">
+                                    <label class="form-check-label" for="paleo">Paleo</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="diet_type" id="vegan" value="vegan">
+                                    <label class="form-check-label" for="vegan">Vegan</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="diet_type" id="vegetarian" value="vegetarian">
+                                    <label class="form-check-label" for="vegetarian">Vegetarian</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="diet_type" id="high_protein" value="high_protein">
+                                    <label class="form-check-label" for="high_protein">High Protein</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pattern" class="form-label">Meal Pattern</label>
+                        <select class="form-select" id="pattern" name="pattern" required>
+                            <option value="3_meals">3 Meals</option>
+                            <option value="3_meals_2_snacks" selected>3 Meals + 2 Snacks</option>
+                            <option value="5_small_meals">5 Small Meals</option>
+                            <option value="intermittent_fasting">Intermittent Fasting</option>
+                        </select>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-magic me-2"></i>Generate Meal Plan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>Generating Your Meal Plan...</h5>
+                <p class="text-muted">This may take a few moments</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Modal -->
+<div class="modal fade" id="resultsModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Your Meal Plan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="mealPlanResults">
+                <!-- Results will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="window.print()">Print</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Simple form handler that works with clean JS
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('mealPlanForm');
+    if (!form) return;
+    
+    console.log('Meal plan form found');
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        console.log('Form submitted');
+        
+        // Show loading with clean JS
+        if (window.CibozerClean) {
+            window.CibozerClean.showLoading('Generating your meal plan...');
+        }
+        
+        try {
+            // Collect form data
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            console.log('Sending data:', data);
+            
+            // Make request
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('[name="csrf_token"]').value
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            // Hide loading
+            if (window.CibozerClean) {
+                window.CibozerClean.hideLoading();
+            }
+            
+            if (result.success) {
+                // Show results
+                document.getElementById('mealPlanResults').innerHTML = `
+                    <div class="alert alert-success">
+                        <h4>Success!</h4>
+                        <p>Your meal plan has been generated successfully.</p>
+                        <pre>${JSON.stringify(result.meal_plan, null, 2)}</pre>
+                    </div>
+                `;
+                
+                // Show results modal
+                const resultsModal = new bootstrap.Modal(document.getElementById('resultsModal'));
+                resultsModal.show();
+            } else {
+                throw new Error(result.error || 'Failed to generate meal plan');
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            
+            // Hide loading
+            if (window.CibozerClean) {
+                window.CibozerClean.hideLoading();
+                window.CibozerClean.showNotification('Error: ' + error.message, 'danger');
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
