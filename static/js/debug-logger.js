@@ -42,8 +42,8 @@
         originalWarn.apply(console, args);
     };
     
-    // Send logs to server every 2 seconds
-    setInterval(() => {
+    // Send logs to server every 2 seconds with memory leak prevention
+    let logSyncInterval = setInterval(() => {
         if (logs.length > 0) {
             const logsToSend = [...logs];
             logs.length = 0; // Clear array
@@ -60,10 +60,22 @@
         }
     }, 2000);
     
-    // Also send on page unload
+    // Also send on page unload and clear interval to prevent memory leaks
     window.addEventListener('beforeunload', () => {
+        if (logSyncInterval) {
+            clearInterval(logSyncInterval);
+            logSyncInterval = null;
+        }
         if (logs.length > 0) {
             navigator.sendBeacon('/api/debug-logs', JSON.stringify({ logs }));
+        }
+    });
+    
+    // Clear interval on page hide (SPA behavior)
+    window.addEventListener('pagehide', () => {
+        if (logSyncInterval) {
+            clearInterval(logSyncInterval);
+            logSyncInterval = null;
         }
     });
     

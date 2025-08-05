@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to Cibozer - Let's Get Started!{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Welcome Hero Section -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8 text-center">
+            <div class="onboarding-hero">
+                <div class="hero-icon mb-4">
+                    <i class="fas fa-star text-primary" style="font-size: 4rem;"></i>
+                </div>
+                <h1 class="display-4 mb-3">🎉 Welcome to Cibozer, {{ user.full_name }}!</h1>
+                <p class="lead mb-4">You're about to discover how AI can transform your meal planning. Let's create your first personalized meal plan in just 2 minutes!</p>
+                
+                <!-- Quick Stats -->
+                <div class="row text-center mb-4">
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <i class="fas fa-clock text-success mb-2" style="font-size: 2rem;"></i>
+                            <h3>2 Minutes</h3>
+                            <p>To create your first plan</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <i class="fas fa-utensils text-warning mb-2" style="font-size: 2rem;"></i>
+                            <h3>{{ user.credits_balance }} Plans</h3>
+                            <p>Free meal plans included</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <i class="fas fa-heart text-danger mb-2" style="font-size: 2rem;"></i>
+                            <h3>Real Recipes</h3>
+                            <p>Kitchen-friendly portions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step-by-Step Guide -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-10">
+            <h2 class="text-center mb-5">📚 Here's How It Works (Super Simple!)</h2>
+            
+            <div class="onboarding-steps">
+                <!-- Step 1 -->
+                <div class="step-card mb-4" data-step="1">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <div class="step-number">1</div>
+                        </div>
+                        <div class="col-md-8">
+                            <h4>🎯 Set Your Goals</h4>
+                            <p>Tell us your daily calorie target, preferred diet type (Standard, Keto, Vegan, etc.), and how many days you want to plan.</p>
+                        </div>
+                        <div class="col-md-2">
+                            <i class="fas fa-target step-icon"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card mb-4" data-step="2">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <div class="step-number">2</div>
+                        </div>
+                        <div class="col-md-8">
+                            <h4>🤖 AI Creates Your Plan</h4>
+                            <p>Our AI instantly generates a complete meal plan with realistic portions, kitchen-friendly measurements, and balanced nutrition.</p>
+                        </div>
+                        <div class="col-md-2">
+                            <i class="fas fa-magic step-icon"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card mb-4" data-step="3">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <div class="step-number">3</div>
+                        </div>
+                        <div class="col-md-8">
+                            <h4>🍽️ Cook & Enjoy!</h4>
+                            <p>Get meals with practical measurements like "1 cup oats" and "1 medium bell pepper" - no more measuring 247.8g of ingredients!</p>
+                        </div>
+                        <div class="col-md-2">
+                            <i class="fas fa-chef-hat step-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Tutorial -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8">
+            <div class="tutorial-card">
+                <h3 class="text-center mb-4">🎥 Quick Preview: What You'll Get</h3>
+                
+                <div class="preview-example">
+                    <div class="example-meal-plan">
+                        <h5 class="text-primary mb-3">Example: Day 1 - Standard Diet</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="preview-meal">
+                                    <h6 class="meal-type">🌅 Breakfast</h6>
+                                    <p class="meal-name">Oatmeal with Berries</p>
+                                    <div class="meal-stats">
+                                        <span class="badge bg-success">485 cal</span>
+                                    </div>
+                                    <ul class="ingredient-preview">
+                                        <li>2/3 cup Oats</li>
+                                        <li>1 cup Milk</li>
+                                        <li>1/2 cup Blueberries</li>
+                                        <li>1 tbsp Honey</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <div class="preview-meal">
+                                    <h6 class="meal-type">🌞 Lunch</h6>
+                                    <p class="meal-name">Quinoa Power Bowl</p>
+                                    <div class="meal-stats">
+                                        <span class="badge bg-success">750 cal</span>
+                                    </div>
+                                    <ul class="ingredient-preview">
+                                        <li>3/4 cup Chickpeas</li>
+                                        <li>1/2 cup dry Quinoa</li>
+                                        <li>2 cups chopped Kale</li>
+                                        <li>1.5 tbsp Tahini</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <div class="preview-meal">
+                                    <h6 class="meal-type">🌙 Dinner</h6>
+                                    <p class="meal-name">Vegetable Stir Fry</p>
+                                    <div class="meal-stats">
+                                        <span class="badge bg-success">765 cal</span>
+                                    </div>
+                                    <ul class="ingredient-preview">
+                                        <li>4 oz Tofu</li>
+                                        <li>1 cup chopped Broccoli</li>
+                                        <li>1 medium Bell Pepper</li>
+                                        <li>1 tbsp Soy Sauce</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <span class="badge bg-primary fs-6">Total: ~2000 calories | Balanced nutrition | Real portions</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-6 text-center">
+            <div class="cta-section">
+                <h3 class="mb-4">🚀 Ready to Create Your First Meal Plan?</h3>
+                <p class="mb-4">It takes less than 2 minutes and you'll see exactly why thousands of people love Cibozer!</p>
+                
+                <div class="cta-buttons">
+                    <a href="{{ url_for('main.create_meal_plan') }}" class="btn btn-primary btn-lg me-3">
+                        <i class="fas fa-magic me-2"></i>Create My First Meal Plan
+                    </a>
+                    <button class="btn btn-outline-secondary btn-lg" onclick="toggleTips()">
+                        <i class="fas fa-lightbulb me-2"></i>Show Pro Tips
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pro Tips (Hidden by default) -->
+    <div class="row justify-content-center" id="proTips" style="display: none;">
+        <div class="col-lg-8">
+            <div class="tips-card">
+                <h4 class="text-center mb-4">💡 Pro Tips for Your First Meal Plan</h4>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="tip-item">
+                            <h6><i class="fas fa-target text-primary me-2"></i>Start Small</h6>
+                            <p>Try a 3-day plan first to get familiar with the system.</p>
+                        </div>
+                        
+                        <div class="tip-item">
+                            <h6><i class="fas fa-heart text-danger me-2"></i>Be Honest</h6>
+                            <p>Set your real calorie target - accuracy leads to better results.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="tip-item">
+                            <h6><i class="fas fa-leaf text-success me-2"></i>Experiment</h6>
+                            <p>Try different diet types to find what works for you.</p>
+                        </div>
+                        
+                        <div class="tip-item">
+                            <h6><i class="fas fa-bookmark text-warning me-2"></i>Save Favorites</h6>
+                            <p>Bookmark meal plans you love for easy access later.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Tracker -->
+    <div class="row justify-content-center mt-5">
+        <div class="col-lg-6">
+            <div class="progress-tracker">
+                <h5 class="text-center mb-3">Your Journey Progress</h5>
+                <div class="progress mb-2" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 25%"></div>
+                </div>
+                <div class="progress-steps">
+                    <span class="step-label active">✅ Account Created</span>
+                    <span class="step-label">📧 Email Received</span>
+                    <span class="step-label">🍽️ First Meal Plan</span>
+                    <span class="step-label">🏆 Success!</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.onboarding-hero {
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.1) 0%, rgba(52, 152, 219, 0.1) 100%);
+    padding: 50px 30px;
+    border-radius: 20px;
+    border: 1px solid rgba(46, 204, 113, 0.2);
+}
+
+.stat-card {
+    padding: 20px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.step-card {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    border-left: 5px solid var(--primary-color);
+    transition: transform 0.3s ease;
+}
+
+.step-card:hover {
+    transform: translateX(10px);
+}
+
+.step-number {
+    width: 50px;
+    height: 50px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.step-icon {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    opacity: 0.7;
+}
+
+.tutorial-card {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.preview-example {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 15px;
+    border: 2px dashed var(--primary-color);
+}
+
+.preview-meal {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    height: 100%;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+.meal-type {
+    color: var(--primary-color);
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.meal-name {
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.ingredient-preview {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ingredient-preview li {
+    padding: 3px 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.ingredient-preview li:before {
+    content: "• ";
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+.cta-section {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 40px 30px;
+    border-radius: 20px;
+}
+
+.tips-card {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    padding: 30px;
+    border-radius: 15px;
+}
+
+.tip-item {
+    margin-bottom: 20px;
+}
+
+.progress-tracker {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.step-label {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.step-label.active {
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .onboarding-hero {
+        padding: 30px 20px;
+    }
+    
+    .step-card {
+        text-align: center;
+    }
+    
+    .step-card .row {
+        flex-direction: column;
+    }
+    
+    .cta-buttons {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .progress-steps {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+</style>
+
+<script>
+function toggleTips() {
+    const tips = document.getElementById('proTips');
+    if (tips.style.display === 'none') {
+        tips.style.display = 'block';
+        tips.scrollIntoView({ behavior: 'smooth' });
+    } else {
+        tips.style.display = 'none';
+    }
+}
+
+// Track onboarding progress
+document.addEventListener('DOMContentLoaded', function() {
+    // Mark that user has seen onboarding
+    localStorage.setItem('cibozer_onboarding_seen', 'true');
+    
+    // Update progress bar based on user state
+    updateProgressBar();
+});
+
+function updateProgressBar() {
+    // This could be enhanced to check actual user progress
+    // For now, just show that account is created
+    console.log('User onboarding progress tracked');
+}
+</script>
+{% endblock %}

@@ -1,19 +1,34 @@
-# Cibozer - AI-Powered Meal Planning Platform
+# 🍽️ Cibozer - AI-Powered Meal Planning
 
-[Live Demo](https://cibozer.com) | [Documentation](./docs) | [API Reference](./docs/api.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Flask](https://img.shields.io/badge/flask-2.3+-green.svg)](https://flask.palletsprojects.com/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Tests](https://img.shields.io/badge/tests-90%25+-brightgreen.svg)](./tests)
+[![Security](https://img.shields.io/badge/security-A+-green.svg)](./SECURITY.md)
 
-## Overview
+[Live Demo](https://cibozer.com) | [Documentation](./docs) | [API Reference](./API_DOCUMENTATION.md) | [Deployment Guide](./DEPLOYMENT_GUIDE.md)
 
-Cibozer is an AI-powered meal planning SaaS platform that generates personalized meal plans, creates video content for social media, and helps users achieve their nutrition goals. Built with Flask and featuring advanced meal optimization algorithms, video generation capabilities, and seamless payment integration.
+## 🌟 Overview
 
-### Key Features
+Cibozer is a production-ready AI-powered meal planning SaaS platform that generates personalized meal plans, creates video content for social media, and helps users achieve their nutrition goals. Built with Flask and featuring advanced meal optimization algorithms, enterprise-grade security, and seamless payment integration.
 
-- **AI Meal Planning**: Intelligent meal generation based on dietary preferences and calorie targets
-- **Video Generation**: Automated video creation for YouTube Shorts, TikTok, and Instagram
-- **PDF Export**: Professional meal plans and grocery lists in PDF format
-- **User Management**: Secure authentication with credit-based and subscription models
-- **Payment Integration**: Stripe-powered billing for Pro ($9.99/mo) and Premium ($19.99/mo) tiers
-- **Admin Dashboard**: Analytics and user management interface
+### ✨ Key Features
+
+#### Core Features
+- 🤖 **AI Meal Planning**: Intelligent meal generation based on dietary preferences and calorie targets
+- 🎯 **Personalized Nutrition**: Customized plans based on individual health goals
+- 🛒 **Smart Shopping Lists**: Automated grocery lists grouped by category
+- 📊 **Nutritional Analytics**: Detailed macro and micronutrient tracking
+- 🔐 **Enterprise Security**: CSRF protection, rate limiting, secure authentication
+
+#### Premium Features
+- 🎥 **Video Generation**: Automated video creation for YouTube Shorts, TikTok, and Instagram
+- 📄 **PDF Export**: Professional meal plans and grocery lists in PDF format
+- 🔄 **Unlimited Plans**: Generate as many meal plans as needed
+- 📧 **Email Integration**: Automatic delivery of meal plans
+- 💳 **Subscription Tiers**: Stripe-powered billing for Pro ($9.99/mo) and Premium ($19.99/mo) tiers
+- 📈 **Admin Dashboard**: Comprehensive analytics and user management interface
 
 ## Quick Start
 

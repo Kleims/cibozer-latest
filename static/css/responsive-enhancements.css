@@ -1,0 +1,440 @@
+/* 
+ * Responsive Design Enhancements for Cibozer
+ * Ensures perfect display across all devices
+ */
+
+/* ===========================
+   Mobile-First Base Styles
+   =========================== */
+
+/* Extra Small Devices (phones, less than 576px) */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px; /* Base font size for better mobile readability */
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+}
+
+body {
+    min-width: 320px; /* Minimum supported width */
+    overflow-x: hidden;
+}
+
+/* Responsive Typography */
+h1 { font-size: clamp(1.75rem, 5vw, 3rem); }
+h2 { font-size: clamp(1.5rem, 4vw, 2.5rem); }
+h3 { font-size: clamp(1.25rem, 3vw, 2rem); }
+h4 { font-size: clamp(1.1rem, 2.5vw, 1.5rem); }
+h5 { font-size: clamp(1rem, 2vw, 1.25rem); }
+p, .body-text { font-size: clamp(0.95rem, 2vw, 1.1rem); }
+
+/* Container Improvements */
+.container-fluid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+@media (min-width: 576px) {
+    .container-fluid {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+}
+
+/* ===========================
+   Navigation Responsive
+   =========================== */
+
+.navbar {
+    padding: 0.5rem 1rem;
+}
+
+.navbar-brand {
+    font-size: 1.1rem;
+}
+
+.navbar-toggler {
+    padding: 0.25rem 0.5rem;
+    font-size: 1.1rem;
+    border: 2px solid transparent;
+    transition: var(--transition-fast);
+}
+
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 0.2rem rgba(46, 204, 113, 0.25);
+}
+
+/* Mobile Menu Enhancements */
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        margin-top: 1rem;
+        padding: 1rem 0;
+        border-top: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .navbar-nav .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 1.1rem;
+        border-radius: 0.5rem;
+        margin: 0.25rem 0;
+    }
+    
+    .navbar-nav .nav-link:hover,
+    .navbar-nav .nav-link:focus {
+        background-color: rgba(46, 204, 113, 0.1);
+    }
+}
+
+/* ===========================
+   Form Responsiveness
+   =========================== */
+
+.form-control,
+.form-select {
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+    min-height: 44px; /* Touch-friendly size */
+}
+
+.btn {
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+    min-height: 44px;
+    touch-action: manipulation; /* Prevent zoom on double-tap */
+}
+
+/* Mobile Form Layout */
+@media (max-width: 575.98px) {
+    .form-label {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-check {
+        padding-left: 2rem;
+    }
+    
+    .form-check-input {
+        width: 1.25rem;
+        height: 1.25rem;
+        margin-top: 0.2rem;
+    }
+    
+    /* Stack form buttons on mobile */
+    .btn-group-mobile {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-group-mobile .btn {
+        width: 100%;
+    }
+}
+
+/* ===========================
+   Card Responsiveness
+   =========================== */
+
+.card {
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 575.98px) {
+    .card {
+        border-radius: 0.75rem;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .card-body {
+        padding: 1.25rem;
+    }
+    
+    .card-title {
+        font-size: 1.25rem;
+    }
+}
+
+/* ===========================
+   Meal Plan Display
+   =========================== */
+
+.meal-plan-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.meal-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-fast);
+}
+
+@media (min-width: 768px) {
+    .meal-plan-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+}
+
+/* Meal Items List */
+.meal-items {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+}
+
+.meal-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.meal-item:last-child {
+    border-bottom: none;
+}
+
+/* ===========================
+   Table Responsiveness
+   =========================== */
+
+.table-responsive {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 767.98px) {
+    .table-responsive table {
+        font-size: 0.9rem;
+    }
+    
+    .table-responsive th,
+    .table-responsive td {
+        padding: 0.5rem;
+        white-space: nowrap;
+    }
+    
+    /* Horizontal scroll indicator */
+    .table-responsive::after {
+        content: '→';
+        position: absolute;
+        right: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        box-shadow: var(--shadow-sm);
+        pointer-events: none;
+        opacity: 0.7;
+    }
+}
+
+/* ===========================
+   Modal Responsiveness
+   =========================== */
+
+@media (max-width: 575.98px) {
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+    
+    .modal-content {
+        border-radius: 0.75rem;
+    }
+    
+    .modal-header {
+        padding: 1rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-footer {
+        padding: 1rem;
+        flex-direction: column;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+        margin: 0.25rem 0;
+    }
+}
+
+/* ===========================
+   Hero Section Mobile
+   =========================== */
+
+@media (max-width: 767.98px) {
+    .hero-section {
+        min-height: 60vh;
+        text-align: center;
+    }
+    
+    .hero-content h1 {
+        margin-bottom: 1rem;
+    }
+    
+    .hero-content .lead {
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .hero-cta {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .hero-cta .btn {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+/* ===========================
+   Feature Cards Mobile
+   =========================== */
+
+@media (max-width: 767.98px) {
+    .feature-card {
+        text-align: center;
+        padding: 1.5rem;
+    }
+    
+    .feature-card .icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+}
+
+/* ===========================
+   Footer Responsive
+   =========================== */
+
+@media (max-width: 767.98px) {
+    footer {
+        text-align: center;
+        padding: 2rem 1rem;
+    }
+    
+    footer .row > div {
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* ===========================
+   Utility Classes
+   =========================== */
+
+/* Spacing utilities for mobile */
+@media (max-width: 575.98px) {
+    .py-5 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+    .my-5 { margin-top: 2rem !important; margin-bottom: 2rem !important; }
+    .px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
+}
+
+/* Text alignment responsive */
+.text-center-mobile {
+    text-align: center;
+}
+
+@media (min-width: 768px) {
+    .text-center-mobile {
+        text-align: inherit;
+    }
+}
+
+/* Hide/Show elements */
+.mobile-only {
+    display: block;
+}
+
+.desktop-only {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .mobile-only {
+        display: none;
+    }
+    
+    .desktop-only {
+        display: block;
+    }
+}
+
+/* ===========================
+   Touch Optimizations
+   =========================== */
+
+/* Increase touch targets */
+a, button, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Remove hover effects on touch devices */
+@media (hover: none) {
+    .btn:hover,
+    .nav-link:hover,
+    .card:hover {
+        transform: none;
+        box-shadow: none;
+    }
+}
+
+/* ===========================
+   Landscape Mobile
+   =========================== */
+
+@media (max-width: 767.98px) and (orientation: landscape) {
+    .hero-section {
+        min-height: 90vh;
+    }
+    
+    .navbar {
+        padding: 0.25rem 1rem;
+    }
+    
+    .modal-dialog {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+}
+
+/* ===========================
+   Print Styles
+   =========================== */
+
+@media print {
+    .navbar,
+    .btn,
+    .footer,
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        font-size: 12pt;
+        line-height: 1.5;
+    }
+    
+    .container {
+        width: 100%;
+        max-width: none;
+    }
+}

@@ -1,0 +1,156 @@
+# ==============================================
+# Docker Compose Development Override
+# This file is automatically used for development
+# Run: docker-compose up (automatically includes this file)
+# ==============================================
+
+version: '3.8'
+
+services:
+  # ==============================================
+  # Web Application - Development Configuration
+  # ==============================================
+  web:
+    build:
+      target: development  # Use development stage
+    environment:
+      - FLASK_ENV=development
+      - DEBUG=True
+      - LOG_LEVEL=DEBUG
+      - SESSION_COOKIE_SECURE=False  # Allow HTTP in development
+    
+    volumes:
+      # Mount source code for live reloading
+      - .:/app
+      - /app/venv  # Exclude venv from mount
+      - /app/__pycache__  # Exclude pycache
+      - /app/.pytest_cache  # Exclude pytest cache
+      
+      # Development-specific mounts
+      - ./logs:/app/logs
+      - ./instance:/app/instance
+      
+    ports:
+      - "5000:5000"  # Direct port mapping for development
+      - "5001:5001"  # Additional port for testing
+    
+    command: >
+      sh -c "
+        echo 'Starting Cibozer in development mode...' &&
+        python -m flask db upgrade &&
+        python wsgi.py
+      "
+    
+    # Development doesn't need health checks
+    healthcheck:
+      disable: true
+    
+    # Development labels
+    labels:
+      - "dev.cibozer.service=web"
+      - "dev.cibozer.environment=development"
+
+  # ==============================================
+  # Redis - Development Configuration
+  # ==============================================
+  redis:
+    ports:
+      - "6379:6379"  # Expose Redis port for development tools
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    
+    labels:
+      - "dev.cibozer.service=redis"
+
+  # ==============================================
+  # PostgreSQL - Development Configuration
+  # ==============================================
+  postgres:
+    environment:
+      - POSTGRES_DB=cibozer_dev
+      - POSTGRES_USER=dev_user
+      - POSTGRES_PASSWORD=dev_password_123
+    
+    ports:
+      - "5432:5432"  # Expose PostgreSQL port for database tools
+    
+    volumes:
+      # Development database scripts
+      - ./scripts/init_dev_database.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    
+    labels:
+      - "dev.cibozer.service=postgres"
+
+# ==============================================
+# Additional Development Services
+# ==============================================
+
+  # ==============================================
+  # MailHog - Email Testing Service
+  # ==============================================
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: cibozer_mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    networks:
+      - cibozer_network
+    labels:
+      - "dev.cibozer.service=mailhog"
+      - "dev.cibozer.description=Email testing service"
+
+  # ==============================================
+  # Redis Commander - Redis Management UI
+  # ==============================================
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: cibozer_redis_commander
+    restart: unless-stopped
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - cibozer_network
+    depends_on:
+      - redis
+    labels:
+      - "dev.cibozer.service=redis-commander"
+      - "dev.cibozer.description=Redis management interface"
+
+  # ==============================================
+  # Adminer - Database Management UI
+  # ==============================================
+  adminer:
+    image: adminer:latest
+    container_name: cibozer_adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - cibozer_network
+    depends_on:
+      - postgres
+    labels:
+      - "dev.cibozer.service=adminer"
+      - "dev.cibozer.description=Database management interface"
+
+# ==============================================
+# Development Volume Overrides
+# ==============================================
+volumes:
+  # Use local directories for development
+  cibozer_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs
+  
+  cibozer_uploads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./static/uploads

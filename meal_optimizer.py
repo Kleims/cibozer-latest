@@ -315,21 +315,37 @@ class MealPlanOptimizer:
         # Try to find a simple, safe meal template
         valid_templates = self.filter_templates_by_diet(preferences['diet'], meal_type)
         if not valid_templates:
-            # Ultimate fallback - create a minimal meal
-            return {
-                'name': f'Simple {meal_type}',
-                'ingredients': [
-                    {'item': 'oats', 'amount': 50, 'unit': 'g'},
-                    {'item': 'milk', 'amount': 200, 'unit': 'ml'}
-                ],
-                'calories': 300,
-                'protein': 10,
-                'fat': 5,
-                'carbs': 45,
-                'prep_time': 5,
-                'cuisine': 'simple',
-                'cooking_method': 'raw'
-            }
+            # Ultimate fallback - create a minimal meal based on diet
+            if preferences.get('diet') == 'vegan':
+                return {
+                    'name': f'Simple {meal_type}',
+                    'ingredients': [
+                        {'item': 'oats', 'amount': 50, 'unit': 'g'},
+                        {'item': 'almond_milk', 'amount': 200, 'unit': 'ml'}
+                    ],
+                    'calories': 300,
+                    'protein': 10,
+                    'fat': 5,
+                    'carbs': 45,
+                    'prep_time': 5,
+                    'cuisine': 'simple',
+                    'cooking_method': 'raw'
+                }
+            else:
+                return {
+                    'name': f'Simple {meal_type}',
+                    'ingredients': [
+                        {'item': 'oats', 'amount': 50, 'unit': 'g'},
+                        {'item': 'milk', 'amount': 200, 'unit': 'ml'}
+                    ],
+                    'calories': 300,
+                    'protein': 10,
+                    'fat': 5,
+                    'carbs': 45,
+                    'prep_time': 5,
+                    'cuisine': 'simple',
+                    'cooking_method': 'raw'
+                }
         
         # Use the first valid template with minimal scaling
         template_id = valid_templates[0]
@@ -1611,7 +1627,18 @@ optimizer.set_constraints(preferences)""",
                             scaled_ing = ing.copy()
                             scaled_amount = ing['amount'] * best_scale
                             
-                            # Validate scaled amount
+                            # Validate scaled amount with liquid constraints
+                            item = ing['item']
+                            unit = ing.get('unit', 'g')
+                            
+                            # Apply liquid constraints
+                            if unit in ['ml', 'milliliters'] or 'milk' in item.lower():
+                                max_liquid = 500  # Max 500ml of any liquid per meal
+                                if scaled_amount > max_liquid:
+                                    scaled_amount = max_liquid
+                                    print(f"[INFO] Capped {item} from {ing['amount'] * best_scale:.0f}ml to {max_liquid}ml")
+                            
+                            # General amount validation
                             if self.MIN_INGREDIENT_AMOUNT <= scaled_amount <= self.MAX_INGREDIENT_AMOUNT:
                                 scaled_ing['amount'] = round(scaled_amount, 2)
                                 scaled_ingredients.append(scaled_ing)
@@ -1627,21 +1654,39 @@ optimizer.set_constraints(preferences)""",
                             day_meals[meal_name] = self._handle_optimization_failure(preferences, meal_type)
                             continue
                         
-                        # Track cuisine
-                        cuisines_used_today.add(template.get('cuisine', 'standard'))
-                        
-                        day_meals[meal_name] = {
+                        # Construct the meal
+                        meal = {
                             'name': template['name'],
                             'ingredients': scaled_ingredients,
                             'calories': nutrition['calories'],
                             'protein': nutrition['protein'],
                             'fat': nutrition['fat'],
                             'carbs': nutrition['carbs'],
-                            'fiber': nutrition.get('fiber'),  # Fix undefined fiber
+                            'fiber': nutrition.get('fiber'),
                             'prep_time': template.get('prep_time', 15),
                             'cuisine': template.get('cuisine', 'standard'),
                             'cooking_method': template.get('cooking_method', 'raw')
                         }
+                        
+                        # Validate diet compliance
+                        is_compliant, violations = self.validate_diet_compliance(meal, diet)
+                        if not is_compliant:
+                            print(f"[WARNING] Meal '{template['name']}' violates {diet} diet:")
+                            for violation in violations:
+                                print(f"  - {violation}")
+                            if self.logger:
+                                self.logger.log_event("DIET_VIOLATION", f"Meal violates {diet} diet", {
+                                    'meal': template['name'],
+                                    'violations': violations
+                                })
+                            # Skip this meal and try another template
+                            continue
+                        
+                        # Track cuisine
+                        cuisines_used_today.add(template.get('cuisine', 'standard'))
+                        
+                        # Meal passed all validations, assign it
+                        day_meals[meal_name] = meal
                         
                         # Log successful meal generation
                         if self.logger:
@@ -2511,6 +2556,58 @@ optimizer.set_constraints(preferences)""",
                     data['total_grams'] = 5000
             
             return validated_list
+    
+    def validate_diet_compliance(self, meal: Dict, diet: str) -> Tuple[bool, List[str]]:
+        """Validate that a meal complies with diet restrictions.
+        Returns (is_compliant, list_of_violations)"""
+        violations = []
+        diet_profile = self.diet_profiles.get(diet, {})
+        banned_ingredients = diet_profile.get('banned', [])
+        
+        # Check each ingredient in the meal
+        for ingredient in meal.get('ingredients', []):
+            if isinstance(ingredient, dict):
+                item = ingredient.get('item', '')
+                
+                # Check direct banned ingredients
+                if item in banned_ingredients:
+                    violations.append(f"{item} is not allowed in {diet} diet")
+                
+                # Special checks for vegan diet
+                if diet == 'vegan':
+                    # Check for dairy
+                    dairy_ingredients = ['milk', 'cheese', 'yogurt', 'butter', 'cream', 'ghee', 
+                                       'whey', 'casein', 'lactose', 'kefir', 'cottage_cheese',
+                                       'greek_yogurt', 'sour_cream', 'cream_cheese', 'tzatziki']
+                    if any(dairy in item.lower() for dairy in dairy_ingredients):
+                        violations.append(f"{item} contains dairy (not vegan)")
+                    
+                    # Check for honey
+                    if 'honey' in item.lower():
+                        violations.append(f"{item} is not vegan (bee product)")
+                    
+                    # Check for eggs
+                    if 'egg' in item.lower() or item.lower() in ['mayonnaise', 'aioli']:
+                        violations.append(f"{item} contains eggs (not vegan)")
+                    
+                    # Check for meat/fish
+                    meat_terms = ['chicken', 'beef', 'pork', 'lamb', 'turkey', 'duck', 
+                                 'fish', 'salmon', 'tuna', 'shrimp', 'bacon', 'ham',
+                                 'anchovy', 'anchovies']
+                    if any(meat in item.lower() for meat in meat_terms):
+                        violations.append(f"{item} is meat/fish (not vegan)")
+                
+                # Special checks for keto diet
+                elif diet == 'keto':
+                    # Check for high-carb ingredients
+                    high_carb_items = ['bread', 'pasta', 'rice', 'potato', 'sugar', 
+                                      'honey', 'maple_syrup', 'agave', 'corn', 'beans',
+                                      'oats', 'quinoa', 'banana', 'apple']
+                    if any(carb in item.lower() for carb in high_carb_items):
+                        violations.append(f"{item} is too high in carbs for keto diet")
+        
+        is_compliant = len(violations) == 0
+        return is_compliant, violations
     
     def save_meal_plan(self, meal_plan: Dict, filename: str = 'meal_plan_enhanced.json'):
         """Save meal plan to JSON file"""

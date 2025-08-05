@@ -4,7 +4,8 @@ import pytest
 from unittest.mock import patch, MagicMock
 from flask import Flask
 from app.extensions import db
-from models import User, Payment
+from app.models.user import User
+from app.models.payment import Payment
 from payments import (
     get_pricing_plans, create_checkout_session, cancel_subscription,
     stripe_webhook, check_user_credits, deduct_credit, add_credits
@@ -71,7 +72,8 @@ class TestCreditSystem:
             result = deduct_credit(user, 2)
             
             assert result is True
-            db.session.refresh(user)
+            # Re-fetch user to get updated credits
+            user = User.query.get(test_user)
             assert user.credits_balance == initial_credits - 2
     
     def test_add_credits_success(self, app, test_user):
@@ -84,7 +86,8 @@ class TestCreditSystem:
             result = add_credits(user, 10)
             
             assert result is True
-            db.session.refresh(user)
+            # Re-fetch user to get updated credits
+            user = User.query.get(test_user)
             assert user.credits_balance == initial_credits + 10
 
     def test_check_user_credits_free_user(self, app, test_user):

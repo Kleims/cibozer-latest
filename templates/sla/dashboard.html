@@ -1,0 +1,702 @@
+{% extends "base.html" %}
+
+{% block title %}SLA Monitoring Dashboard - Cibozer{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.sla-metric-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.sla-status-healthy { color: #28a745; }
+.sla-status-warning { color: #ffc107; }
+.sla-status-critical { color: #fd7e14; }
+.sla-status-breached { color: #dc3545; }
+
+.sla-target-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-left: 5px solid;
+}
+
+.sla-target-card.healthy { border-color: #28a745; }
+.sla-target-card.warning { border-color: #ffc107; }
+.sla-target-card.critical { border-color: #fd7e14; }
+.sla-target-card.breached { border-color: #dc3545; }
+
+.compliance-progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.compliance-bar {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.compliance-bar.healthy { background-color: #28a745; }
+.compliance-bar.warning { background-color: #ffc107; }
+.compliance-bar.critical { background-color: #fd7e14; }
+.compliance-bar.breached { background-color: #dc3545; }
+
+.alert-item {
+    border-left: 4px solid;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0 5px 5px 0;
+    background-color: white;
+}
+
+.alert-item.healthy { border-color: #28a745; }
+.alert-item.warning { border-color: #ffc107; }
+.alert-item.critical { border-color: #fd7e14; }
+.alert-item.breached { border-color: #dc3545; }
+
+.category-summary {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.uptime-display {
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.breach-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.target-tags {
+    margin-top: 0.5rem;
+}
+
+.target-tag {
+    display: inline-block;
+    background: rgba(0,0,0,0.1);
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    margin: 0.1rem;
+    font-size: 0.75rem;
+}
+
+.trend-indicator {
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
+}
+
+.trend-up { color: #28a745; }
+.trend-down { color: #dc3545; }
+.trend-stable { color: #6c757d; }
+
+.refresh-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.refresh-indicator.show {
+    opacity: 1;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-chart-pie"></i> SLA Monitoring Dashboard</h1>
+        <div>
+            <button class="btn btn-outline-primary me-2" onclick="refreshDashboard()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <a href="/sla/targets" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-bullseye"></i> Manage Targets
+            </a>
+            <a href="/sla/reports" class="btn btn-outline-info">
+                <i class="fas fa-file-alt"></i> Reports
+            </a>
+        </div>
+    </div>
+
+    <!-- Overall Status Banner -->
+    <div class="alert alert-{{ 'success' if data.overall_status == 'healthy' else 'warning' if data.overall_status == 'warning' else 'danger' }} mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="alert-heading mb-1">
+                    <i class="fas fa-{{ 'check-circle' if data.overall_status == 'healthy' else 'exclamation-triangle' if data.overall_status == 'warning' else 'times-circle' }}"></i>
+                    Overall SLA Status: {{ data.overall_status.title() }}
+                </h4>
+                <p class="mb-0">System-wide compliance: {{ "%.2f"|format(data.overall_compliance) }}%</p>
+            </div>
+            <div class="text-end">
+                <div class="uptime-display">{{ "%.3f"|format(data.overall_compliance) }}%</div>
+                <small>Overall Compliance</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="sla-metric-card">
+                <div class="metric-value">{{ data.healthy_targets }}</div>
+                <div class="metric-label">
+                    <i class="fas fa-check-circle"></i> Healthy Targets
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="sla-metric-card">
+                <div class="metric-value">{{ data.warning_targets }}</div>
+                <div class="metric-label">
+                    <i class="fas fa-exclamation-triangle"></i> Warning Targets
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="sla-metric-card">
+                <div class="metric-value">{{ data.critical_targets }}</div>
+                <div class="metric-label">
+                    <i class="fas fa-exclamation-circle"></i> Critical Targets
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="sla-metric-card">
+                <div class="metric-value">{{ data.breached_targets }}</div>
+                <div class="metric-label">
+                    <i class="fas fa-times-circle"></i> Breached Targets
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- SLA Targets Overview -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-bullseye"></i> SLA Targets</h5>
+                    <div id="sla-targets" style="max-height: 600px; overflow-y: auto;">
+                        {% for target_name, report in data.reports.items() %}
+                        <div class="sla-target-card {{ report.status }}" onclick="viewTargetDetails('{{ target_name }}')">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ target_name.replace('_', ' ').title() }}</h6>
+                                    <p class="text-muted small mb-2">{{ report.time_period }} compliance</p>
+                                    
+                                    <div class="compliance-progress mb-2">
+                                        <div class="compliance-bar {{ report.status }}" 
+                                             style="width: {{ report.compliance_percentage }}%"></div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="small">
+                                            {{ report.compliant_measurements }}/{{ report.total_measurements }} compliant
+                                        </span>
+                                        <span class="fw-bold">{{ "%.2f"|format(report.compliance_percentage) }}%</span>
+                                    </div>
+                                    
+                                    {% if report.breaches %}
+                                    <div class="mt-2">
+                                        <small class="text-danger">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            {{ report.breaches|length }} breach{{ 'es' if report.breaches|length != 1 else '' }}
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="text-end">
+                                    <i class="fas fa-{{ 'check-circle sla-status-healthy' if report.status == 'healthy' else 'exclamation-triangle sla-status-warning' if report.status == 'warning' else 'exclamation-circle sla-status-critical' if report.status == 'critical' else 'times-circle sla-status-breached' }}"></i>
+                                    <div class="mt-2">
+                                        <small class="text-muted">Avg: {{ "%.1f"|format(report.average_value) }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Alerts and Category Summary -->
+        <div class="col-md-4">
+            <!-- Category Summary -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-layer-group"></i> Category Summary</h5>
+                    {% for category, stats in data.categories.items() %}
+                    <div class="category-summary">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>{{ category.title() }}</strong>
+                            <span class="badge bg-{{ 'success' if stats.compliance_rate == 100 else 'warning' if stats.compliance_rate >= 90 else 'danger' }}">
+                                {{ "%.1f"|format(stats.compliance_rate) }}%
+                            </span>
+                        </div>
+                        <div class="small text-muted">
+                            {{ stats.compliant }}/{{ stats.targets }} targets compliant
+                        </div>
+                        <div class="small text-muted">
+                            Avg compliance: {{ "%.1f"|format(stats.avg_compliance) }}%
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Recent Alerts -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-bell"></i> Recent SLA Alerts
+                        <button class="btn btn-sm btn-outline-primary float-end" onclick="loadAlerts()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </h5>
+                    <div id="sla-alerts" style="max-height: 400px; overflow-y: auto;">
+                        {% if data.recent_alerts %}
+                            {% for alert in data.recent_alerts[-10:] %}
+                            <div class="alert-item {{ alert.severity }}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>{{ alert.target_name.replace('_', ' ').title() }}</strong>
+                                        <div class="small">{{ alert.description }}</div>
+                                        <div class="small text-muted">
+                                            Value: {{ "%.2f"|format(alert.value) }} 
+                                            (Target: {{ "%.2f"|format(alert.target_value) }})
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-{{ 'success' if alert.severity == 'healthy' else 'warning' if alert.severity == 'warning' else 'danger' }}">
+                                            {{ alert.severity.title() }}
+                                        </span>
+                                        <div class="small text-muted">
+                                            {{ (alert.timestamp * 1000) | datetimeformat }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-check-circle fa-3x mb-3"></i>
+                                <p>No recent SLA alerts</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compliance Trends Chart -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-chart-line"></i> Compliance Trends (24 Hours)</h5>
+                    <canvas id="complianceChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Target Details Modal -->
+<div class="modal fade" id="targetModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="targetModalTitle">Target Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="target-modal-content">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="exportTargetData()">
+                    <i class="fas fa-download"></i> Export Data
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Refresh Indicator -->
+<div id="refresh-indicator" class="refresh-indicator">
+    <i class="fas fa-sync-alt"></i> Updated
+</div>
+
+<script>
+let dashboardData = {{ data | tojson }};
+let currentTarget = null;
+let complianceChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeComplianceChart();
+    
+    // Auto-refresh every 60 seconds
+    setInterval(refreshDashboard, 60000);
+});
+
+function initializeComplianceChart() {
+    const ctx = document.getElementById('complianceChart').getContext('2d');
+    
+    // Create sample hourly data (in real implementation, this would come from API)
+    const hours = [];
+    const now = new Date();
+    for (let i = 23; i >= 0; i--) {
+        const hour = new Date(now.getTime() - (i * 60 * 60 * 1000));
+        hours.push(hour.getHours() + ':00');
+    }
+    
+    // Sample compliance data for major targets
+    const datasets = [];
+    const colors = ['#28a745', '#17a2b8', '#ffc107', '#fd7e14', '#6f42c1'];
+    let colorIndex = 0;
+    
+    Object.keys(dashboardData.reports).slice(0, 5).forEach(targetName => {
+        const report = dashboardData.reports[targetName];
+        
+        // Generate sample trend data (in real implementation, fetch from API)
+        const trendData = Array.from({length: 24}, () => 
+            Math.max(0, Math.min(100, report.compliance_percentage + (Math.random() - 0.5) * 10))
+        );
+        
+        datasets.push({
+            label: targetName.replace('_', ' ').toUpperCase(),
+            data: trendData,
+            borderColor: colors[colorIndex % colors.length],
+            backgroundColor: colors[colorIndex % colors.length] + '20',
+            fill: false,
+            tension: 0.4
+        });
+        colorIndex++;
+    });
+    
+    complianceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: hours,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Compliance %'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Hour'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        afterLabel: function(context) {
+                            return 'Target: ' + context.dataset.label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function refreshDashboard() {
+    fetch('/sla/api/dashboard')
+        .then(response => response.json())
+        .then(data => {
+            dashboardData = data;
+            updateDashboard(data);
+            showRefreshIndicator();
+        })
+        .catch(error => console.error('Error refreshing dashboard:', error));
+}
+
+function updateDashboard(data) {
+    // Update summary metrics
+    const metricValues = document.querySelectorAll('.sla-metric-card .metric-value');
+    metricValues[0].textContent = data.healthy_targets;
+    metricValues[1].textContent = data.warning_targets;
+    metricValues[2].textContent = data.critical_targets;
+    metricValues[3].textContent = data.breached_targets;
+    
+    // Update overall status banner
+    const statusBanner = document.querySelector('.alert');
+    statusBanner.className = `alert mb-4 alert-${data.overall_status === 'healthy' ? 'success' : 
+                                                  data.overall_status === 'warning' ? 'warning' : 'danger'}`;
+    
+    // Update targets list
+    updateTargetsList(data.reports);
+    
+    // Refresh compliance chart
+    if (complianceChart) {
+        // Update chart data (would normally fetch trends from API)
+        complianceChart.update();
+    }
+}
+
+function updateTargetsList(reports) {
+    const container = document.getElementById('sla-targets');
+    
+    container.innerHTML = Object.entries(reports).map(([targetName, report]) => `
+        <div class="sla-target-card ${report.status}" onclick="viewTargetDetails('${targetName}')">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${targetName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h6>
+                    <p class="text-muted small mb-2">${report.time_period} compliance</p>
+                    
+                    <div class="compliance-progress mb-2">
+                        <div class="compliance-bar ${report.status}" 
+                             style="width: ${report.compliance_percentage}%"></div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small">
+                            ${report.compliant_measurements}/${report.total_measurements} compliant
+                        </span>
+                        <span class="fw-bold">${report.compliance_percentage.toFixed(2)}%</span>
+                    </div>
+                    
+                    ${report.breaches.length > 0 ? `
+                    <div class="mt-2">
+                        <small class="text-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            ${report.breaches.length} breach${report.breaches.length !== 1 ? 'es' : ''}
+                        </small>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <div class="text-end">
+                    <i class="fas fa-${report.status === 'healthy' ? 'check-circle sla-status-healthy' : 
+                                     report.status === 'warning' ? 'exclamation-triangle sla-status-warning' : 
+                                     report.status === 'critical' ? 'exclamation-circle sla-status-critical' : 
+                                     'times-circle sla-status-breached'}"></i>
+                    <div class="mt-2">
+                        <small class="text-muted">Avg: ${report.average_value.toFixed(1)}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function viewTargetDetails(targetName) {
+    currentTarget = targetName;
+    const modal = new bootstrap.Modal(document.getElementById('targetModal'));
+    document.getElementById('targetModalTitle').textContent = targetName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    
+    // Load detailed target information
+    fetch(`/sla/api/targets/${targetName}/report?hours=24`)
+        .then(response => response.json())
+        .then(data => {
+            displayTargetDetails(data.report);
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error loading target details:', error);
+            document.getElementById('target-modal-content').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> Error loading target details
+                </div>
+            `;
+            modal.show();
+        });
+}
+
+function displayTargetDetails(report) {
+    const content = document.getElementById('target-modal-content');
+    
+    content.innerHTML = `
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h6>Compliance Overview</h6>
+                <div class="compliance-progress mb-2" style="height: 20px;">
+                    <div class="compliance-bar ${report.status}" 
+                         style="width: ${report.compliance_percentage}%"></div>
+                </div>
+                <div class="text-center">
+                    <strong>${report.compliance_percentage.toFixed(2)}%</strong> compliant
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6>Statistics</h6>
+                <table class="table table-sm">
+                    <tr><td>Total Measurements:</td><td>${report.total_measurements}</td></tr>
+                    <tr><td>Compliant Measurements:</td><td>${report.compliant_measurements}</td></tr>
+                    <tr><td>Average Value:</td><td>${report.average_value.toFixed(2)}</td></tr>
+                    <tr><td>Min Value:</td><td>${report.min_value.toFixed(2)}</td></tr>
+                    <tr><td>Max Value:</td><td>${report.max_value.toFixed(2)}</td></tr>
+                </table>
+            </div>
+        </div>
+        
+        ${report.uptime_percentage !== null ? `
+        <div class="row mb-3">
+            <div class="col-12">
+                <h6>Availability Metrics</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="text-center">
+                            <div class="uptime-display">${report.uptime_percentage.toFixed(3)}%</div>
+                            <small>Uptime</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-center">
+                            <div class="uptime-display">${report.downtime_minutes.toFixed(1)}min</div>
+                            <small>Downtime</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        ` : ''}
+        
+        ${report.breaches.length > 0 ? `
+        <div class="row">
+            <div class="col-12">
+                <h6>Recent Breaches (${report.breaches.length})</h6>
+                <div style="max-height: 200px; overflow-y: auto;">
+                    ${report.breaches.slice(-10).map(breach => `
+                        <div class="alert-item ${breach.status} mb-2">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong>Value: ${breach.value.toFixed(2)}</strong>
+                                    <small class="text-muted d-block">
+                                        Target: ${breach.target_value.toFixed(2)}
+                                    </small>
+                                </div>
+                                <small class="text-muted">
+                                    ${new Date(breach.timestamp * 1000).toLocaleString()}
+                                </small>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+        ` : `
+        <div class="text-center text-muted py-3">
+            <i class="fas fa-check-circle fa-3x mb-3"></i>
+            <p>No breaches in the selected time period</p>
+        </div>
+        `}
+    `;
+}
+
+function loadAlerts() {
+    fetch('/sla/api/alerts?limit=10')
+        .then(response => response.json())
+        .then(data => {
+            updateAlertsDisplay(data.alerts);
+        })
+        .catch(error => console.error('Error loading alerts:', error));
+}
+
+function updateAlertsDisplay(alerts) {
+    const container = document.getElementById('sla-alerts');
+    
+    if (alerts.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-check-circle fa-3x mb-3"></i>
+                <p>No recent SLA alerts</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = alerts.map(alert => `
+        <div class="alert-item ${alert.severity}">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <strong>${alert.target_name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong>
+                    <div class="small">${alert.description}</div>
+                    <div class="small text-muted">
+                        Value: ${alert.value.toFixed(2)} 
+                        (Target: ${alert.target_value.toFixed(2)})
+                    </div>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-${alert.severity === 'healthy' ? 'success' : 
+                                          alert.severity === 'warning' ? 'warning' : 'danger'}">
+                        ${alert.severity.charAt(0).toUpperCase() + alert.severity.slice(1)}
+                    </span>
+                    <div class="small text-muted">
+                        ${new Date(alert.timestamp * 1000).toLocaleString()}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function exportTargetData() {
+    if (currentTarget) {
+        window.open(`/sla/api/export?target=${currentTarget}&hours=24&format=json`, '_blank');
+    }
+}
+
+function showRefreshIndicator() {
+    const indicator = document.getElementById('refresh-indicator');
+    indicator.classList.add('show');
+    setTimeout(() => {
+        indicator.classList.remove('show');
+    }, 2000);
+}
+</script>
+{% endblock %}

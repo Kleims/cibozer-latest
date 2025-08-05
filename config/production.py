@@ -12,14 +12,36 @@ class ProductionConfig(Config):
     if SQLALCHEMY_DATABASE_URI and SQLALCHEMY_DATABASE_URI.startswith('postgres://'):
         SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace('postgres://', 'postgresql://', 1)
     
-    # Security
-    SESSION_COOKIE_SECURE = True
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Strict'
+    # Enhanced Security Settings
+    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'true').lower() == 'true'
+    SESSION_COOKIE_HTTPONLY = os.environ.get('SESSION_COOKIE_HTTPONLY', 'true').lower() == 'true'
+    SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE', 'Strict')
+    
+    # Server configuration
+    SERVER_NAME = os.environ.get('SERVER_NAME')
+    PREFERRED_URL_SCHEME = os.environ.get('PREFERRED_URL_SCHEME', 'https')
+    
+    # CSRF Protection
+    WTF_CSRF_TIME_LIMIT = None
+    WTF_CSRF_SSL_STRICT = os.environ.get('WTF_CSRF_SSL_STRICT', 'true').lower() == 'true'
     
     # Production cache (Redis if available)
     CACHE_TYPE = 'redis' if os.environ.get('REDIS_URL') else 'simple'
     CACHE_REDIS_URL = os.environ.get('REDIS_URL')
+    
+    # Enhanced Stripe Configuration
+    STRIPE_PRICE_ID_PRO = os.environ.get('STRIPE_PRICE_ID_PRO')
+    STRIPE_PRICE_ID_PREMIUM = os.environ.get('STRIPE_PRICE_ID_PREMIUM')
+    
+    # Error Tracking
+    SENTRY_DSN = os.environ.get('SENTRY_DSN')
+    
+    # Rate limiting (Redis preferred for production)
+    RATELIMIT_STORAGE_URL = os.environ.get('REDIS_URL') or 'memory://'
+    
+    # JavaScript minification in production
+    MINIFY_JS = True
+    ENV = 'production'
     
     # Ensure critical settings are set
     @classmethod

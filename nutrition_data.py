@@ -834,6 +834,16 @@ DIET_PROFILES = {
         "daily_sugar_max": 50,
         "icon": "utensils"
     },
+    "high_protein": {
+        "name": "High Protein",
+        "macros": {"protein": 40, "fat": 30, "carbs": 30},
+        "rules": {"min_protein_per_meal": 30},
+        "preferred": ["chicken", "beef", "fish", "eggs", "greek_yogurt", "cottage_cheese", "tofu", "lentils"],
+        "meal_tags": ["high_protein", "standard"],
+        "description": "High protein for muscle building and satiety",
+        "daily_protein_min": 120,
+        "icon": "dumbbell"
+    },
     "keto": {
         "name": "Ketogenic",
         "macros": {"protein": 25, "fat": 70, "carbs": 5},
@@ -1723,12 +1733,12 @@ MEAL_TEMPLATES = {
         "cuisine": "standard",
         "cooking_method": "cooked",
         "prep_time": 10,
-        "tags": ["vegetarian", "vegan", "healthy"],
+        "tags": ["vegetarian", "vegan", "healthy", "standard"],
         "base_ingredients": [
             {"item": "oats", "amount": 50, "unit": "g"},
-            {"item": "milk", "amount": 200, "unit": "ml"},
+            {"item": "almond_milk", "amount": 200, "unit": "ml"},
             {"item": "blueberries", "amount": 50, "unit": "g"},
-            {"item": "honey", "amount": 10, "unit": "g"}
+            {"item": "maple_syrup", "amount": 10, "unit": "g"}
         ]
     },
     "scrambled_eggs": {
@@ -1737,7 +1747,7 @@ MEAL_TEMPLATES = {
         "cuisine": "standard",
         "cooking_method": "pan_fried",
         "prep_time": 8,
-        "tags": ["vegetarian", "protein"],
+        "tags": ["vegetarian", "protein", "standard", "high_protein"],
         "base_ingredients": [
             {"item": "eggs", "amount": 100, "unit": "g"},
             {"item": "whole_wheat_bread", "amount": 50, "unit": "g"},
@@ -1751,7 +1761,7 @@ MEAL_TEMPLATES = {
         "cuisine": "standard",
         "cooking_method": "pan_fried",
         "prep_time": 12,
-        "tags": ["vegan", "vegetarian", "protein"],
+        "tags": ["vegan", "vegetarian", "protein", "standard", "high_protein"],
         "base_ingredients": [
             {"item": "tofu", "amount": 100, "unit": "g"},
             {"item": "spinach", "amount": 50, "unit": "g"},
@@ -1766,7 +1776,7 @@ MEAL_TEMPLATES = {
         "cuisine": "standard",
         "cooking_method": "grilled",
         "prep_time": 15,
-        "tags": ["protein", "low_carb"],
+        "tags": ["protein", "low_carb", "standard", "high_protein"],
         "base_ingredients": [
             {"item": "chicken_breast", "amount": 120, "unit": "g"},
             {"item": "lettuce", "amount": 100, "unit": "g"},
@@ -1782,7 +1792,7 @@ MEAL_TEMPLATES = {
         "cuisine": "healthy",
         "cooking_method": "steamed",
         "prep_time": 20,
-        "tags": ["vegan", "vegetarian", "protein", "healthy"],
+        "tags": ["vegan", "vegetarian", "protein", "healthy", "standard", "high_protein"],
         "base_ingredients": [
             {"item": "chickpeas", "amount": 80, "unit": "g"},
             {"item": "quinoa", "amount": 60, "unit": "g"},
@@ -1797,7 +1807,7 @@ MEAL_TEMPLATES = {
         "cuisine": "standard",
         "cooking_method": "raw",
         "prep_time": 2,
-        "tags": ["vegetarian", "vegan", "healthy"],
+        "tags": ["vegetarian", "vegan", "healthy", "standard"],
         "base_ingredients": [
             {"item": "apple", "amount": 150, "unit": "g"},
             {"item": "almond_butter", "amount": 15, "unit": "g"}
@@ -1809,7 +1819,7 @@ MEAL_TEMPLATES = {
         "cuisine": "standard",
         "cooking_method": "raw",
         "prep_time": 3,
-        "tags": ["vegetarian", "keto"],
+        "tags": ["vegetarian", "keto", "standard"],
         "base_ingredients": [
             {"item": "cheddar_cheese", "amount": 30, "unit": "g"},
             {"item": "macadamia_nuts", "amount": 20, "unit": "g"}
@@ -1821,7 +1831,7 @@ MEAL_TEMPLATES = {
         "cuisine": "healthy",
         "cooking_method": "baked",
         "prep_time": 25,
-        "tags": ["pescatarian", "protein", "healthy"],
+        "tags": ["pescatarian", "protein", "healthy", "standard", "high_protein"],
         "base_ingredients": [
             {"item": "salmon", "amount": 150, "unit": "g"},
             {"item": "sweet_potato", "amount": 100, "unit": "g"},
@@ -1836,7 +1846,7 @@ MEAL_TEMPLATES = {
         "cuisine": "asian",
         "cooking_method": "stir_fried",
         "prep_time": 15,
-        "tags": ["vegan", "vegetarian", "asian"],
+        "tags": ["vegan", "vegetarian", "asian", "standard"],
         "base_ingredients": [
             {"item": "tofu", "amount": 100, "unit": "g"},
             {"item": "broccoli", "amount": 100, "unit": "g"},
@@ -1844,18 +1854,62 @@ MEAL_TEMPLATES = {
             {"item": "soy_sauce", "amount": 15, "unit": "ml"},
             {"item": "sesame_oil", "amount": 10, "unit": "ml"}
         ]
+    },
+    "keto_breakfast": {
+        "name": "Bacon and Eggs with Avocado",
+        "meal_type": "breakfast",
+        "cuisine": "standard",
+        "cooking_method": "pan_fried",
+        "prep_time": 12,
+        "tags": ["keto", "low_carb", "high_fat", "standard", "high_protein"],
+        "base_ingredients": [
+            {"item": "eggs", "amount": 100, "unit": "g"},
+            {"item": "bacon", "amount": 30, "unit": "g"},
+            {"item": "avocado", "amount": 50, "unit": "g"},
+            {"item": "butter", "amount": 10, "unit": "g"}
+        ]
+    },
+    "keto_lunch": {
+        "name": "Keto Chicken Caesar Salad",
+        "meal_type": "lunch",
+        "cuisine": "standard",
+        "cooking_method": "grilled",
+        "prep_time": 15,
+        "tags": ["keto", "low_carb", "high_fat", "standard", "high_protein"],
+        "base_ingredients": [
+            {"item": "chicken_breast", "amount": 120, "unit": "g"},
+            {"item": "lettuce", "amount": 100, "unit": "g"},
+            {"item": "parmesan_cheese", "amount": 20, "unit": "g"},
+            {"item": "mayonnaise", "amount": 20, "unit": "g"},
+            {"item": "olive_oil", "amount": 10, "unit": "ml"}
+        ]
+    },
+    "keto_dinner": {
+        "name": "Ribeye Steak with Cauliflower Mash",
+        "meal_type": "dinner",
+        "cuisine": "standard",
+        "cooking_method": "grilled",
+        "prep_time": 25,
+        "tags": ["keto", "low_carb", "high_fat", "standard", "high_protein"],
+        "base_ingredients": [
+            {"item": "ribeye_steak", "amount": 150, "unit": "g"},
+            {"item": "cauliflower", "amount": 100, "unit": "g"},
+            {"item": "butter", "amount": 15, "unit": "g"},
+            {"item": "heavy_cream", "amount": 30, "unit": "ml"},
+            {"item": "garlic", "amount": 5, "unit": "g"}
+        ]
     }
 }
 
 ALLERGEN_MAPPING = {
     "nuts": ["almonds", "walnuts", "cashews", "pecans", "macadamia_nuts", "pistachios", "brazil_nuts", "hazelnuts", "pine_nuts", "peanuts"],
     "dairy": ["milk", "cheese", "yogurt", "butter", "cream", "cottage_cheese"],
-    "gluten": ["wheat", "bread", "pasta", "flour", "barley", "rye"],
     "shellfish": ["shrimp", "crab", "lobster", "clams", "mussels", "oysters"],
     "eggs": ["eggs", "egg_whites"],
     "soy": ["tofu", "tempeh", "soy_sauce", "edamame"],
     "sesame": ["sesame_seeds", "sesame_oil", "tahini"],
-    "fish": ["salmon", "tuna", "cod", "tilapia", "mackerel"]
+    "fish": ["salmon", "tuna", "cod", "tilapia", "mackerel"],
+    "gluten": ["wheat", "barley", "rye", "whole_wheat_bread", "pasta", "flour"]
 }
 
 NUTRIENT_RETENTION = {

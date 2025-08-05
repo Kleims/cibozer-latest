@@ -1,0 +1,18 @@
+{
+  "current_sprint": "Auto-20250805",
+  "active_features": [
+    "Social Sharing"
+  ],
+  "completed_features": [],
+  "technical_debt": [],
+  "deployment_status": "development",
+  "last_deployment": null,
+  "database_schema_version": "1.0.0",
+  "api_version": "1.0.0",
+  "known_issues": [
+    "FIXED: Login form doesn't show error messages when credentials are incorrect"
+  ],
+  "upcoming_tasks": [
+    "Document Social Sharing"
+  ]
+}

@@ -5,8 +5,12 @@ from datetime import timedelta
 class Config:
     """Base configuration."""
     
-    # Basic Flask config
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    # Basic Flask config - SECURITY: Must set SECRET_KEY environment variable
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    if not SECRET_KEY:
+        import secrets
+        SECRET_KEY = secrets.token_urlsafe(32)
+        print("WARNING: SECRET_KEY not set! Using randomly generated key. Set SECRET_KEY environment variable for production.")
     DEBUG = False
     TESTING = False
     
@@ -15,8 +19,21 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_size': 10,
-        'pool_recycle': 3600,
-        'pool_pre_ping': True
+        'max_overflow': 20,  # Allow up to 30 total connections (10 + 20 overflow)
+        'pool_recycle': 3600,  # Recycle connections every hour
+        'pool_pre_ping': True,  # Verify connections before use
+        'pool_timeout': 30,  # Connection timeout in seconds
+        'pool_reset_on_return': 'commit',  # Reset connections on return
+        'connect_args': {
+            'timeout': 30,  # Query timeout in seconds (SQLite)
+            'check_same_thread': False,  # Allow SQLite to be used across threads
+            'isolation_level': None  # Use autocommit mode for better performance
+        } if 'sqlite' in (os.environ.get('DATABASE_URL') or 'sqlite:///cibozer.db') else {
+            'connect_timeout': 30,  # Connection timeout for PostgreSQL/MySQL
+            'server_side_cursors': False,  # Disable server-side cursors for better timeout handling
+            'pool_reset_on_return': 'commit',  # Reset connection state
+            'application_name': 'Cibozer',  # For connection identification
+        }
     }
     
     # Security

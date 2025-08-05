@@ -38,15 +38,31 @@ def premium_required(f):
 
 
 def admin_required(f):
-    """Require admin access."""
+    """Require admin access with enhanced security."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        from flask import current_app, abort, request
+        
         if not current_user.is_authenticated:
+            if request.is_json:
+                return jsonify({'error': 'Authentication required'}), 401
             flash('Please log in to access this page.', 'error')
             return redirect(url_for('auth.login'))
         
-        # Check if user is admin (you might want to add an is_admin field to User model)
-        if current_user.email not in ['admin@cibozer.com']:  # Replace with proper admin check
+        # Enhanced admin check - multiple criteria
+        admin_emails = current_app.config.get('ADMIN_EMAILS', ['admin@cibozer.com'])
+        
+        is_admin = (
+            current_user.email in admin_emails or
+            current_user.subscription_tier == 'admin' or
+            (current_user.is_premium() and hasattr(current_user, 'is_admin') and current_user.is_admin)
+        )
+        
+        if not is_admin:
+            current_app.logger.warning(f"Unauthorized admin access attempt by {current_user.email} from {request.remote_addr}")
+            
+            if request.is_json:
+                return jsonify({'error': 'Admin access required'}), 403
             flash('You do not have permission to access this page.', 'error')
             return redirect(url_for('main.index'))
         

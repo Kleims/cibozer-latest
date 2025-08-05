@@ -1,0 +1,453 @@
+/* 
+ * Accessibility Enhancements for Cibozer
+ * WCAG 2.1 AA Compliance
+ */
+
+/* ===========================
+   Focus Indicators
+   =========================== */
+
+/* Enhanced focus styles for keyboard navigation */
+:focus {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Remove default focus for mouse users */
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Visible focus for keyboard users */
+:focus-visible {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.25);
+}
+
+/* Custom focus styles for specific elements */
+.btn:focus-visible {
+    outline: 3px solid currentColor;
+    outline-offset: 2px;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(46, 204, 113, 0.25);
+}
+
+.nav-link:focus-visible {
+    outline: 3px solid var(--primary-color);
+    outline-offset: -3px;
+    border-radius: 0.25rem;
+}
+
+/* ===========================
+   Color Contrast
+   =========================== */
+
+/* Ensure sufficient contrast ratios */
+body {
+    color: #212529; /* Higher contrast than default */
+}
+
+.text-muted {
+    color: #495057 !important; /* WCAG AA compliant */
+}
+
+.btn-primary {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: #1e7e34;
+    border-color: #1c7430;
+}
+
+/* Ensure link contrast */
+a {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+a:hover,
+a:focus {
+    color: #003d82;
+    text-decoration: underline;
+}
+
+/* Navigation link contrast */
+.navbar-light .navbar-nav .nav-link {
+    color: rgba(0, 0, 0, 0.7);
+}
+
+.navbar-light .navbar-nav .nav-link:hover,
+.navbar-light .navbar-nav .nav-link:focus {
+    color: rgba(0, 0, 0, 0.9);
+}
+
+/* ===========================
+   Skip Links
+   =========================== */
+
+.skip-links {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--primary-color);
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    border-radius: 0 0 4px 0;
+    z-index: 9999;
+}
+
+.skip-links:focus {
+    top: 0;
+}
+
+/* ===========================
+   Screen Reader Only Content
+   =========================== */
+
+.sr-only,
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+.sr-only-focusable:focus,
+.visually-hidden-focusable:focus {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    clip: auto !important;
+    white-space: normal !important;
+}
+
+/* ===========================
+   Form Accessibility
+   =========================== */
+
+/* Required field indicators */
+.required::after {
+    content: " *";
+    color: var(--danger-color);
+    font-weight: bold;
+}
+
+/* Form validation states */
+.form-control.is-invalid,
+.form-select.is-invalid {
+    border-color: #dc3545;
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.form-control.is-valid,
+.form-select.is-valid {
+    border-color: #28a745;
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+/* Error message styling */
+.invalid-feedback,
+.valid-feedback {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.invalid-feedback {
+    color: #dc3545;
+}
+
+.valid-feedback {
+    color: #28a745;
+}
+
+/* ===========================
+   Button Accessibility
+   =========================== */
+
+/* Ensure buttons have visible states */
+.btn {
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+/* Disabled state styling */
+.btn:disabled,
+.btn.disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* Loading state for buttons */
+.btn.loading {
+    color: transparent;
+}
+
+.btn.loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    border-right-color: transparent;
+    animation: spinner 0.75s linear infinite;
+}
+
+@keyframes spinner {
+    to { transform: rotate(360deg); }
+}
+
+/* ===========================
+   Modal Accessibility
+   =========================== */
+
+/* Ensure modals trap focus */
+.modal {
+    overflow-y: auto;
+}
+
+.modal-dialog {
+    margin: 1.75rem auto;
+}
+
+/* Close button must be easily targetable */
+.modal-header .btn-close {
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem -0.5rem auto;
+}
+
+/* ===========================
+   Navigation Accessibility
+   =========================== */
+
+/* Current page indicator */
+.nav-link[aria-current="page"] {
+    font-weight: 600;
+    position: relative;
+}
+
+.nav-link[aria-current="page"]::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--primary-color);
+}
+
+/* Dropdown keyboard navigation */
+.dropdown-menu {
+    box-shadow: var(--shadow-lg);
+}
+
+.dropdown-item:focus,
+.dropdown-item:hover {
+    background-color: rgba(46, 204, 113, 0.1);
+    color: var(--primary-dark);
+}
+
+/* ===========================
+   Table Accessibility
+   =========================== */
+
+/* Zebra striping for better row distinction */
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Hover state for tables */
+.table-hover tbody tr:hover {
+    background-color: rgba(46, 204, 113, 0.08);
+}
+
+/* Ensure table headers are distinguishable */
+.table thead th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* ===========================
+   Loading States
+   =========================== */
+
+/* Skeleton screens for loading content */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.skeleton-text {
+    height: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.skeleton-heading {
+    height: 2rem;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+    width: 60%;
+}
+
+/* ===========================
+   High Contrast Mode Support
+   =========================== */
+
+@media (prefers-contrast: high) {
+    :root {
+        --primary-color: #1a8f4e;
+        --primary-dark: #146b3a;
+        --text-primary: #000;
+        --text-secondary: #333;
+    }
+    
+    .btn {
+        border-width: 2px;
+    }
+    
+    .form-control,
+    .form-select {
+        border-width: 2px;
+        border-color: #000;
+    }
+}
+
+/* ===========================
+   Reduced Motion Support
+   =========================== */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ===========================
+   Print Accessibility
+   =========================== */
+
+@media print {
+    /* Ensure good contrast in print */
+    * {
+        color: #000 !important;
+        background: #fff !important;
+    }
+    
+    /* Show link URLs */
+    a[href]::after {
+        content: " (" attr(href) ")";
+    }
+    
+    /* Expand abbreviations */
+    abbr[title]::after {
+        content: " (" attr(title) ")";
+    }
+}
+
+/* ===========================
+   Touch Target Sizing
+   =========================== */
+
+/* Ensure all interactive elements meet minimum size */
+button,
+input,
+select,
+textarea,
+a,
+.btn,
+.nav-link,
+.dropdown-item {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Exception for inline links */
+p a,
+li a,
+td a {
+    min-height: auto;
+    min-width: auto;
+}
+
+/* ===========================
+   Error Prevention
+   =========================== */
+
+/* Confirmation dialogs for destructive actions */
+.btn-danger {
+    position: relative;
+}
+
+.confirm-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.confirm-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #333;
+}
+
+.btn-danger:hover .confirm-tooltip {
+    opacity: 1;
+}

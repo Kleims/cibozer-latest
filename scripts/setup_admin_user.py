@@ -6,6 +6,11 @@ Create admin user with credits
 from app import app
 from models import db, User
 import bcrypt
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 def create_admin_user():
     """Create admin user with credits"""
@@ -27,8 +32,11 @@ def create_admin_user():
         # Create new admin user
         print("[SETUP] Creating new admin user...")
         
-        # Hash password
-        password = 'admin123'  # Simple password for demo
+        # Get password from environment or use secure default
+        password = os.environ.get('ADMIN_DEFAULT_PASSWORD', 'ChangeMeImmediately123!')
+        if password == 'ChangeMeImmediately123!':
+            print("[WARNING] Using default password. Set ADMIN_DEFAULT_PASSWORD in .env file!")
+        
         password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
         admin_user = User(

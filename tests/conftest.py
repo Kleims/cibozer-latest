@@ -1,215 +1,273 @@
-"""Pytest configuration and shared fixtures for Cibozer testing."""
+"""
+Shared pytest configuration and fixtures for all tests.
+"""
 
 import pytest
-import tempfile
 import os
 import sys
-from unittest.mock import patch, MagicMock
+import tempfile
+from datetime import datetime
 
-# Mock problematic video modules before any imports
-# Also mock bcrypt to avoid PyO3 initialization issues in tests
-mock_bcrypt = MagicMock()
-# Return bytes that can be decoded to match User model expectations
-mock_bcrypt.hashpw = MagicMock(return_value=b'$2b$12$fake.hash.for.testing')
-mock_bcrypt.checkpw = MagicMock(return_value=True)
-mock_bcrypt.gensalt = MagicMock(return_value=b'$2b$12$fake.salt')
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-with patch.dict('sys.modules', {
-    'cv2': MagicMock(),
-    'edge_tts': MagicMock(),
-    'matplotlib.pyplot': MagicMock(),
-    'simple_video_generator': MagicMock(),
-    'video_service': MagicMock(),
-    'bcrypt': mock_bcrypt,
-}):
-    from flask import Flask
-    from models import db, User, Payment, UsageLog, SavedMealPlan
-    
-    # Mock app creation to avoid video service imports
-    def create_test_app(config=None):
-        """Create Flask app for testing without video dependencies."""
-        app = Flask(__name__)
-        app.config.update({
-            'TESTING': True,
-            'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
-            'SECRET_KEY': 'test-secret-key',
-            'WTF_CSRF_ENABLED': False,
-        })
-        if config:
-            app.config.update(config)
-        
-        # Import and register auth blueprint without video dependencies
-        with app.app_context():
-            db.init_app(app)
-            # Register essential blueprints for testing
-            try:
-                from auth import auth_bp
-                from payments import payments_bp
-                app.register_blueprint(auth_bp)
-                app.register_blueprint(payments_bp)
-            except ImportError:
-                pass  # Skip if blueprints can't be imported
-            
-        return app
+from app import create_app
+from app.extensions import db
+from app.models.user import User
+from app.models.payment import PricingPlan
+from app.models.meal_plan import SavedMealPlan
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='function')
 def app():
-    """Create application for testing."""
-    # Create a temporary directory for test database
-    test_dir = tempfile.mkdtemp()
-    test_db_path = os.path.join(test_dir, 'test.db')
+    """Create and configure test Flask application."""
+    # Use testing configuration
+    app = create_app('testing')
     
-    # Override configuration for testing
-    test_config = {
+    # Override specific settings for tests
+    app.config.update({
         'TESTING': True,
-        'SQLALCHEMY_DATABASE_URI': f'sqlite:///{test_db_path}',
-        'SECRET_KEY': 'test-secret-key-for-testing-only',
-        'WTF_CSRF_ENABLED': False,  # Disable CSRF for testing
-        'STRIPE_PUBLISHABLE_KEY': 'pk_test_fake',
-        'STRIPE_SECRET_KEY': 'sk_test_fake',
-    }
+        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
+        'WTF_CSRF_ENABLED': False,
+        'SECRET_KEY': 'test-secret-key-only-for-testing',
+        'STRIPE_SECRET_KEY': 'sk_test_mock_key',
+        'STRIPE_PUBLISHABLE_KEY': 'pk_test_mock_key',
+        'OPENAI_API_KEY': 'test-api-key',
+        'RATELIMIT_ENABLED': False,  # Disable rate limiting for tests
+    })
     
-    app = create_test_app(test_config)
-    
+    # Create application context
     with app.app_context():
+        # Create all tables
         db.create_all()
+        
+        # Create default pricing plans
+        plans = [
+            PricingPlan(
+                name='free',
+                display_name='Free Plan',
+                price_monthly=0,
+                credits_included=5
+            ),
+            PricingPlan(
+                name='premium',
+                display_name='Premium Plan',
+                price_monthly=9.99,
+                credits_included=100
+            )
+        ]
+        
+        for plan in plans:
+            existing = PricingPlan.query.filter_by(name=plan.name).first()
+            if not existing:
+                db.session.add(plan)
+        
+        db.session.commit()
+        
         yield app
+        
+        # Cleanup
+        db.session.remove()
         db.drop_all()
-    
-    # Cleanup
-    try:
-        os.unlink(test_db_path)
-        os.rmdir(test_dir)
-    except (OSError, FileNotFoundError):
-        pass
 
 
-@pytest.fixture
+@pytest.fixture(scope='function')
 def client(app):
-    """Create test client."""
+    """Create test client for the Flask application."""
     return app.test_client()
 
 
-@pytest.fixture
+@pytest.fixture(scope='function')
 def runner(app):
-    """Create test CLI runner.""" 
+    """Create test CLI runner."""
     return app.test_cli_runner()
 
 
-@pytest.fixture
-def db_session(app):
-    """Create database session for testing."""
-    with app.app_context():
-        yield db.session
+@pytest.fixture(scope='function')
+def auth_client(client, test_user):
+    """Create authenticated test client."""
+    # Login the test user
+    client.post('/auth/login', data={
+        'email': test_user.email,
+        'password': 'testpassword123'
+    })
+    return client
 
 
-@pytest.fixture
-def test_user(db_session):
+@pytest.fixture(scope='function')
+def test_user(app):
     """Create a test user."""
     user = User(
         email='test@example.com',
-        password_hash='$2b$12$fake.hash.for.testing.purposes.only',
-        is_active=True,
-        email_verified=True,
-        subscription_tier='free',
-        subscription_status='active',
-        credits_balance=5
+        full_name='Test User',
+        credits_balance=10
     )
-    db_session.add(user)
-    db_session.commit()
+    user.set_password('testpassword123')
+    
+    db.session.add(user)
+    db.session.commit()
+    
     return user
 
 
-@pytest.fixture
-def premium_user(db_session):
-    """Create a premium test user."""
+@pytest.fixture(scope='function')
+def admin_user(app):
+    """Create an admin test user."""
     user = User(
-        email='premium@example.com', 
-        password_hash='$2b$12$fake.hash.for.testing.purposes.only',
-        is_active=True,
-        email_verified=True,
-        subscription_tier='premium',
-        subscription_status='active',
-        credits_balance=999
+        email='admin@example.com',
+        full_name='Admin User',
+        is_admin=True,
+        credits_balance=100
     )
-    db_session.add(user)
-    db_session.commit()
+    user.set_password('adminpassword123')
+    
+    db.session.add(user)
+    db.session.commit()
+    
     return user
 
 
-@pytest.fixture
-def mock_stripe():
-    """Mock Stripe API calls."""
-    with patch('stripe.Customer') as mock_customer, \
-         patch('stripe.Subscription') as mock_subscription, \
-         patch('stripe.PaymentIntent') as mock_payment_intent:
-        
-        # Mock customer creation
-        mock_customer.create.return_value = MagicMock(id='cus_fake123')
-        
-        # Mock subscription creation
-        mock_subscription.create.return_value = MagicMock(
-            id='sub_fake123',
-            status='active',
-            current_period_end=1234567890
-        )
-        
-        # Mock payment intent
-        mock_payment_intent.create.return_value = MagicMock(
-            id='pi_fake123',
-            status='succeeded',
-            amount=999
-        )
-        
-        yield {
-            'customer': mock_customer,
-            'subscription': mock_subscription, 
-            'payment_intent': mock_payment_intent
-        }
-
-
-@pytest.fixture
-def mock_video_service():
-    """Mock video generation to avoid OpenCV issues."""
-    with patch('video_service.VideoService') as mock:
-        mock_instance = MagicMock()
-        mock_instance.generate_video.return_value = True
-        mock_instance.upload_video.return_value = {'success': True}
-        mock.return_value = mock_instance
-        yield mock_instance
-
-
-@pytest.fixture
-def mock_meal_optimizer():
-    """Mock meal optimizer for consistent testing."""
-    with patch('meal_optimizer.create_meal_plan') as mock:
-        mock.return_value = {
-            'success': True,
-            'meals': [
-                {
-                    'name': 'Test Breakfast',
-                    'ingredients': ['eggs', 'bread'],
-                    'calories': 300,
-                    'protein': 20,
-                    'carbs': 30,
-                    'fat': 15
-                }
-            ],
-            'daily_totals': {
-                'calories': 1500,
-                'protein': 120,
-                'carbs': 150,
-                'fat': 50
+@pytest.fixture(scope='function')
+def sample_meal_plan():
+    """Create a sample meal plan data structure."""
+    return {
+        'diet_type': 'standard',
+        'calories': 2000,
+        'meals': [
+            {
+                'name': 'Breakfast',
+                'items': [
+                    {
+                        'food': 'Oatmeal',
+                        'quantity': '1 cup',
+                        'calories': 300,
+                        'protein': 10,
+                        'carbs': 50,
+                        'fat': 5
+                    }
+                ],
+                'total_calories': 300
+            },
+            {
+                'name': 'Lunch',
+                'items': [
+                    {
+                        'food': 'Grilled Chicken Salad',
+                        'quantity': '1 serving',
+                        'calories': 450,
+                        'protein': 40,
+                        'carbs': 20,
+                        'fat': 15
+                    }
+                ],
+                'total_calories': 450
+            },
+            {
+                'name': 'Dinner',
+                'items': [
+                    {
+                        'food': 'Salmon with Rice',
+                        'quantity': '1 serving',
+                        'calories': 600,
+                        'protein': 35,
+                        'carbs': 45,
+                        'fat': 25
+                    }
+                ],
+                'total_calories': 600
             }
+        ],
+        'totals': {
+            'calories': 1350,
+            'protein': 85,
+            'carbs': 115,
+            'fat': 45
         }
-        yield mock
+    }
 
 
-@pytest.fixture(autouse=True)
-def suppress_video_warnings():
-    """Suppress OpenCV warnings during testing."""
-    with patch('cv2.VideoWriter'), \
-         patch('cv2.imread'), \
-         patch('cv2.imwrite'):
-        yield
+@pytest.fixture(scope='function')
+def saved_meal_plan(app, test_user, sample_meal_plan):
+    """Create a saved meal plan in database."""
+    meal_plan = SavedMealPlan(
+        user_id=test_user.id,
+        name='Test Meal Plan',
+        diet_type='standard',
+        total_calories=2000,
+        meal_data=sample_meal_plan,
+        is_public=False
+    )
+    
+    db.session.add(meal_plan)
+    db.session.commit()
+    
+    return meal_plan
+
+
+@pytest.fixture
+def mock_openai(monkeypatch):
+    """Mock OpenAI API calls."""
+    def mock_create(*args, **kwargs):
+        class MockChoice:
+            def __init__(self):
+                self.message = type('obj', (object,), {
+                    'content': '''
+                    {
+                        "meals": [
+                            {
+                                "name": "Breakfast",
+                                "items": [
+                                    {
+                                        "food": "Oatmeal",
+                                        "quantity": "1 cup",
+                                        "calories": 300
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                    '''
+                })
+        
+        class MockResponse:
+            def __init__(self):
+                self.choices = [MockChoice()]
+        
+        return MockResponse()
+    
+    monkeypatch.setattr('openai.ChatCompletion.create', mock_create)
+
+
+@pytest.fixture
+def mock_stripe(monkeypatch):
+    """Mock Stripe API calls."""
+    class MockStripeCustomer:
+        def __init__(self, **kwargs):
+            self.id = 'cus_test123'
+            self.email = kwargs.get('email')
+    
+    class MockStripeSubscription:
+        def __init__(self, **kwargs):
+            self.id = 'sub_test123'
+            self.status = 'active'
+            self.current_period_end = 1234567890
+    
+    monkeypatch.setattr('stripe.Customer.create', lambda **kwargs: MockStripeCustomer(**kwargs))
+    monkeypatch.setattr('stripe.Subscription.create', lambda **kwargs: MockStripeSubscription(**kwargs))
+
+
+# Test environment setup
+def pytest_configure(config):
+    """Configure pytest environment."""
+    # Set testing environment
+    os.environ['FLASK_ENV'] = 'testing'
+    os.environ['TESTING'] = '1'
+
+
+def pytest_unconfigure(config):
+    """Clean up after tests."""
+    # Remove testing environment variables
+    if 'FLASK_ENV' in os.environ:
+        del os.environ['FLASK_ENV']
+    if 'TESTING' in os.environ:
+        del os.environ['TESTING']

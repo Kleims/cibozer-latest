@@ -1,0 +1,46 @@
+{
+  "timestamp": "2025-07-28T21:15:43.236825",
+  "overall_ready": false,
+  "categories": {
+    "environment": {
+      "ready": false,
+      "blockers": [
+        "Debug mode is enabled - must be disabled for production"
+      ],
+      "warnings": [
+        "Stripe payment processing not configured"
+      ]
+    },
+    "database": {
+      "ready": true,
+      "blockers": [],
+      "warnings": []
+    },
+    "application": {
+      "ready": true,
+      "blockers": [],
+      "warnings": []
+    },
+    "security": {
+      "ready": true,
+      "blockers": [],
+      "warnings": [
+        "Security concern in authentication: 66.7%",
+        "Security concern in database: 62.5%",
+        "Security concern in security_headers: 62.5%"
+      ]
+    },
+    "performance": {
+      "ready": true,
+      "blockers": [],
+      "warnings": []
+    },
+    "infrastructure": {
+      "ready": true,
+      "blockers": [],
+      "warnings": [
+        "Health check endpoint not found"
+      ]
+    }
+  }
+}

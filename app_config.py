@@ -77,7 +77,7 @@ class SecurityConfig:
     """Security-related configuration"""
     # Rate limiting
     RATE_LIMIT_ENABLED: bool = field(default_factory=lambda: os.getenv('RATE_LIMIT_ENABLED', 'True').lower() == 'true')
-    RATE_LIMIT_DEFAULT: str = "10 per minute"
+    RATE_LIMIT_DEFAULT: str = "100 per minute"
     RATE_LIMIT_STORAGE_URL: str = field(default_factory=lambda: os.getenv('RATE_LIMIT_STORAGE_URL', 'memory://'))
     
     # Password requirements

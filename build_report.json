@@ -1,0 +1,25 @@
+{
+  "build_time": "2025-07-31T10:01:00.840968",
+  "version": "1e9dde0",
+  "steps_completed": [
+    {
+      "step": "JavaScript files minified successfully",
+      "time": "2025-07-31T10:01:00.979232"
+    },
+    {
+      "step": "CSS files minified (saved 8,813 bytes)",
+      "time": "2025-07-31T10:01:00.993765"
+    }
+  ],
+  "assets_minified": {
+    "javascript": {
+      "bundle_savings": 26637,
+      "individual_savings": 31165,
+      "total_savings": 57802
+    },
+    "css": {
+      "total_savings": 8813
+    }
+  },
+  "total_savings": 66615
+}

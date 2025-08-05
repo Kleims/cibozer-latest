@@ -9,8 +9,10 @@ class DevelopmentConfig(Config):
     # Less secure settings for development
     SESSION_COOKIE_SECURE = False
     
-    # Development database
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///dev_cibozer.db'
+    # Development database  
+    import os
+    basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    SQLALCHEMY_DATABASE_URI = f'sqlite:///{os.path.join(basedir, "instance", "dev_cibozer.db")}'
     
     # Disable rate limiting in development
     RATELIMIT_ENABLED = False

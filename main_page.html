@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="csrf-token" content="ImQ2OTQ0YWI5YTBmOWVkOWRmM2NjMTU1MzY2YmRlODRlYjg1NTIxMDUi.aIhdxA.ur3oPxJjsPJgRQ8LVx4df88pUlg">
+    <title>Cibozer - AI Meal Planning</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="/static/css/style.css?v=7332" rel="stylesheet">
+    
+    
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-utensils me-2"></i>Cibozer
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="/auth/login">Sign In</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-primary text-white px-3 ms-2" href="/auth/register">
+                            Get Started Free
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">About</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    
+        
+    
+
+    <!-- CRITICAL LEGAL DISCLAIMER -->
+    <div class="container">
+        <div class="alert alert-warning border-warning mb-3">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                </div>
+                <div class="col">
+                    <h6 class="mb-1"><strong>⚠️ Important Disclaimer</strong></h6>
+                    <p class="mb-1"><strong>This tool is for educational purposes only and is NOT medical advice.</strong></p>
+                    <small>
+                        • NOT intended to diagnose, treat, cure, or prevent any disease<br>
+                        • NOT a substitute for professional medical advice<br>
+                        • ALWAYS consult your physician before starting any diet program<br>
+                        • Individual results may vary significantly<br>
+                        <em>These statements have not been evaluated by the FDA.</em>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main>
+        
+<!-- Hero Section -->
+<section class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">AI-Powered Meal Planning</h1>
+                <p class="lead mb-4">
+                    Create personalized meal plans with our advanced AI algorithm. 
+                    Perfect for health enthusiasts, fitness professionals, and anyone looking to eat healthier.
+                </p>
+                <div class="d-grid gap-2 d-sm-flex">
+                    
+                    <a href="/auth/register" class="btn btn-light btn-lg px-4">
+                        <i class="fas fa-rocket me-2"></i>Get Started Free
+                    </a>
+                    
+                    <a href="/about" class="btn btn-outline-light btn-lg px-4">
+                        <i class="fas fa-info-circle me-2"></i>Learn More
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-image text-center">
+                    <i class="fas fa-utensils hero-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold mb-3">Why Choose Cibozer?</h2>
+                <p class="lead text-muted">Advanced AI meets nutrition science</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-brain fa-3x text-primary"></i>
+                    </div>
+                    <h4>AI-Powered Algorithm</h4>
+                    <p class="text-muted">
+                        Our enhanced algorithm achieves 95%+ accuracy with robust mathematical validation 
+                        and convergence guarantees.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-file-pdf fa-3x text-success"></i>
+                    </div>
+                    <h4>PDF Export</h4>
+                    <p class="text-muted">
+                        Download beautiful PDF meal plans with grocery lists, 
+                        nutrition info, and preparation instructions.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-chart-line fa-3x text-warning"></i>
+                    </div>
+                    <h4>Nutrition Analytics</h4>
+                    <p class="text-muted">
+                        Comprehensive nutrition tracking, macro analysis, and dietary optimization 
+                        with medical condition support.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Diet Types Section -->
+<section class="diet-types-section py-5 bg-light">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold mb-3">Supported Diet Types</h2>
+                <p class="lead text-muted">Versatile support for all dietary preferences</p>
+            </div>
+        </div>
+        
+        <div class="row g-3">
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-leaf"></i> Vegan
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-seedling"></i> Vegetarian
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-dumbbell"></i> Keto
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-fish"></i> Paleo
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-heart"></i> Mediterranean
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-fire"></i> High Protein
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-balance-scale"></i> Low Carb
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="diet-badge">
+                    <i class="fas fa-utensils"></i> Standard
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section py-5">
+    <div class="container">
+        <div class="row text-center g-4">
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">300+</div>
+                    <div class="stat-label">Ingredients</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">95%</div>
+                    <div class="stat-label">Accuracy</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">0.06s</div>
+                    <div class="stat-label">Generation Time</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">8</div>
+                    <div class="stat-label">Diet Types</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="display-5 fw-bold mb-4">Ready to Get Started?</h2>
+        <p class="lead mb-4">Create your first AI-powered meal plan in seconds</p>
+        
+        <a href="/auth/register" class="btn btn-light btn-lg px-5">
+            <i class="fas fa-rocket me-2"></i>Get Started Free
+        </a>
+        
+    </div>
+</section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Cibozer</h5>
+                    <p>AI-powered meal planning for healthier living</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>&copy; 2025 Cibozer. All rights reserved.</p>
+                    <p>Built with ❤️ and AI</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Clean Cibozer JS -->
+    <script src="/static/js/cibozer-clean.js"></script>
+    
+    
+<script>
+// Add smooth scrolling and animations
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate stats on scroll
+    const statsSection = document.querySelector('.stats-section');
+    if (statsSection) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateStats();
+                }
+            });
+        });
+        observer.observe(statsSection);
+    }
+});
+
+function animateStats() {
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers.forEach(stat => {
+        const target = stat.textContent;
+        const isPercentage = target.includes('%');
+        const isDecimal = target.includes('.');
+        const isPlus = target.includes('+');
+        
+        let finalValue = parseFloat(target);
+        if (isNaN(finalValue)) finalValue = 0;
+        
+        let current = 0;
+        const increment = finalValue / 50;
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= finalValue) {
+                current = finalValue;
+                clearInterval(timer);
+            }
+            
+            let display = isDecimal ? current.toFixed(2) : Math.floor(current);
+            if (isPercentage) display += '%';
+            if (isPlus) display += '+';
+            if (target.includes('s')) display += 's';
+            
+            stat.textContent = display;
+        }, 20);
+    });
+}
+</script>
+
+</body>
+</html>

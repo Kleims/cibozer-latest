@@ -1,4 +1,5 @@
 """User model for authentication and subscription tracking."""
+from datetime import datetime, timezone, timedelta
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -30,10 +31,19 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     last_login = db.Column(db.DateTime)
     email_verified = db.Column(db.Boolean, default=False)
+    # Email verification
+    email_verification_token = db.Column(db.String(100), unique=True, nullable=True)
+    email_verification_expires = db.Column(db.DateTime, nullable=True)
     is_active = db.Column(db.Boolean, default=True)
     
     # Trial
     trial_ends_at = db.Column(db.DateTime)
+    
+    # Security fields
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    locked_until = db.Column(db.DateTime, nullable=True)
+    last_failed_login = db.Column(db.DateTime, nullable=True)
+    password_changed_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Password reset
     reset_token = db.Column(db.String(100))
@@ -46,11 +56,13 @@ class User(UserMixin, db.Model):
     meal_plans = db.relationship('SavedMealPlan', backref='user', lazy='dynamic')
     
     def set_password(self, password):
-        """Hash and set password."""
+        """Hash and set password with secure bcrypt rounds."""
+        # Use 12 rounds for security (default is 12, but being explicit)
         self.password_hash = bcrypt.hashpw(
             password.encode('utf-8'), 
-            bcrypt.gensalt()
+            bcrypt.gensalt(rounds=12)
         ).decode('utf-8')
+        self.password_changed_at = datetime.now(timezone.utc)
     
     def check_password(self, password):
         """Check if password matches."""
@@ -118,16 +130,59 @@ class User(UserMixin, db.Model):
         return self.has_credits()
     
     def get_monthly_usage(self):
-        """Get usage count for current month."""
+        """Get usage count for current month - optimized query."""
         from datetime import datetime, timezone
         from app.models.usage import UsageLog
         start_of_month = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        return db.session.query(UsageLog).filter(
+        
+        # Use optimized query with indexed fields
+        return UsageLog.query.filter(
             UsageLog.user_id == self.id,
-            UsageLog.created_at >= start_of_month,
-            UsageLog.action == 'meal_plan_generated'
-        ).count()
+            UsageLog.action == 'meal_plan_generated',
+            UsageLog.created_at >= start_of_month
+        ).with_entities(UsageLog.id).count()
     
+
+    def generate_verification_token(self):
+        """Generate email verification token"""
+        self.email_verification_token = secrets.token_urlsafe(32)
+        self.email_verification_expires = datetime.now(timezone.utc) + timedelta(hours=24)
+        return self.email_verification_token
+    
+    def verify_email(self, token):
+        """Verify email with token"""
+        if (self.email_verification_token == token and 
+            self.email_verification_expires and 
+            self.email_verification_expires > datetime.now(timezone.utc)):
+            self.email_verified = True
+            self.email_verification_token = None
+            self.email_verification_expires = None
+            return True
+        return False
+
+
+    def is_locked(self):
+        """Check if account is locked due to failed attempts"""
+        if self.locked_until:
+            if self.locked_until.tzinfo is None:
+                self.locked_until = self.locked_until.replace(tzinfo=timezone.utc)
+            return self.locked_until > datetime.now(timezone.utc)
+        return False
+    
+    def increment_failed_login(self):
+        """Increment failed login counter and lock if necessary"""
+        self.failed_login_attempts += 1
+        self.last_failed_login = datetime.now(timezone.utc)
+        
+        # Lock account after 5 failed attempts
+        if self.failed_login_attempts >= 5:
+            self.locked_until = datetime.now(timezone.utc) + timedelta(minutes=30)
+    
+    def reset_failed_login(self):
+        """Reset failed login counter on successful login"""
+        self.failed_login_attempts = 0
+        self.locked_until = None
+        self.last_failed_login = None
     def __repr__(self):
         """String representation."""
         return f'<User {self.email}>'

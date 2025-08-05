@@ -9,9 +9,9 @@
             <!-- Share Header -->
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
-                    <h2 class="card-title">{{ shared_plan.title or 'Shared Meal Plan' }}</h2>
+                    <h2 class="card-title">{{ (shared_plan.title or 'Shared Meal Plan')|e }}</h2>
                     {% if shared_plan.description %}
-                    <p class="text-muted">{{ shared_plan.description }}</p>
+                    <p class="text-muted">{{ shared_plan.description|e }}</p>
                     {% endif %}
                     
                     <div class="row mt-3">
@@ -88,7 +88,7 @@
             <div class="mt-4 text-center">
                 <p class="text-muted">Share this meal plan:</p>
                 <div class="input-group" style="max-width: 500px; margin: 0 auto;">
-                    <input type="text" class="form-control" id="share-url" value="{{ request.url }}" readonly>
+                    <input type="text" class="form-control" id="share-url" value="{{ request.url|e }}" readonly>
                     <button class="btn btn-outline-secondary" onclick="copyShareLink()">
                         <i class="fas fa-copy"></i> Copy Link
                     </button>

@@ -1,0 +1,110 @@
+{
+  "audit_date": "2025-07-31T08:39:01.724971",
+  "total_issues": 4,
+  "total_fixes": 12,
+  "issues_by_severity": {
+    "CRITICAL": 2,
+    "HIGH": 2
+  },
+  "issues_by_category": {
+    "Authentication": 2,
+    "Input Validation": 1,
+    "API Security": 1
+  },
+  "issues": [
+    {
+      "severity": "CRITICAL",
+      "category": "Authentication",
+      "description": "Broken code in forgot_password and reset_password routes",
+      "file_path": "app\\routes\\auth.py",
+      "line_num": 146,
+      "timestamp": "2025-07-31T08:39:01.680172"
+    },
+    {
+      "severity": "HIGH",
+      "category": "Authentication",
+      "description": "No account lockout mechanism",
+      "file_path": "app\\models\\user.py",
+      "line_num": null,
+      "timestamp": "2025-07-31T08:39:01.682435"
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "Input Validation",
+      "description": "Direct string concatenation in queries",
+      "file_path": null,
+      "line_num": null,
+      "timestamp": "2025-07-31T08:39:01.683443"
+    },
+    {
+      "severity": "HIGH",
+      "category": "API Security",
+      "description": "Some API endpoints lack authentication",
+      "file_path": "app\\routes\\api.py",
+      "line_num": null,
+      "timestamp": "2025-07-31T08:39:01.717379"
+    }
+  ],
+  "fixes_applied": [
+    {
+      "description": "Fixed broken authentication code",
+      "file_path": "app\\routes\\auth.py",
+      "timestamp": "2025-07-31T08:39:01.680172"
+    },
+    {
+      "description": "Added account lockout mechanism",
+      "file_path": "app\\models\\user.py",
+      "timestamp": "2025-07-31T08:39:01.683443"
+    },
+    {
+      "description": "Created API authentication utilities",
+      "file_path": "app\\utils\\api_auth.py",
+      "timestamp": "2025-07-31T08:39:01.717379"
+    },
+    {
+      "description": "Created secure CORS configuration",
+      "file_path": "app\\utils\\cors_config.py",
+      "timestamp": "2025-07-31T08:39:01.717379"
+    },
+    {
+      "description": "Created comprehensive error handlers",
+      "file_path": "app\\utils\\error_handlers.py",
+      "timestamp": "2025-07-31T08:39:01.724971"
+    },
+    {
+      "description": "Created database security configuration",
+      "file_path": "app\\utils\\db_security.py",
+      "timestamp": "2025-07-31T08:39:01.724971"
+    },
+    {
+      "description": "Created secure file handling utilities",
+      "file_path": "app\\utils\\file_security.py",
+      "timestamp": "2025-07-31T08:39:01.724971"
+    },
+    {
+      "description": "Created enhanced rate limiting configuration",
+      "file_path": "app\\utils\\rate_limiting.py",
+      "timestamp": "2025-07-31T08:39:01.724971"
+    },
+    {
+      "description": "Created secure logging configuration",
+      "file_path": "app\\utils\\secure_logging.py",
+      "timestamp": "2025-07-31T08:39:01.724971"
+    },
+    {
+      "description": "Created comprehensive security headers",
+      "file_path": "app\\utils\\security_headers.py",
+      "timestamp": "2025-07-31T08:39:01.724971"
+    },
+    {
+      "description": "Created security scanning script",
+      "file_path": "scripts\\security_scan.py",
+      "timestamp": "2025-07-31T08:39:01.724971"
+    },
+    {
+      "description": "Created security middleware",
+      "file_path": "app\\middleware\\security.py",
+      "timestamp": "2025-07-31T08:39:01.724971"
+    }
+  ]
+}

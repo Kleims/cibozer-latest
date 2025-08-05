@@ -1,0 +1,292 @@
+/* Touch Target Optimization for Mobile */
+/* Ensures all interactive elements meet 44px minimum touch target requirement */
+
+/* Button Touch Targets */
+.btn {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    padding: 12px 16px !important;
+    touch-action: manipulation; /* Prevents zoom on double-tap */
+}
+
+.btn-sm {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    padding: 10px 14px !important;
+}
+
+.btn-lg {
+    min-height: 48px !important;
+    min-width: 48px !important;
+    padding: 14px 20px !important;
+}
+
+/* Link Touch Targets */
+a:not(.btn) {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 4px;
+    touch-action: manipulation;
+}
+
+/* Navigation Links */
+.navbar-nav .nav-link {
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 12px 16px !important;
+}
+
+/* Form Controls */
+.form-control,
+.form-select,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+    min-height: 44px !important;
+    padding: 12px 16px !important;
+    touch-action: manipulation;
+}
+
+/* Checkboxes and Radios */
+input[type="checkbox"],
+input[type="radio"] {
+    min-width: 20px !important;
+    min-height: 20px !important;
+    transform: scale(1.5);
+    margin: 12px;
+}
+
+/* Labels for checkboxes/radios should be tappable */
+.form-check-label {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 12px 8px;
+    cursor: pointer;
+}
+
+/* Close buttons */
+.btn-close {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    padding: 10px !important;
+}
+
+/* Pagination */
+.page-link {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 10px 12px !important;
+}
+
+/* Dropdown Items */
+.dropdown-item {
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 12px 16px !important;
+}
+
+/* Card Actions */
+.card-header .btn,
+.card-footer .btn {
+    min-height: 44px !important;
+    margin: 4px !important;
+}
+
+/* Modal Actions */
+.modal-header .btn-close {
+    min-height: 44px !important;
+    min-width: 44px !important;
+}
+
+/* Tab Navigation */
+.nav-tabs .nav-link,
+.nav-pills .nav-link {
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 12px 16px !important;
+}
+
+/* Icon Buttons */
+.btn-icon,
+button[aria-label] {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Action Links */
+.action-link,
+.btn-link {
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 10px 8px !important;
+    text-decoration: none !important;
+}
+
+.action-link:hover,
+.btn-link:hover {
+    text-decoration: underline !important;
+}
+
+/* List Group Items */
+.list-group-item {
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 12px 16px !important;
+}
+
+.list-group-item.list-group-item-action {
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+/* Accordion Buttons */
+.accordion-button {
+    min-height: 44px !important;
+    padding: 12px 16px !important;
+    touch-action: manipulation;
+}
+
+/* Progress Bar (if clickable) */
+.progress[role="button"],
+.progress.clickable {
+    min-height: 44px !important;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+/* Badge Links */
+.badge[href],
+.badge.clickable {
+    min-height: 32px !important;
+    min-width: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px 12px !important;
+}
+
+/* Breadcrumb Links */
+.breadcrumb-item a {
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 10px 8px !important;
+}
+
+/* Social Media Links */
+.social-link {
+    min-height: 48px !important;
+    min-width: 48px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 4px !important;
+}
+
+/* Mobile-specific enhancements */
+@media (max-width: 768px) {
+    /* Increase touch targets on mobile */
+    .btn {
+        min-height: 48px !important;
+        padding: 14px 18px !important;
+    }
+    
+    .form-control,
+    .form-select {
+        min-height: 48px !important;
+        font-size: 16px !important; /* Prevents zoom on iOS */
+    }
+    
+    /* Navigation improvements */
+    .navbar-nav .nav-link {
+        min-height: 48px !important;
+        padding: 14px 16px !important;
+        font-size: 16px !important;
+    }
+    
+    /* Modal improvements */
+    .modal-header .btn-close {
+        min-height: 48px !important;
+        min-width: 48px !important;
+    }
+}
+
+/* Focus indicators for accessibility */
+*:focus-visible {
+    outline: 2px solid var(--primary-color, #007bff) !important;
+    outline-offset: 2px !important;
+    border-radius: 2px;
+}
+
+/* Ensure sufficient spacing between touch targets */
+.btn + .btn,
+.btn + .btn-group,
+.btn-group + .btn,
+.btn-group + .btn-group {
+    margin-left: 8px !important;
+}
+
+/* Prevent accidental touches */
+.no-touch {
+    touch-action: none;
+    pointer-events: none;
+}
+
+/* High-priority touch targets */
+.touch-priority {
+    min-height: 48px !important;
+    min-width: 48px !important;
+    padding: 14px 18px !important;
+    touch-action: manipulation;
+    cursor: pointer;
+}
+
+/* Ensure clickable areas extend to full element */
+.full-click {
+    display: block !important;
+    width: 100% !important;
+    text-align: left !important;
+    border: none !important;
+    background: none !important;
+    padding: 12px 16px !important;
+    min-height: 44px !important;
+}
+
+/* Loading state touch prevention */
+.loading .btn,
+.loading button,
+.loading a {
+    pointer-events: none !important;
+    touch-action: none !important;
+}
+
+/* Debug mode - shows touch target boundaries (remove in production) */
+.debug-touch-targets * {
+    outline: 1px dashed rgba(255, 0, 0, 0.3) !important;
+}
+
+.debug-touch-targets .btn,
+.debug-touch-targets button,
+.debug-touch-targets a,
+.debug-touch-targets input,
+.debug-touch-targets select,
+.debug-touch-targets textarea {
+    outline: 2px solid rgba(0, 255, 0, 0.5) !important;
+    background: rgba(0, 255, 0, 0.1) !important;
+}

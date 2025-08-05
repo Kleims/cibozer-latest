@@ -9,13 +9,13 @@ let currentUser = null;
 
 // Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing Cibozer app...');
+    // DOM loaded, initializing Cibozer app
     
     try {
         // Check for reduced motion preference
         if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
             document.documentElement.style.setProperty('--animation-duration', '0s');
-            console.log('Reduced motion mode enabled');
+            // Reduced motion mode enabled
         }
         
         initializeApp();
@@ -38,13 +38,13 @@ function initializeApp() {
     initializers.forEach(init => {
         try {
             init.fn();
-            console.log(`Initialized ${init.name}`);
+            // Initialized component
         } catch (error) {
             console.error(`Error initializing ${init.name}:`, error);
         }
     });
     
-    console.log('Cibozer app initialization complete');
+    // Cibozer app initialization complete
 }
 
 /**
@@ -105,7 +105,7 @@ function initializeNavigation() {
  * Show notification message
  */
 function showNotification(message, type = 'info') {
-    console.log(`[${type.toUpperCase()}] ${message}`);
+    // Log message (removed for production)
     
     // Check if we have a notification container
     const container = document.getElementById('notification-container');
@@ -164,16 +164,24 @@ async function apiRequest(url, options = {}) {
     
     try {
         const response = await fetch(url, mergedOptions);
-        const data = await response.json();
         
         if (!response.ok) {
-            throw new Error(data.error || 'Request failed');
+            const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+            throw new Error(errorData.error || `Request failed with status ${response.status}`);
         }
         
+        const data = await response.json();
         return data;
     } catch (error) {
-        console.error('API request failed:', error);
-        showNotification(error.message, 'danger');
+        // Log error for debugging (without console.log)
+        if (window.CibozerLogger) {
+            window.CibozerLogger.error('API request failed', { url, error: error.message });
+        }
+        
+        // Show user-friendly notification
+        showNotification(error.message || 'Request failed', 'danger');
+        
+        // Re-throw for caller to handle
         throw error;
     }
 }

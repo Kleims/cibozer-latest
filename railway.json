@@ -1,9 +1,50 @@
 {
+  "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS"
+    "builder": "NIXPACKS",
+    "buildCommand": "pip install --no-cache-dir -r requirements.txt",
+    "watchPatterns": [
+      "**/*.py",
+      "**/*.html", 
+      "**/*.css",
+      "**/*.js",
+      "requirements.txt"
+    ]
   },
   "deploy": {
+    "numReplicas": 1,
+    "sleepApplication": false,
     "restartPolicyType": "ON_FAILURE",
-    "sleepApplication": false
+    "restartPolicyMaxRetries": 10,
+    "healthcheckPath": "/api/health",
+    "healthcheckTimeout": 300,
+    "startCommand": "gunicorn wsgi:application --bind 0.0.0.0:$PORT --workers 2 --worker-class sync --timeout 120 --keepalive 5 --log-level info"
+  },
+  "environments": {
+    "production": {
+      "variables": {
+        "FLASK_ENV": "production",
+        "DEBUG": "False",
+        "LOG_TO_STDOUT": "True",
+        "LOG_LEVEL": "INFO",
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      }
+    }
+  },
+  "plugins": [
+    {
+      "type": "postgresql",
+      "plan": "hobby"
+    },
+    {
+      "type": "redis", 
+      "plan": "hobby"
+    }
+  ],
+  "regions": ["us-west1"],
+  "observability": {
+    "logging": true,
+    "metrics": true
   }
 }

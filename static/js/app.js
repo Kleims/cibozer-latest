@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check for reduced motion preference
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         document.documentElement.style.setProperty('--animation-duration', '0s');
-        console.log('Reduced motion mode enabled');
+        // Reduced motion mode enabled
     }
     
     initializeApp();
@@ -37,7 +37,7 @@ function initializeApp() {
     // Initialize modals
     initializeModals();
     
-    console.log('Cibozer app initialized successfully');
+    // Cibozer app initialized successfully
 }
 
 /**
@@ -250,29 +250,66 @@ function debounce(func, wait) {
 }
 
 /**
- * Make API request with error handling
+ * Make API request with robust error handling, retry, and circuit breaker
  * @param {string} url - API endpoint
- * @param {Object} options - Fetch options
+ * @param {Object} options - Request options
  * @returns {Promise} API response
  */
 async function apiRequest(url, options = {}) {
     try {
-        const defaultOptions = {
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        };
-        
-        const response = await fetch(url, { ...defaultOptions, ...options });
-        
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        // Use the robust API client if available
+        if (window.apiClient) {
+            if (options.method === 'POST' || options.method === 'PUT' || options.method === 'PATCH') {
+                const data = options.body ? JSON.parse(options.body) : null;
+                const response = await window.apiClient.post(url, data, {
+                    headers: options.headers,
+                    timeout: options.timeout,
+                    retries: options.retries
+                });
+                return response.data || response;
+            } else {
+                const response = await window.apiClient.get(url, {
+                    headers: options.headers,
+                    timeout: options.timeout,
+                    retries: options.retries
+                });
+                return response.data || response;
+            }
+        } else {
+            // Fallback to basic fetch if API client not available
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+            
+            const response = await fetch(url, { ...defaultOptions, ...options });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+            
+            return await response.json();
+        }
+    } catch (error) {
+        // Use error handling if available
+        if (window.ErrorHandling) {
+            window.ErrorHandling.logError('API Request Failed', { 
+                url, 
+                method: options.method || 'GET',
+                error: error.message 
+            });
         }
         
-        return await response.json();
-    } catch (error) {
-        console.error('API request failed:', error);
+        // Show user-friendly error message
+        if (window.apiClient && typeof window.apiClient.handleError === 'function') {
+            const userMessage = window.apiClient.handleError(error);
+            if (window.showNotification) {
+                window.showNotification(userMessage, 'error');
+            }
+        }
+        
         throw error;
     }
 }
@@ -467,4 +504,4 @@ window.CibozerApp = {
     throttle
 };
 
-console.log('Cibozer app.js loaded successfully');
+// Cibozer app.js loaded successfully

@@ -1,6 +1,7 @@
 """Application factory for Cibozer."""
 import os
 import logging
+import logging.handlers
 from flask import Flask, render_template
 from flask_migrate import Migrate
 
@@ -33,14 +34,21 @@ def create_app(config_name=None):
     # Register error handlers
     register_error_handlers(app)
     
-    # Register security headers
+    # Register security headers and middleware
     register_security_headers(app)
+    register_security_middleware(app)
     
     # Register CLI commands
     register_commands(app)
     
     # Create necessary directories
     create_directories(app)
+    
+    # Initialize monitoring and tracing
+    initialize_monitoring_tracing(app)
+    
+    # Register shutdown handlers
+    register_shutdown_handlers(app)
     
     return app
 
@@ -53,6 +61,12 @@ def register_blueprints(app):
     from app.routes.payment import payments_bp as payment_bp
     from app.routes.share import share_bp
     from app.routes.api import api_bp
+    from app.routes.monitoring import monitoring_bp
+    from app.routes.analytics import analytics_bp
+    from app.routes.tracing import tracing_bp
+    from app.routes.logs import logs_bp
+    from app.routes.sla import sla_bp
+    from app.routes.debug_setup import debug_bp
     
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -60,36 +74,32 @@ def register_blueprints(app):
     app.register_blueprint(payment_bp, url_prefix='/payment')
     app.register_blueprint(share_bp, url_prefix='/share')
     app.register_blueprint(api_bp)
+    app.register_blueprint(monitoring_bp)
+    app.register_blueprint(analytics_bp)
+    app.register_blueprint(tracing_bp)
+    app.register_blueprint(logs_bp)
+    app.register_blueprint(sla_bp)
+    app.register_blueprint(debug_bp)
     
     app.logger.info('Blueprints registered successfully')
 
 
 def register_error_handlers(app):
     """Register error handlers."""
-    @app.errorhandler(404)
-    def not_found_error(error):
-        return render_template('errors/404.html'), 404
-    
-    @app.errorhandler(500)
-    def internal_error(error):
-        db.session.rollback()
-        return render_template('errors/500.html'), 500
-    
-    @app.errorhandler(403)
-    def forbidden_error(error):
-        return render_template('errors/403.html'), 403
+    from app.utils.error_handlers import register_error_handlers as register_all_handlers
+    register_all_handlers(app)
 
 
 def register_security_headers(app):
     """Register security headers."""
-    @app.after_request
-    def set_security_headers(response):
-        response.headers['X-Content-Type-Options'] = 'nosniff'
-        response.headers['X-Frame-Options'] = 'DENY'
-        response.headers['X-XSS-Protection'] = '1; mode=block'
-        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-        response.headers['Content-Security-Policy'] = "default-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net"
-        return response
+    from app.utils.security_headers import configure_security_headers
+    configure_security_headers(app)
+
+
+def register_security_middleware(app):
+    """Register security middleware."""
+    from app.middleware.security import SecurityMiddleware
+    security_middleware = SecurityMiddleware(app)
 
 
 def configure_logging(app):
@@ -130,6 +140,37 @@ def create_directories(app):
             app.logger.info(f'Created directory: {directory}')
 
 
+def initialize_monitoring_tracing(app):
+    """Initialize monitoring, tracing, logging and SLA services."""
+    from datetime import datetime
+    from app.services.monitoring_service import get_monitoring_service
+    from app.services.tracing_service import init_tracing
+    from app.services.logging_service import init_logging_service
+    from app.services.sla_service import get_sla_service
+    
+    # Set app start time for uptime calculation
+    app.start_time = datetime.utcnow()
+    
+    # Initialize logging service first (since other services may use it)
+    init_logging_service(app)
+    app.logger.info('Logging service initialized')
+    
+    # Initialize monitoring service
+    monitoring = get_monitoring_service()
+    app.logger.info('Monitoring service initialized')
+    
+    # Initialize SLA service
+    sla_service = get_sla_service()
+    app.logger.info('SLA service initialized')
+    
+    # Initialize distributed tracing
+    init_tracing(app)
+    app.logger.info('Distributed tracing initialized')
+    
+    # Background monitoring tasks will be started automatically
+    app.logger.info('Monitoring services initialized and ready')
+
+
 def register_commands(app):
     """Register CLI commands."""
     @app.cli.command()
@@ -165,3 +206,39 @@ def register_commands(app):
         db.session.commit()
         
         print(f'Admin user {email} created successfully!')
+
+
+def register_shutdown_handlers(app):
+    """Register proper shutdown handlers for graceful termination."""
+    import signal
+    import atexit
+    
+    def cleanup_handler():
+        """Cleanup resources on shutdown."""
+        try:
+            # Close database connections
+            if hasattr(db, 'session'):
+                db.session.close()
+                app.logger.info('Database connections closed')
+            
+            # Close file handlers
+            for handler in app.logger.handlers:
+                if hasattr(handler, 'close'):
+                    handler.close()
+            
+            app.logger.info('Application shutdown complete')
+        except Exception as e:
+            print(f"Error during cleanup: {e}")
+    
+    def signal_handler(signum, frame):
+        """Handle termination signals."""
+        app.logger.info(f'Received signal {signum}, shutting down gracefully...')
+        cleanup_handler()
+        exit(0)
+    
+    # Register signal handlers
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+    
+    # Register exit handler
+    atexit.register(cleanup_handler)

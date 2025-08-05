@@ -48,9 +48,9 @@ def log_request_start():
         logger.info(f"QUERY_PARAMS: {dict(request.args)}")
     
     # Log JSON data if present
-    if request.is_json:
+    if request.is_json or (request.content_type and 'json' in request.content_type.lower()):
         try:
-            json_data = request.get_json()
+            json_data = request.get_json(force=True)
             if json_data:
                 logger.info(f"JSON_DATA: {json.dumps(json_data, default=str)}")
         except:

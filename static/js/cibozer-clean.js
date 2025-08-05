@@ -1,26 +1,26 @@
 /**
  * Cibozer - Clean JavaScript Solution
  * Single file to handle all interactions without conflicts
+ * Enhanced with robust error handling and resilience
  */
 
-console.log('Cibozer Clean JS loading...');
+// Import error handling utilities
+// Note: error-handling.js and api-client.js should be loaded before this file
 
 // Global state
 let isLoading = false;
 
 // Main initialization
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Cibozer Clean JS initialized');
-    
-    // Remove any existing issues immediately
-    cleanupStuckStates();
-    
     // Initialize components
     initializeTooltips();
     initializeModals();
     initializeNavigation();
     
-    console.log('Cibozer Clean JS ready');
+    // Delayed cleanup to avoid interfering with page load
+    setTimeout(() => {
+        cleanupStuckStates();  // Use the existing cleanup function
+    }, 1000);
 });
 
 /**
@@ -30,7 +30,7 @@ function cleanupStuckStates() {
     // Remove orphaned backdrops
     const backdrops = document.querySelectorAll('.modal-backdrop');
     backdrops.forEach(backdrop => {
-        console.log('Removing orphaned backdrop');
+        // Remove orphaned backdrop
         backdrop.remove();
     });
     
@@ -39,11 +39,17 @@ function cleanupStuckStates() {
     document.body.style.overflow = '';
     document.body.style.paddingRight = '';
     
-    // Hide any stuck modals
+    // Hide any stuck modals (but not if they were just shown)
     const modals = document.querySelectorAll('.modal.show');
     modals.forEach(modal => {
+        // Skip modals that have Bootstrap instances (they're being managed)
+        const bsModal = bootstrap.Modal.getInstance(modal);
+        if (bsModal && bsModal._isShown) {
+            return; // Skip this modal, it's actively being shown
+        }
+        
         if (!modal.dataset.shouldBeVisible) {
-            console.log('Hiding stuck modal:', modal.id);
+            // Hide stuck modal
             modal.classList.remove('show');
             modal.style.display = 'none';
             modal.setAttribute('aria-hidden', 'true');
@@ -52,7 +58,7 @@ function cleanupStuckStates() {
 }
 
 /**
- * Initialize Bootstrap tooltips safely
+ * Initialize Bootstrap tooltips safely with enhanced error handling
  */
 function initializeTooltips() {
     if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
@@ -61,7 +67,13 @@ function initializeTooltips() {
             try {
                 new bootstrap.Tooltip(el);
             } catch (e) {
-                console.error('Tooltip error:', e);
+                if (window.ErrorHandling) {
+                    window.ErrorHandling.logError('Tooltip Initialization Error', { 
+                        element: el.tagName, 
+                        error: e.message 
+                    });
+                }
+                // Don't let tooltip errors break the page
             }
         });
     }
@@ -73,18 +85,22 @@ function initializeTooltips() {
 function initializeModals() {
     // Clean modal event handling
     document.addEventListener('show.bs.modal', function(e) {
-        console.log('Modal showing:', e.target.id);
+        // Modal showing
         isLoading = true;
     });
     
     document.addEventListener('hidden.bs.modal', function(e) {
-        console.log('Modal hidden:', e.target.id);
+        // Modal hidden
         isLoading = false;
         
-        // Ensure cleanup
-        setTimeout(() => {
-            cleanupStuckStates();
-        }, 100);
+        // Only cleanup if this was the results modal being closed by user
+        if (e.target.id === 'resultsModal') {
+            // Clear the shouldBeVisible flag when user closes results
+            e.target.dataset.shouldBeVisible = 'false';
+            setTimeout(() => {
+                cleanupStuckStates();
+            }, 300);
+        }
     });
 }
 
@@ -97,53 +113,69 @@ function initializeNavigation() {
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             // Only log, don't prevent navigation
-            console.log('Navigation clicked:', this.href);
+            // Navigation clicked
         });
     });
 }
 
 /**
- * Show loading state
+ * Show loading state with error handling
  */
 function showLoading(message = 'Loading...') {
-    console.log('Showing loading:', message);
-    isLoading = true;
-    
-    // Find or create loading modal
-    let loadingModal = document.getElementById('loadingModal');
-    if (loadingModal) {
-        const modal = bootstrap.Modal.getInstance(loadingModal) || new bootstrap.Modal(loadingModal);
-        modal.show();
+    try {
+        // Show loading state
+        isLoading = true;
+        
+        // Find or create loading modal
+        let loadingModal = document.getElementById('loadingModal');
+        if (loadingModal) {
+            const modal = bootstrap.Modal.getInstance(loadingModal) || new bootstrap.Modal(loadingModal);
+            modal.show();
+        }
+    } catch (e) {
+        if (window.ErrorHandling) {
+            window.ErrorHandling.logError('Show Loading Error', { error: e.message });
+        }
+        // Continue without loading modal if it fails
     }
 }
 
 /**
- * Hide loading state
+ * Hide loading state with error handling
  */
 function hideLoading() {
-    console.log('Hiding loading');
-    isLoading = false;
-    
-    // Hide loading modal
-    const loadingModal = document.getElementById('loadingModal');
-    if (loadingModal) {
-        const modal = bootstrap.Modal.getInstance(loadingModal);
-        if (modal) {
-            modal.hide();
+    try {
+        // Hide loading state
+        isLoading = false;
+        
+        // Hide loading modal
+        const loadingModal = document.getElementById('loadingModal');
+        if (loadingModal) {
+            const modal = bootstrap.Modal.getInstance(loadingModal);
+            if (modal) {
+                modal.hide();
+            }
         }
-    }
-    
-    // Cleanup
-    setTimeout(() => {
+        
+        // Cleanup
+        setTimeout(() => {
+            cleanupStuckStates();
+        }, 100);
+    } catch (e) {
+        if (window.ErrorHandling) {
+            window.ErrorHandling.logError('Hide Loading Error', { error: e.message });
+        }
+        // Force cleanup even if modal hiding fails
+        isLoading = false;
         cleanupStuckStates();
-    }, 100);
+    }
 }
 
 /**
  * Show notification
  */
 function showNotification(message, type = 'info') {
-    console.log(`[${type.toUpperCase()}] ${message}`);
+    // Log message (removed for production)
     
     // Create notification element
     const alert = document.createElement('div');
@@ -179,7 +211,7 @@ window.addEventListener('error', function(e) {
     
     // If error might be related to stuck state, try to fix it
     if (e.message.includes('modal') || e.message.includes('backdrop')) {
-        console.log('Modal-related error detected, attempting cleanup');
+        // Modal-related error detected, attempting cleanup
         cleanupStuckStates();
     }
 });
@@ -194,7 +226,7 @@ window.addEventListener('unhandledrejection', function(e) {
  * Download meal plan as PDF
  */
 function downloadPDF() {
-    console.log('Download PDF clicked');
+    // Download PDF clicked
     showNotification('PDF download feature coming soon!', 'info');
 }
 
@@ -202,7 +234,7 @@ function downloadPDF() {
  * View shopping list
  */
 function viewShoppingList() {
-    console.log('View shopping list clicked');
+    // View shopping list clicked
     showNotification('Shopping list feature coming soon!', 'info');
 }
 
@@ -210,7 +242,7 @@ function viewShoppingList() {
  * Generate another meal plan
  */
 function generateAnother() {
-    console.log('Generate another clicked');
+    // Generate another clicked
     // Hide results modal and reset form
     const resultsModal = bootstrap.Modal.getInstance(document.getElementById('resultsModal'));
     if (resultsModal) {
@@ -236,11 +268,27 @@ window.downloadPDF = downloadPDF;
 window.viewShoppingList = viewShoppingList;
 window.generateAnother = generateAnother;
 
-// Periodic cleanup (every 5 seconds)
-setInterval(() => {
+// Periodic cleanup (every 5 seconds) with memory leak prevention
+let cleanupInterval = setInterval(() => {
     if (!isLoading) {
         cleanupStuckStates();
     }
 }, 5000);
 
-console.log('Cibozer Clean JS loaded successfully');
+// Clear interval on page unload to prevent memory leaks
+window.addEventListener('beforeunload', function() {
+    if (cleanupInterval) {
+        clearInterval(cleanupInterval);
+        cleanupInterval = null;
+    }
+});
+
+// Clear interval when navigating away (SPA behavior)
+window.addEventListener('pagehide', function() {
+    if (cleanupInterval) {
+        clearInterval(cleanupInterval);
+        cleanupInterval = null;
+    }
+});
+
+// Cibozer Clean JS loaded successfully

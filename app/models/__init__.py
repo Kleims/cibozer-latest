@@ -4,6 +4,7 @@ from .user import User
 from .payment import Payment, PricingPlan
 from .meal_plan import SavedMealPlan, SharedMealPlan, MealPlanShare
 from .usage import UsageLog, APIKey
+from .error_log import ErrorLog
 
 __all__ = [
     'db',
@@ -14,5 +15,6 @@ __all__ = [
     'SharedMealPlan',
     'MealPlanShare',
     'UsageLog',
-    'APIKey'
+    'APIKey',
+    'ErrorLog'
 ]

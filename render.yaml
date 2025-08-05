@@ -1,12 +1,143 @@
+previewsEnabled: true
+previewsExpireAfterDays: 2
+
 services:
+  # ==============================================
+  # Main Web Application
+  # ==============================================
   - type: web
-    name: cibozer
-    env: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python app.py
+    name: cibozer-web
+    runtime: python3
+    plan: starter
+    region: oregon
+    
+    # Build configuration
+    buildCommand: |
+      pip install --upgrade pip setuptools wheel &&
+      pip install --no-cache-dir -r requirements.txt &&
+      python scripts/validate_production_env.py
+    
+    # Production startup command
+    startCommand: |
+      python scripts/init_production_database.py --skip-admin &&
+      gunicorn wsgi:application --bind 0.0.0.0:$PORT --workers 2 --worker-class sync --timeout 120 --keepalive 5 --log-level info --access-logfile - --error-logfile -
+    
+    # Health check
+    healthCheckPath: /api/health
+    
+    # Auto-deploy settings
+    autoDeploy: true
+    
+    # Environment variables
     envVars:
-      - key: SECRET_KEY
-        value: cibozer-render-deployment
+      # Core application
+      - key: FLASK_ENV
+        value: production
       - key: DEBUG
         value: False
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
+      - key: LOG_TO_STDOUT
+        value: True
+      - key: LOG_LEVEL
+        value: INFO
+      
+      # Security (these should be set via Render dashboard for security)
+      - key: SECRET_KEY
+        generateValue: true
+      
+      # Database connection (automatically set by Render PostgreSQL service)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cibozer-postgres
+          property: connectionString
+      
+      # Redis connection (automatically set by Render Redis service)
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: cibozer-redis
+          property: connectionString
+      
+      # Session security
+      - key: SESSION_COOKIE_SECURE
+        value: True
+      - key: SESSION_COOKIE_HTTPONLY
+        value: True
+      - key: SESSION_COOKIE_SAMESITE
+        value: Strict
+      
+      # CSRF Protection
+      - key: WTF_CSRF_SSL_STRICT
+        value: True
+    
+    # Disk storage for uploads
+    disk:
+      name: cibozer-storage
+      mountPath: /opt/render/project/src/static/uploads
+      sizeGB: 1
+
+  # ==============================================
+  # PostgreSQL Database
+  # ==============================================
+  - type: pserv
+    name: cibozer-postgres
+    runtime: postgresql
+    plan: starter
+    region: oregon
+    
+    # Database configuration
+    databaseName: cibozer_prod
+    databaseUser: cibozer_user
+    
+    # Automatic backups
+    ipAllowList: []  # Restrict access to Render services only
+
+  # ==============================================
+  # Redis Cache
+  # ==============================================
+  - type: redis
+    name: cibozer-redis
+    plan: starter
+    region: oregon
+    ipAllowList: []  # Restrict access to Render services only
+
+# ==============================================
+# Environment-specific configurations
+# ==============================================
+environments:
+  # Production environment
+  production:
+    services:
+      - name: cibozer-web
+        plan: standard  # Upgrade to standard plan for production
+        scaling:
+          minInstances: 1
+          maxInstances: 3
+          targetCPUPercent: 70
+          targetMemoryPercent: 80
+        
+        envVars:
+          - key: LOG_LEVEL
+            value: INFO
+          - key: FLASK_ENV
+            value: production
+      
+      - name: cibozer-postgres
+        plan: standard  # Upgrade to standard plan for production
+      
+      - name: cibozer-redis
+        plan: standard  # Upgrade to standard plan for production
+
+  # Staging environment
+  staging:
+    services:
+      - name: cibozer-web-staging
+        plan: starter
+        envVars:
+          - key: LOG_LEVEL
+            value: DEBUG
+          - key: FLASK_ENV
+            value: staging

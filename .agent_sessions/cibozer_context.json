@@ -1,0 +1,25 @@
+{
+  "current_sprint": "Auto-20250805",
+  "active_features": [],
+  "completed_features": [],
+  "technical_debt": [],
+  "deployment_status": "development",
+  "last_deployment": null,
+  "database_schema_version": "1.0.0",
+  "api_version": "1.0.0",
+  "known_issues": [],
+  "upcoming_tasks": [
+    "sort out if it is worth the effort to make sure this is",
+    "Check -numweeks for next year.",
+    "Fix security issue: Potential hardcoded secret in security_scan.json",
+    "Fix security issue: Verify security headers are configured",
+    "Fix security issue: Audit database queries for SQL injection risks",
+    "Implement actual email/push sending",
+    "sort out if it is worth the effort to make sure this is",
+    "Fix security issue: Potential hardcoded secret in security_scan.json",
+    "Fix security issue: Verify security headers are configured",
+    "Fix security issue: Audit database queries for SQL injection risks",
+    "Implement actual email/push sending",
+    "sort out if it is worth the effort to make sure this is"
+  ]
+}

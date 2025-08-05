@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JSON Test</title>
+</head>
+<body>
+    <h1>JSON Endpoint Test</h1>
+    
+    <button id="testEndpoint">Test /api/test-json</button>
+    <button id="testGenerate">Test /api/generate</button>
+    
+    <pre id="results"></pre>
+    
+    <script>
+    const resultsEl = document.getElementById('results');
+    
+    function log(msg) {
+        resultsEl.textContent += msg + '\n';
+        console.log(msg);
+    }
+    
+    document.getElementById('testEndpoint').addEventListener('click', async () => {
+        log('\n=== Testing /api/test-json ===');
+        
+        const data = {
+            test: 'data',
+            calories: 2000,
+            diet: 'standard'
+        };
+        
+        try {
+            log('Sending request...');
+            const response = await fetch('/api/test-json', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            log(`Response status: ${response.status} ${response.statusText}`);
+            log(`Response headers: ${[...response.headers.entries()].map(([k,v]) => `${k}: ${v}`).join(', ')}`);
+            
+            const result = await response.text();
+            log(`Response body: ${result}`);
+            
+            if (response.ok) {
+                const json = JSON.parse(result);
+                log(`Parsed JSON: ${JSON.stringify(json, null, 2)}`);
+            }
+        } catch (error) {
+            log(`Error: ${error.message}`);
+            console.error(error);
+        }
+    });
+    
+    document.getElementById('testGenerate').addEventListener('click', async () => {
+        log('\n=== Testing /api/generate ===');
+        
+        const data = {
+            calories: "2000",
+            days: "1",
+            diet: "standard",
+            meal_structure: "standard"
+        };
+        
+        try {
+            log('Sending request...');
+            log('Request data: ' + JSON.stringify(data));
+            
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            log(`Response status: ${response.status} ${response.statusText}`);
+            
+            const result = await response.text();
+            log(`Response body (first 500 chars): ${result.substring(0, 500)}`);
+            
+            if (response.ok) {
+                const json = JSON.parse(result);
+                log(`Success: ${json.success}`);
+                if (json.meal_plan) {
+                    log(`Meal plan received with ${json.meal_plan.days?.length || 0} days`);
+                }
+            }
+        } catch (error) {
+            log(`Error: ${error.message}`);
+            console.error(error);
+        }
+    });
+    </script>
+</body>
+</html>

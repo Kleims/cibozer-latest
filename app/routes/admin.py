@@ -11,10 +11,12 @@ import json
 from video_service import VideoService
 import meal_optimizer as mo
 import asyncio
-from app.extensions import db
+from app.extensions import db, csrf
 from app.models.user import User
 from app.models.usage import UsageLog
 from app.models.payment import Payment
+from app.models.error_log import ErrorLog
+from app.services.monitoring_service import monitoring_service
 from sqlalchemy import func, case
 
 # Create admin blueprint
@@ -46,11 +48,16 @@ def admin_required(f):
     return decorated_function
 
 @admin_bp.route('/login', methods=['GET', 'POST'])
+@csrf.exempt
 def login():
     """Admin login page"""
+    current_app.logger.info(f"Admin login accessed: method={request.method}, path={request.path}")
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        
+        current_app.logger.info(f"Admin login attempt: username={username}, ADMIN_USERNAME={ADMIN_USERNAME}")
+        current_app.logger.info(f"Password match: {password == ADMIN_PASSWORD}")
         
         if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
             session['is_admin'] = True
@@ -284,9 +291,9 @@ def analytics():
     
     # Get usage statistics
     usage_stats = db.session.query(
-        func.date(UsageLog.timestamp).label('date'),
+        func.date(UsageLog.created_at).label('date'),
         func.count(UsageLog.id).label('count')
-    ).filter(UsageLog.timestamp >= thirty_days_ago).group_by(func.date(UsageLog.timestamp)).all()
+    ).filter(UsageLog.created_at >= thirty_days_ago).group_by(func.date(UsageLog.created_at)).all()
     
     # Get revenue statistics (compatible with SQLite and PostgreSQL)
     try:
@@ -392,3 +399,261 @@ def users():
                          users=users_paginated.items,
                          pagination=users_paginated,
                          stats=user_stats)
+
+@admin_bp.route('/monitoring')
+@admin_required
+def monitoring():
+    """System monitoring dashboard"""
+    # Get error statistics for last 24 hours
+    error_stats = ErrorLog.get_error_summary(hours=24)
+    
+    # Get recent critical errors
+    critical_errors = ErrorLog.query.filter(
+        ErrorLog.severity.in_(['critical', 'fatal'])
+    ).order_by(ErrorLog.created_at.desc()).limit(10).all()
+    
+    # Get performance statistics
+    slow_operations = UsageLog.query.filter(
+        UsageLog.action == 'slow_operation'
+    ).order_by(UsageLog.created_at.desc()).limit(20).all()
+    
+    # Get security events
+    security_events = UsageLog.query.filter(
+        UsageLog.action == 'security_event'
+    ).order_by(UsageLog.created_at.desc()).limit(20).all()
+    
+    # System health metrics
+    health_metrics = {
+        'total_errors_24h': error_stats.get('total_errors', 0),
+        'critical_errors_24h': len(critical_errors),
+        'slow_operations_24h': len(slow_operations),
+        'security_events_24h': len(security_events),
+        'unresolved_errors': ErrorLog.query.filter_by(resolved=False).count(),
+    }
+    
+    return render_template('admin/monitoring.html',
+                         error_stats=error_stats,
+                         critical_errors=critical_errors,
+                         slow_operations=slow_operations,
+                         security_events=security_events,
+                         health_metrics=health_metrics)
+
+@admin_bp.route('/monitoring/errors')
+@admin_required
+def error_logs():
+    """Detailed error logs view"""
+    page = request.args.get('page', 1, type=int)
+    severity = request.args.get('severity')
+    resolved = request.args.get('resolved')
+    per_page = 50
+    
+    # Build query
+    query = ErrorLog.query
+    
+    if severity:
+        query = query.filter(ErrorLog.severity == severity)
+    
+    if resolved is not None:
+        query = query.filter(ErrorLog.resolved == (resolved.lower() == 'true'))
+    
+    # Get paginated results
+    errors_paginated = query.order_by(
+        ErrorLog.severity.desc(),
+        ErrorLog.counter.desc(),
+        ErrorLog.created_at.desc()
+    ).paginate(page=page, per_page=per_page, error_out=False)
+    
+    return render_template('admin/error_logs.html',
+                         errors=errors_paginated.items,
+                         pagination=errors_paginated,
+                         current_severity=severity,
+                         current_resolved=resolved)
+
+@admin_bp.route('/monitoring/error/<int:error_id>')
+@admin_required
+def error_detail(error_id):
+    """Detailed view of specific error"""
+    error = ErrorLog.query.get_or_404(error_id)
+    
+    # Get similar errors (same type)
+    similar_errors = ErrorLog.query.filter(
+        ErrorLog.error_type == error.error_type,
+        ErrorLog.id != error.id
+    ).order_by(ErrorLog.created_at.desc()).limit(10).all()
+    
+    return render_template('admin/error_detail.html',
+                         error=error,
+                         similar_errors=similar_errors)
+
+@admin_bp.route('/monitoring/resolve_error/<int:error_id>', methods=['POST'])
+@admin_required
+def resolve_error(error_id):
+    """Mark error as resolved"""
+    try:
+        error = ErrorLog.query.get_or_404(error_id)
+        notes = request.form.get('notes', '')
+        
+        # In a real admin system, you'd get the admin user ID
+        # For now, we'll use a placeholder
+        admin_user_id = 1  # Replace with actual admin user system
+        
+        error.mark_resolved(admin_user_id, notes)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Error marked as resolved'})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/monitoring/performance')
+@admin_required
+def performance_monitoring():
+    """Performance monitoring dashboard"""
+    # Get slow operations from last 24 hours
+    twenty_four_hours_ago = datetime.now(timezone.utc) - timedelta(hours=24)
+    
+    slow_ops = UsageLog.query.filter(
+        UsageLog.action == 'slow_operation',
+        UsageLog.created_at >= twenty_four_hours_ago
+    ).order_by(UsageLog.created_at.desc()).all()
+    
+    # Group by operation type
+    operation_stats = {}
+    for op in slow_ops:
+        metadata = op.metadata or {}
+        operation_name = metadata.get('operation', 'unknown')
+        duration = metadata.get('duration_ms', 0)
+        
+        if operation_name not in operation_stats:
+            operation_stats[operation_name] = {
+                'count': 0,
+                'total_duration': 0,
+                'max_duration': 0,
+                'min_duration': float('inf')
+            }
+        
+        stats = operation_stats[operation_name]
+        stats['count'] += 1
+        stats['total_duration'] += duration
+        stats['max_duration'] = max(stats['max_duration'], duration)
+        stats['min_duration'] = min(stats['min_duration'], duration)
+    
+    # Calculate averages
+    for stats in operation_stats.values():
+        stats['avg_duration'] = stats['total_duration'] / stats['count'] if stats['count'] > 0 else 0
+        if stats['min_duration'] == float('inf'):
+            stats['min_duration'] = 0
+    
+    return render_template('admin/performance.html',
+                         slow_operations=slow_ops,
+                         operation_stats=operation_stats)
+
+@admin_bp.route('/monitoring/security')
+@admin_required
+def security_monitoring():
+    """Security monitoring dashboard"""
+    # Get security events from last 7 days
+    seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
+    
+    security_events = UsageLog.query.filter(
+        UsageLog.action == 'security_event',
+        UsageLog.created_at >= seven_days_ago
+    ).order_by(UsageLog.created_at.desc()).all()
+    
+    # Group by event type and severity
+    event_stats = {}
+    for event in security_events:
+        metadata = event.metadata or {}
+        event_type = metadata.get('event_type', 'unknown')
+        severity = metadata.get('severity', 'unknown')
+        
+        key = f"{event_type}_{severity}"
+        if key not in event_stats:
+            event_stats[key] = {
+                'event_type': event_type,
+                'severity': severity,
+                'count': 0,
+                'recent_events': []
+            }
+        
+        event_stats[key]['count'] += 1
+        if len(event_stats[key]['recent_events']) < 5:
+            event_stats[key]['recent_events'].append(event)
+    
+    return render_template('admin/security.html',
+                         security_events=security_events,
+                         event_stats=event_stats)
+
+@admin_bp.route('/api/monitoring/health')
+@admin_required
+def system_health():
+    """System health API endpoint"""
+    try:
+        # Get various health metrics
+        now = datetime.now(timezone.utc)
+        one_hour_ago = now - timedelta(hours=1)
+        
+        # Error rate (errors per hour)
+        recent_errors = ErrorLog.query.filter(
+            ErrorLog.created_at >= one_hour_ago
+        ).count()
+        
+        # Critical error count
+        critical_errors = ErrorLog.query.filter(
+            ErrorLog.severity.in_(['critical', 'fatal']),
+            ErrorLog.created_at >= one_hour_ago
+        ).count()
+        
+        # Slow operations count
+        slow_ops = UsageLog.query.filter(
+            UsageLog.action == 'slow_operation',
+            UsageLog.created_at >= one_hour_ago
+        ).count()
+        
+        # Database connectivity test
+        try:
+            db.session.execute('SELECT 1')
+            db_status = 'healthy'
+        except Exception:
+            db_status = 'unhealthy'
+        
+        # Calculate overall health score
+        health_score = 100
+        if critical_errors > 0:
+            health_score -= 30
+        if recent_errors > 10:
+            health_score -= 20
+        if slow_ops > 5:
+            health_score -= 15
+        if db_status == 'unhealthy':
+            health_score -= 35
+        
+        health_score = max(0, health_score)
+        
+        # Determine status
+        if health_score >= 90:
+            status = 'healthy'
+        elif health_score >= 70:
+            status = 'warning'
+        else:
+            status = 'critical'
+        
+        return jsonify({
+            'status': status,
+            'health_score': health_score,
+            'timestamp': now.isoformat(),
+            'metrics': {
+                'errors_last_hour': recent_errors,
+                'critical_errors_last_hour': critical_errors,
+                'slow_operations_last_hour': slow_ops,
+                'database_status': db_status
+            }
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e),
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        }), 500

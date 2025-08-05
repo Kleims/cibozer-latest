@@ -1,0 +1,20 @@
+{
+  "number": 0,
+  "name": "Foundation",
+  "started": "2025-08-05T13:17:15.878894",
+  "goal": "Stabilize codebase, reach 200+ passing tests",
+  "tasks": [],
+  "completed": [],
+  "metrics": {
+    "tests_total": 201,
+    "tests_passing": 137,
+    "tests_failing": 64,
+    "coverage": 68.2,
+    "critical_issues": 7,
+    "performance": {
+      "startup_time": "Not measured",
+      "avg_response": "Not measured",
+      "database_queries": "Not measured"
+    }
+  }
+}
