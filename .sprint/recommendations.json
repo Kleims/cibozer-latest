@@ -1,33 +1,19 @@
 {
   "selected": {
-    "id": "testing",
-    "title": "Test Coverage Improvement",
-    "description": "Increase test coverage from 68.2% to 90%+",
-    "priority": "HIGH",
-    "estimated_impact": "Fix 64 failing tests, add missing tests"
+    "id": "mvp_week1_fix",
+    "title": "\ud83d\udd27 MVP Week 1: Make It Not Broken",
+    "description": "Fix all failing tests, eliminate 500 errors, ensure all pages load",
+    "priority": "CRITICAL",
+    "estimated_impact": "REQUIRED: Zero crashes, all pages working"
   },
   "all_options": [
     {
-      "id": "testing",
-      "title": "Test Coverage Improvement",
-      "description": "Increase test coverage from 68.2% to 90%+",
-      "priority": "HIGH",
-      "estimated_impact": "Fix 64 failing tests, add missing tests"
-    },
-    {
-      "id": "features",
-      "title": "Feature Development",
-      "description": "Add new features (payments, UX improvements, etc.)",
-      "priority": "MEDIUM",
-      "estimated_impact": "Enhances product functionality"
-    },
-    {
-      "id": "performance",
-      "title": "Performance Optimization",
-      "description": "Optimize database queries, caching, and response times",
-      "priority": "LOW",
-      "estimated_impact": "Improves user experience"
+      "id": "mvp_week1_fix",
+      "title": "\ud83d\udd27 MVP Week 1: Make It Not Broken",
+      "description": "Fix all failing tests, eliminate 500 errors, ensure all pages load",
+      "priority": "CRITICAL",
+      "estimated_impact": "REQUIRED: Zero crashes, all pages working"
     }
   ],
-  "timestamp": "2025-08-05T13:51:25.620502"
+  "timestamp": "2025-08-05T15:37:21.573782"
 }

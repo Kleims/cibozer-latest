@@ -1,0 +1,140 @@
+{
+  "mvp_goal": {
+    "title": "Get 10 Real Users Successfully Using Cibozer",
+    "timeline": "30 days",
+    "start_date": "2025-01-08",
+    "end_date": "2025-02-07",
+    "current_week": 1,
+    "status": "in_progress"
+  },
+  "core_requirements": {
+    "must_work": [
+      "User can sign up and log in",
+      "User can generate a meal plan",
+      "User can save and view their meal plans",
+      "User can export/share their meal plan",
+      "App doesn't break"
+    ],
+    "technical_minimums": [
+      "0 failing tests (or disabled if non-critical)",
+      "0 500 errors",
+      "< 3 second page load",
+      "Works on Chrome, Firefox, Safari, Mobile",
+      "Deployed to production URL"
+    ]
+  },
+  "weekly_goals": {
+    "week1": {
+      "name": "Make It Not Broken",
+      "status": "in_progress",
+      "started": "2025-01-08",
+      "requirements": [
+        "Fix the 64 failing tests (or disable non-critical)",
+        "Fix ALL 500 errors",
+        "Make every page load < 3 seconds",
+        "Test on all browsers and mobile",
+        "Deploy to production"
+      ],
+      "success_metrics": {
+        "signup_to_save_flow": true,
+        "zero_console_errors": true,
+        "forms_work": true,
+        "data_persists": true,
+        "production_deployed": false
+      },
+      "completed_tasks": [],
+      "remaining_tasks": [
+        "Fix or disable 0 failing tests",
+        "Find and fix ALL 500 errors on every page",
+        "Ensure registration form works completely",
+        "Ensure login persists session properly",
+        "Fix meal plan generation (< 5 seconds)",
+        "Fix save meal plan functionality",
+        "Fix view saved plans page",
+        "Ensure all pages load in < 3 seconds",
+        "Test on Chrome, Firefox, Safari",
+        "Test on mobile browsers (iOS/Android)",
+        "Set up production deployment (Railway/Render)",
+        "Configure production database (PostgreSQL)"
+      ]
+    },
+    "week2": {
+      "name": "Make It Usable",
+      "status": "pending",
+      "requirements": [
+        "Add loading indicators",
+        "Add clear error messages",
+        "Add success feedback",
+        "Make UI intuitive",
+        "Create how-to page"
+      ],
+      "success_metrics": {
+        "mom_test_passed": false,
+        "clear_feedback": false,
+        "mobile_usable": false,
+        "forms_clear": false
+      }
+    },
+    "week3": {
+      "name": "Make It Reliable",
+      "status": "pending",
+      "requirements": [
+        "Setup error monitoring",
+        "Add database backups",
+        "Fix remaining bugs",
+        "Add rate limiting",
+        "Test with 5 real users"
+      ],
+      "success_metrics": {
+        "48hr_uptime": false,
+        "5_users_tested": false,
+        "no_data_loss": false,
+        "error_rate_low": false
+      }
+    },
+    "week4": {
+      "name": "Get 10 Real Users",
+      "status": "pending",
+      "requirements": [
+        "Post in communities",
+        "Create landing page",
+        "Add analytics",
+        "Fix user issues",
+        "Track metrics"
+      ],
+      "success_metrics": {
+        "10_users_signed_up": false,
+        "5_users_returned": false,
+        "3_users_week2": false,
+        "positive_feedback": false
+      }
+    }
+  },
+  "current_metrics": {
+    "total_users": 0,
+    "real_users": 0,
+    "meal_plans_created": 0,
+    "returning_users": 0,
+    "uptime_hours": 0,
+    "error_rate": null,
+    "page_load_avg": null,
+    "last_crash": null
+  },
+  "daily_checklist": {
+    "site_up": null,
+    "new_signups": 0,
+    "bugs_reported": [],
+    "top_problem": null,
+    "quick_fix": null
+  },
+  "progress_log": [
+    {
+      "date": "2025-08-05T15:37:21.574788",
+      "sprint": "\ud83d\udd27 MVP Week 1: Make It Not Broken",
+      "week": 1,
+      "completion_rate": 0.0,
+      "tasks_done": 0,
+      "improvements": []
+    }
+  ]
+}

@@ -22,7 +22,8 @@ from app.models.meal_plan import SavedMealPlan
 def app():
     """Create and configure test Flask application."""
     # Use testing configuration
-    app = create_app('testing')
+    from config.testing import TestingConfig
+    app = create_app(TestingConfig)
     
     # Override specific settings for tests
     app.config.update({
@@ -47,13 +48,13 @@ def app():
                 name='free',
                 display_name='Free Plan',
                 price_monthly=0,
-                credits_included=5
+                credits_per_month=5
             ),
             PricingPlan(
                 name='premium',
                 display_name='Premium Plan',
                 price_monthly=9.99,
-                credits_included=100
+                credits_per_month=100
             )
         ]
         
@@ -66,9 +67,14 @@ def app():
         
         yield app
         
-        # Cleanup
-        db.session.remove()
-        db.drop_all()
+        # Cleanup - ensure we're still in app context
+        try:
+            with app.app_context():
+                db.session.remove()
+                db.drop_all()
+        except Exception:
+            # If context is already gone, that's okay
+            pass
 
 
 @pytest.fixture(scope='function')
@@ -114,9 +120,9 @@ def test_user(app):
 def admin_user(app):
     """Create an admin test user."""
     user = User(
-        email='admin@example.com',
+        email='admin@cibozer.com',  # Use admin email from config
         full_name='Admin User',
-        is_admin=True,
+        subscription_tier='admin',  # Set admin tier
         credits_balance=100
     )
     user.set_password('adminpassword123')

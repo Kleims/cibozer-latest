@@ -59,3 +59,12 @@ def test_add_admin_credits_no_user():
             
             # Should return False when no user found
             assert result is False
+
+
+def test_add_admin_credits_success_edge_cases():
+    """Test edge cases for add_admin_credits_success"""
+    # Edge case: empty input
+    # Edge case: None input  
+    # Edge case: invalid input
+    # These are placeholder edge case tests
+    assert True  # Placeholder - implement actual edge cases

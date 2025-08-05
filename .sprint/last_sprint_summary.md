@@ -1,20 +1,18 @@
-# Sprint 3: Test Coverage Expansion
+# Sprint 5: 🔧 MVP Week 1: Make It Not Broken
 
 **Date**: 2025-08-05 to 2025-08-05
-**Focus**: testing
-**Completion**: 25.0%
+**Focus**: mvp_week1_fix
+**Completion**: 0.0%
 
 ## Achievements
-- ✅ Fix 64 failing tests
-- ✅ Add tests for uncovered routes
 
 ## To Do Next Sprint
-- ⏳ Create integration tests for API
-- ⏳ Add edge case testing
-- ⏳ Implement end-to-end tests
-- ⏳ Add performance tests
-- ⏳ Create security tests
-- ... and 1 more
+- ⏳ Fix or disable 0 failing tests
+- ⏳ Find and fix ALL 500 errors on every page
+- ⏳ Ensure registration form works completely
+- ⏳ Ensure login persists session properly
+- ⏳ Fix meal plan generation (< 5 seconds)
+- ... and 7 more
 
 ## Next Steps
-- Complete 6 remaining tasks
+- Complete 12 remaining tasks

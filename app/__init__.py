@@ -2,6 +2,7 @@
 import os
 import logging
 import logging.handlers
+from datetime import datetime, timezone
 from flask import Flask, render_template
 from flask_migrate import Migrate
 
@@ -149,7 +150,7 @@ def initialize_monitoring_tracing(app):
     from app.services.sla_service import get_sla_service
     
     # Set app start time for uptime calculation
-    app.start_time = datetime.utcnow()
+    app.start_time = datetime.now(timezone.utc)
     
     # Initialize logging service first (since other services may use it)
     init_logging_service(app)

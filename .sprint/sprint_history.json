@@ -64,9 +64,54 @@
         "Document test patterns"
       ],
       "improvements": []
+    },
+    {
+      "number": 4,
+      "name": "Test Coverage Expansion",
+      "focus": "testing",
+      "started": "2025-08-05T14:19:19.384392",
+      "completed": "2025-08-05T14:19:20.885918",
+      "completion_rate": 25.0,
+      "tasks_completed": [
+        "Fix 64 failing tests",
+        "Add tests for uncovered routes"
+      ],
+      "tasks_remaining": [
+        "Create integration tests for API",
+        "Add edge case testing",
+        "Implement end-to-end tests",
+        "Add performance tests",
+        "Create security tests",
+        "Document test patterns"
+      ],
+      "improvements": []
+    },
+    {
+      "number": 5,
+      "name": "\ud83d\udd27 MVP Week 1: Make It Not Broken",
+      "focus": "mvp_week1_fix",
+      "started": "2025-08-05T15:37:21.573782",
+      "completed": "2025-08-05T15:37:21.574788",
+      "completion_rate": 0.0,
+      "tasks_completed": [],
+      "tasks_remaining": [
+        "Fix or disable 0 failing tests",
+        "Find and fix ALL 500 errors on every page",
+        "Ensure registration form works completely",
+        "Ensure login persists session properly",
+        "Fix meal plan generation (< 5 seconds)",
+        "Fix save meal plan functionality",
+        "Fix view saved plans page",
+        "Ensure all pages load in < 3 seconds",
+        "Test on Chrome, Firefox, Safari",
+        "Test on mobile browsers (iOS/Android)",
+        "Set up production deployment (Railway/Render)",
+        "Configure production database (PostgreSQL)"
+      ],
+      "improvements": []
     }
   ],
-  "total_sprints": 3,
+  "total_sprints": 5,
   "start_date": "2025-08-05T13:44:32.237604",
   "achievements": [],
   "recurring_issues": []

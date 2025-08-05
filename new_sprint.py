@@ -15,10 +15,20 @@ from typing import Dict, List, Optional, Tuple
 import shutil
 import time
 
+# Import the real sprint executor
+try:
+    from real_sprint_executor import RealSprintExecutor
+    REAL_EXECUTION_AVAILABLE = True
+except ImportError:
+    REAL_EXECUTION_AVAILABLE = False
+
 # Fix Windows console encoding
-if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+try:
+    if sys.platform == 'win32' and hasattr(sys.stdout, 'buffer'):
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+except:
+    pass  # Fallback to default encoding
 
 class UnifiedSprintManager:
     """One-command sprint management system"""
@@ -31,10 +41,15 @@ class UnifiedSprintManager:
         self.current_sprint_file = self.sprint_dir / 'current_sprint.json'
         self.history_file = self.sprint_dir / 'sprint_history.json'
         self.recommendations_file = self.sprint_dir / 'recommendations.json'
+        self.mvp_tracker_file = self.sprint_dir / 'mvp_tracker.json'
         
         # Load or initialize data
         self.current_sprint = self._load_current_sprint()
         self.history = self._load_history()
+        self.mvp_tracker = self._load_mvp_tracker()
+        
+        # Initialize real executor if available
+        self.real_executor = RealSprintExecutor() if REAL_EXECUTION_AVAILABLE else None
         
     def _load_current_sprint(self) -> Dict:
         """Load current sprint data"""
@@ -65,6 +80,19 @@ class UnifiedSprintManager:
         """Save sprint history"""
         with open(self.history_file, 'w', encoding='utf-8') as f:
             json.dump(self.history, f, indent=2)
+    
+    def _load_mvp_tracker(self) -> Dict:
+        """Load MVP tracker data"""
+        if self.mvp_tracker_file.exists():
+            with open(self.mvp_tracker_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return None
+    
+    def _save_mvp_tracker(self):
+        """Save MVP tracker data"""
+        if self.mvp_tracker:
+            with open(self.mvp_tracker_file, 'w', encoding='utf-8') as f:
+                json.dump(self.mvp_tracker, f, indent=2)
     
     def run_new_sprint(self):
         """Main entry point - runs complete sprint cycle"""
@@ -120,8 +148,28 @@ class UnifiedSprintManager:
             'last_sprint': self._get_last_sprint_summary()
         }
         
-        # Display status
-        print(f"\n📊 Current Status:")
+        # Display MVP Progress if tracker exists
+        if self.mvp_tracker:
+            print(f"\n🎯 MVP GOAL: 10 Real Users in 30 Days")
+            print("="*50)
+            current_week = self.mvp_tracker.get('mvp_goal', {}).get('current_week', 1)
+            week_data = self.mvp_tracker.get('weekly_goals', {}).get(f'week{current_week}', {})
+            print(f"📅 Current: Week {current_week} - {week_data.get('name', 'Unknown')}")
+            
+            # Show core requirements status
+            print(f"\n✅ Core Features Status:")
+            for req in self.mvp_tracker.get('core_requirements', {}).get('must_work', [])[:3]:
+                print(f"   • {req}")
+            
+            # Show current metrics
+            metrics = self.mvp_tracker.get('current_metrics', {})
+            print(f"\n📊 MVP Metrics:")
+            print(f"   Real Users: {metrics.get('real_users', 0)}/10")
+            print(f"   Meal Plans Created: {metrics.get('meal_plans_created', 0)}")
+            print(f"   Returning Users: {metrics.get('returning_users', 0)}")
+        
+        # Display technical status
+        print(f"\n📊 Technical Status:")
         print(f"   Tests: {status['tests']['passing']}/{status['tests']['total']} passing ({status['tests']['coverage']}%)")
         print(f"   Critical Issues: {status['security']['critical_issues']}")
         print(f"   Code Quality: {status['code_quality']['score']}/10")
@@ -135,6 +183,16 @@ class UnifiedSprintManager:
     
     def _get_test_status(self) -> Dict:
         """Get current test status"""
+        if self.real_executor:
+            # Use real metrics from executor
+            real_metrics = self.real_executor.capture_real_metrics()
+            return {
+                'total': real_metrics.get('tests_total', 201),
+                'passing': real_metrics.get('tests_passing', 137),
+                'failing': real_metrics.get('tests_failing', 64),
+                'coverage': real_metrics.get('coverage_percent', 68.2)
+            }
+        
         try:
             result = subprocess.run(
                 ['python', '-m', 'pytest', 'tests/', '-q', '--tb=no'],
@@ -230,64 +288,151 @@ class UnifiedSprintManager:
         return None
     
     def _get_recommendations_and_choose(self, status: Dict) -> Optional[str]:
-        """Generate recommendations and let user choose"""
+        """Generate recommendations aligned with MVP GOAL - 10 Real Users in 30 Days"""
         recommendations = []
         
-        # Priority 1: Fix critical issues
-        if status['security']['critical_issues'] > 0:
+        # Check MVP week based on sprint history
+        mvp_week = self._get_current_mvp_week()
+        
+        # MVP WEEK 1: Make It Work (Fix all breaking issues)
+        if mvp_week == 1 or (status['tests']['failing'] > 0 or status['security']['critical_issues'] > 0):
             recommendations.append({
-                'id': 'security',
-                'title': 'Security & Critical Issues',
-                'description': f"Fix {status['security']['critical_issues']} critical security issues",
-                'priority': 'HIGH',
-                'estimated_impact': 'Eliminates security vulnerabilities'
+                'id': 'mvp_week1_fix',
+                'title': '🔧 MVP Week 1: Make It Not Broken',
+                'description': f"Fix {status['tests']['failing']} failing tests, eliminate 500 errors, ensure all pages load",
+                'priority': 'CRITICAL',
+                'estimated_impact': 'REQUIRED: Zero crashes, all pages working',
+                'mvp_requirements': [
+                    'Fix or disable the 64 failing tests',
+                    'Fix ALL 500 errors on every page',
+                    'Ensure < 3 second page load time',
+                    'Test on Chrome, Firefox, Safari, Mobile',
+                    'Deploy to real URL (not localhost)'
+                ],
+                'success_metrics': [
+                    'Can complete signup → login → create plan → save plan without errors',
+                    '0 console errors on main pages',
+                    'All forms submit properly',
+                    'Database doesn\'t lose data'
+                ]
             })
         
-        # Priority 2: Improve test coverage
-        if status['tests']['coverage'] < 90:
-            recommendations.append({
-                'id': 'testing',
-                'title': 'Test Coverage Improvement',
-                'description': f"Increase test coverage from {status['tests']['coverage']}% to 90%+",
-                'priority': 'HIGH' if status['tests']['coverage'] < 70 else 'MEDIUM',
-                'estimated_impact': f"Fix {status['tests']['failing']} failing tests, add missing tests"
-            })
-        
-        # Priority 3: Complete unfinished tasks
-        if status['last_sprint'] and status['last_sprint']['remaining_tasks']:
-            recommendations.append({
-                'id': 'completion',
-                'title': 'Complete Previous Sprint Tasks',
-                'description': f"Finish {len(status['last_sprint']['remaining_tasks'])} remaining tasks",
-                'priority': 'MEDIUM',
-                'estimated_impact': 'Closes open items from last sprint'
-            })
-        
-        # Priority 4: Feature development
+        # MVP WEEK 2: Make It Usable (Mom could use it)
         recommendations.append({
-            'id': 'features',
-            'title': 'Feature Development',
-            'description': 'Add new features (payments, UX improvements, etc.)',
-            'priority': 'LOW' if status['security']['critical_issues'] > 0 else 'MEDIUM',
-            'estimated_impact': 'Enhances product functionality'
+            'id': 'mvp_week2_usable',
+            'title': '👤 MVP Week 2: Make It Usable',
+            'description': 'Add loading indicators, clear error messages, success feedback, intuitive UI',
+            'priority': 'HIGH',
+            'estimated_impact': 'Mom could use it without calling for help',
+            'mvp_requirements': [
+                'Add loading spinners for all async operations',
+                'Add error messages that make sense (not "Error: undefined")',
+                'Add success messages when things work',
+                'Make buttons look clickable',
+                'Make forms show what\'s required',
+                'Add simple "How to use" page'
+            ],
+            'success_metrics': [
+                'Non-technical person can sign up without help',
+                'User knows what to do on each page',
+                'User gets feedback when they do something',
+                'Mobile users can tap buttons easily'
+            ]
         })
         
-        # Priority 5: Performance optimization
+        # MVP WEEK 3: Make It Reliable (48 hours no crashes)
         recommendations.append({
-            'id': 'performance',
-            'title': 'Performance Optimization',
-            'description': 'Optimize database queries, caching, and response times',
-            'priority': 'LOW',
-            'estimated_impact': 'Improves user experience'
+            'id': 'mvp_week3_reliable',
+            'title': '⚡ MVP Week 3: Make It Reliable',
+            'description': 'Setup monitoring, add backups, fix remaining bugs, test with real users',
+            'priority': 'HIGH',
+            'estimated_impact': '48 hours with zero crashes',
+            'mvp_requirements': [
+                'Set up error monitoring (Sentry free tier)',
+                'Add database backups (daily)',
+                'Fix any bugs from Week 1-2 testing',
+                'Add rate limiting to prevent abuse',
+                'Test with 5 friends/family members',
+                'Document how to restart if it crashes'
+            ],
+            'success_metrics': [
+                '48 hours uptime without intervention',
+                '5 real users complete full flow',
+                'No data loss incidents',
+                'Error rate < 1%'
+            ]
+        })
+        
+        # MVP WEEK 4: Get 10 Real Users (Launch!)
+        recommendations.append({
+            'id': 'mvp_week4_users',
+            'title': '🎯 MVP Week 4: Get 10 Real Users',
+            'description': 'Share in communities, create landing page, track usage, fix top issues',
+            'priority': 'HIGH',
+            'estimated_impact': '10 people who aren\'t friends/family using it',
+            'mvp_requirements': [
+                'Post in 1 relevant Reddit community',
+                'Share in 1 Facebook group about meal planning',
+                'Ask 3 friends to share with someone who might use it',
+                'Create 1 simple landing page explaining what it does',
+                'Add Google Analytics to see what people actually do',
+                'Fix the top 3 issues users report'
+            ],
+            'success_metrics': [
+                '10 users signed up (not friends/family)',
+                '5 users create more than one meal plan',
+                '3 users use it in week 2',
+                '1 user gives positive feedback'
+            ]
+        })
+        
+        # MVP CORE: Focus on Core Features Only
+        recommendations.append({
+            'id': 'mvp_core_features',
+            'title': '✅ MVP Core: Essential Features Only',
+            'description': 'Ensure the 5 core features work perfectly, nothing else',
+            'priority': 'MEDIUM',
+            'estimated_impact': 'Focus on what matters: signup, meal plan, save, export, no crashes',
+            'mvp_requirements': [
+                'Registration and login work flawlessly',
+                'Meal plan generates in < 5 seconds',
+                'Save and view saved plans works',
+                'PDF export OR share link works (just one)',
+                'No 500 errors anywhere',
+                'Works on mobile browsers'
+            ],
+            'success_metrics': [
+                'User can sign up and log in',
+                'User can generate meal plan (3 diet options, calorie target)',
+                'User can save and view plans',
+                'User can export/share plan',
+                'App doesn\'t break'
+            ]
         })
         
         # Display recommendations
+        print("\n🎯 MVP GOAL: Get 10 Real Users Successfully Using Cibozer in 30 Days")
+        print("="*70)
         print("\nBased on current status, here are your sprint options:\n")
         for i, rec in enumerate(recommendations, 1):
-            priority_emoji = {'HIGH': '🔴', 'MEDIUM': '🟡', 'LOW': '🟢'}.get(rec['priority'], '⚪')
+            priority_emoji = {'CRITICAL': '🔴', 'HIGH': '🟠', 'MEDIUM': '🟢', 'LOW': '🟢'}.get(rec['priority'], '⚪')
             print(f"{i}. {priority_emoji} {rec['title']} [{rec['priority']}]")
             print(f"   {rec['description']}")
             print(f"   Impact: {rec['estimated_impact']}")
+            
+            # Show MVP requirements if present
+            if 'mvp_requirements' in rec:
+                print("\n   📦 MVP Requirements:")
+                for req in rec['mvp_requirements'][:3]:  # Show first 3
+                    print(f"      • {req}")
+                if len(rec['mvp_requirements']) > 3:
+                    print(f"      ... and {len(rec['mvp_requirements']) - 3} more")
+            
+            # Show success metrics if present
+            if 'success_metrics' in rec:
+                print("\n   ✅ Success Metrics:")
+                for metric in rec['success_metrics'][:2]:  # Show first 2
+                    print(f"      → {metric}")
             print()
         
         # Get user choice
@@ -350,8 +495,18 @@ class UnifiedSprintManager:
         return sprint_plan
     
     def _get_sprint_name(self, focus: str) -> str:
-        """Get sprint name based on focus"""
+        """Get sprint name based on focus - MVP GOAL: 10 Real Users in 30 Days"""
         names = {
+            'mvp_week1_fix': '🔧 MVP Week 1: Make It Not Broken',
+            'mvp_week2_usable': '👤 MVP Week 2: Make It Usable',
+            'mvp_week3_reliable': '⚡ MVP Week 3: Make It Reliable',
+            'mvp_week4_users': '🎯 MVP Week 4: Get 10 Real Users',
+            'mvp_core_features': '✅ MVP Core: Essential Features Only',
+            'foundation': '🔧 Foundation: Zero Critical Issues',
+            'monetization': '💰 Payment & Polish: Launch Revenue',
+            'activation': '🚀 Onboarding Excellence: 10x Conversion',
+            'growth': '📈 Viral Growth: Referral Engine',
+            'ai_enhancement': '🤖 AI Personalization: Smart Learning',
             'security': 'Security Hardening',
             'testing': 'Test Coverage Expansion',
             'completion': 'Task Completion',
@@ -361,8 +516,18 @@ class UnifiedSprintManager:
         return names.get(focus, 'General Improvement')
     
     def _get_sprint_goal(self, focus: str, status: Dict) -> str:
-        """Get sprint goal based on focus"""
+        """Get sprint goal based on focus - MVP GOAL: 10 Real Users in 30 Days"""
         goals = {
+            'mvp_week1_fix': f"Fix {status['tests']['failing']} tests, eliminate ALL 500 errors → Zero crashes, all pages load",
+            'mvp_week2_usable': "Add loading indicators, error messages, success feedback → Mom could use it without help",
+            'mvp_week3_reliable': "Setup monitoring, backups, fix bugs → 48 hours uptime without crashes",
+            'mvp_week4_users': "Launch to communities, track usage → 10 real users (not friends/family)",
+            'mvp_core_features': "Perfect the 5 core features → Signup, Generate, Save, Export, No Crashes",
+            'foundation': f"Fix all {status['tests']['failing']} failing tests and {status['security']['critical_issues']} security issues → Production ready",
+            'monetization': "Launch Stripe payments, subscription tiers, pricing page → $1,000 MRR",
+            'activation': "Build onboarding flow, email verification, tutorials → 60% activation rate",
+            'growth': "Launch referral program, social sharing, family accounts → 0.4 viral coefficient",
+            'ai_enhancement': "Implement feedback learning, smart suggestions → 8+ plans/user/month",
             'security': f"Eliminate all {status['security']['critical_issues']} critical security issues",
             'testing': f"Increase test coverage from {status['tests']['coverage']}% to 90%+",
             'completion': "Complete all remaining tasks from previous sprint",
@@ -371,11 +536,176 @@ class UnifiedSprintManager:
         }
         return goals.get(focus, 'Improve overall system quality')
     
+    def _get_current_mvp_week(self) -> int:
+        """Determine current MVP week based on sprint history"""
+        # Check if we've completed MVP week sprints
+        completed_weeks = set()
+        for sprint in self.history.get('sprints', []):
+            if 'mvp_week1' in sprint.get('focus', ''):
+                completed_weeks.add(1)
+            elif 'mvp_week2' in sprint.get('focus', ''):
+                completed_weeks.add(2)
+            elif 'mvp_week3' in sprint.get('focus', ''):
+                completed_weeks.add(3)
+            elif 'mvp_week4' in sprint.get('focus', ''):
+                completed_weeks.add(4)
+        
+        # Return next week to work on
+        for week in [1, 2, 3, 4]:
+            if week not in completed_weeks:
+                return week
+        return 1  # Start over if all weeks done
+    
     def _generate_tasks(self, focus: str, status: Dict) -> List[str]:
         """Generate specific tasks based on focus"""
         tasks = []
         
-        if focus == 'security':
+        # MVP Week 1: Make It Not Broken
+        if focus == 'mvp_week1_fix':
+            tasks = [
+                f"Fix or disable {status['tests']['failing']} failing tests",
+                "Find and fix ALL 500 errors on every page",
+                "Ensure registration form works completely",
+                "Ensure login persists session properly",
+                "Fix meal plan generation (< 5 seconds)",
+                "Fix save meal plan functionality",
+                "Fix view saved plans page",
+                "Ensure all pages load in < 3 seconds",
+                "Test on Chrome, Firefox, Safari",
+                "Test on mobile browsers (iOS/Android)",
+                "Set up production deployment (Railway/Render)",
+                "Configure production database (PostgreSQL)"
+            ]
+        
+        # MVP Week 2: Make It Usable
+        elif focus == 'mvp_week2_usable':
+            tasks = [
+                "Add loading spinner for meal plan generation",
+                "Add loading indicators for all async operations",
+                "Replace generic error messages with helpful ones",
+                "Add success toast when meal plan is saved",
+                "Add success feedback for all user actions",
+                "Make buttons have hover states and look clickable",
+                "Add asterisks (*) to required form fields",
+                "Add form validation messages that help",
+                "Create simple 'How It Works' page with 3 steps",
+                "Improve mobile button sizes (min 44x44px)",
+                "Add breadcrumbs or progress indicators",
+                "Make error pages helpful (not just 404)"
+            ]
+        
+        # MVP Week 3: Make It Reliable  
+        elif focus == 'mvp_week3_reliable':
+            tasks = [
+                "Set up Sentry error monitoring (free tier)",
+                "Configure daily database backups",
+                "Add application health check endpoint",
+                "Implement rate limiting (10 requests/minute)",
+                "Add retry logic for failed API calls",
+                "Fix bugs discovered in Week 1-2",
+                "Test with 5 real users (friends/family)",
+                "Document server restart procedure",
+                "Set up uptime monitoring (UptimeRobot free)",
+                "Create error recovery procedures",
+                "Add graceful error handling everywhere",
+                "Ensure data persistence across restarts"
+            ]
+        
+        # MVP Week 4: Get 10 Real Users
+        elif focus == 'mvp_week4_users':
+            tasks = [
+                "Create simple landing page with clear value prop",
+                "Add Google Analytics tracking",
+                "Write post for r/MealPrepSunday or r/EatCheapAndHealthy",
+                "Share in 'Meal Planning' Facebook group",
+                "Ask 3 friends to share with interested people",
+                "Create simple onboarding email",
+                "Monitor user behavior and issues",
+                "Fix top 3 reported issues immediately",
+                "Add feedback widget or email link",
+                "Track: signups, meal plans created, return users",
+                "Respond to user questions within 24 hours",
+                "Document common issues and solutions"
+            ]
+        
+        # MVP Core Features
+        elif focus == 'mvp_core_features':
+            tasks = [
+                "Perfect user registration flow",
+                "Perfect login and session management",
+                "Optimize meal plan generation (< 5 seconds)",
+                "Perfect save meal plan functionality",
+                "Perfect view saved plans interface",
+                "Implement basic PDF export",
+                "OR implement shareable link feature",
+                "Eliminate ALL 500 errors",
+                "Ensure mobile responsiveness",
+                "Add password reset functionality",
+                "Limit to 3 diet type options for simplicity",
+                "Focus on breakfast, lunch, dinner only"
+            ]
+        
+        elif focus == 'foundation':
+            tasks = [
+                f"Fix all {status['tests']['failing']} failing tests",
+                "Set up production deployment (Railway/Render)",
+                "Configure monitoring (Sentry)",
+                "Set up analytics (Mixpanel/GA)",
+                "Fix all critical security issues",
+                "Ensure < 2s page load time",
+                "Database migration to PostgreSQL",
+                "Document deployment process"
+            ]
+        
+        elif focus == 'monetization':
+            tasks = [
+                "Complete Stripe integration",
+                "Build subscription management UI",
+                "Create pricing page with tiers",
+                "Implement payment success/failure flows",
+                "Add subscription upgrade/downgrade",
+                "Create billing history page",
+                "Test with real payments",
+                "Launch to first 10 customers"
+            ]
+        
+        elif focus == 'activation':
+            tasks = [
+                "Create interactive onboarding quiz",
+                "Implement progress indicators",
+                "Add email verification flow",
+                "Set up welcome email series (SendGrid)",
+                "Create first-use tutorial",
+                "Build user dashboard",
+                "Add achievement system",
+                "Implement A/B testing framework"
+            ]
+        
+        elif focus == 'growth':
+            tasks = [
+                "Build referral program (1 month free)",
+                "Add social sharing buttons",
+                "Create shareable meal plan links",
+                "Implement family accounts",
+                "Add gamification/achievements",
+                "Create viral loop mechanics",
+                "Build affiliate program",
+                "Add user testimonials"
+            ]
+        
+        elif focus == 'ai_enhancement':
+            tasks = [
+                "Implement meal rating system",
+                "Build preference learning algorithm",
+                "Add smart substitution suggestions",
+                "Create personalization engine",
+                "Implement cooking time optimization",
+                "Add dietary restriction handling",
+                "Build recommendation system",
+                "Create taste profile learning"
+            ]
+        
+        elif focus == 'security':
             tasks = [
                 "Scan for hardcoded passwords and secrets",
                 "Fix SQL injection vulnerabilities",
@@ -433,8 +763,43 @@ class UnifiedSprintManager:
         return tasks
     
     def _get_success_criteria(self, focus: str, status: Dict) -> List[str]:
-        """Define success criteria for sprint"""
+        """Define success criteria for sprint - MVP focused"""
         criteria = {
+            'mvp_week1_fix': [
+                "Can complete full user flow without ANY errors",
+                "0 console errors on main pages",
+                "All forms submit and save data properly",
+                "Deployed to production URL (not localhost)",
+                "< 3 second page load times"
+            ],
+            'mvp_week2_usable': [
+                "Non-technical person can use without help",
+                "User always knows if something is loading",
+                "User gets clear feedback for all actions",
+                "Mobile users can easily tap all buttons",
+                "Forms clearly show what's required"
+            ],
+            'mvp_week3_reliable': [
+                "48 hours continuous uptime",
+                "Error monitoring active and working",
+                "Daily backups running automatically",
+                "5 real users successfully test the app",
+                "< 1% error rate in production"
+            ],
+            'mvp_week4_users': [
+                "10 real users signed up (not friends/family)",
+                "5 users create more than one meal plan",
+                "3 users return in second week",
+                "1 piece of positive user feedback",
+                "Top 3 user issues fixed"
+            ],
+            'mvp_core_features': [
+                "Registration works 100% of the time",
+                "Meal plans generate in < 5 seconds",
+                "Save/view plans works flawlessly",
+                "Export feature works (PDF or share link)",
+                "Zero 500 errors in production"
+            ],
             'security': [
                 "Zero critical security issues",
                 "All forms have CSRF protection",
@@ -464,36 +829,65 @@ class UnifiedSprintManager:
         return criteria.get(focus, ["Sprint goals achieved"])
     
     def _execute_sprint(self, sprint_plan: Dict) -> Dict:
-        """Execute sprint tasks (simulated for now)"""
-        print("\nExecuting sprint tasks...")
-        print("(In production, this would run actual fixes)\n")
+        """Execute sprint tasks (REAL EXECUTION!)"""
+        if self.real_executor:
+            print("\n🔥 EXECUTING REAL SPRINT TASKS!")
+            print("(This will make actual changes to your codebase)\n")
+        else:
+            print("\nExecuting sprint tasks...")
+            print("(Simulated mode - real executor not available)\n")
         
         results = {
             'completed_tasks': [],
             'failed_tasks': [],
-            'metrics_before': self._capture_metrics(),
+            'metrics_before': self._capture_real_metrics() if self.real_executor else self._capture_metrics(),
             'execution_log': []
         }
         
-        # Simulate task execution
+        # Execute tasks for real!
         for i, task in enumerate(sprint_plan['tasks'][:3], 1):  # Execute first 3 tasks
-            print(f"⚡ Executing: {task}")
-            time.sleep(0.5)  # Simulate work
+            print(f"⚡ Task {i}/3: {task}")
             
-            # Simulate success/failure
-            if i <= 2:  # First 2 succeed
-                results['completed_tasks'].append(task)
-                print(f"   ✅ Completed")
+            if self.real_executor:
+                # REAL EXECUTION
+                try:
+                    execution_result = self.real_executor.execute_task(task)
+                    
+                    if execution_result['success']:
+                        results['completed_tasks'].append(task)
+                        print(f"   ✅ COMPLETED: {execution_result['details']}")
+                        
+                        # Add execution logs
+                        if execution_result.get('execution_log'):
+                            results['execution_log'].extend(execution_result['execution_log'])
+                    else:
+                        results['failed_tasks'].append(task)
+                        print(f"   ⚠️  FAILED: {execution_result['details']}")
+                        if execution_result.get('error'):
+                            print(f"       Error: {execution_result['error']}")
+                
+                except Exception as e:
+                    results['failed_tasks'].append(task)
+                    print(f"   ❌ ERROR: {str(e)}")
+                    results['execution_log'].append(f"Task failed with exception: {str(e)}")
+            
             else:
-                results['failed_tasks'].append(task)
-                print(f"   ⚠️  Needs manual intervention")
+                # Fallback to simulation
+                time.sleep(0.5)
+                if i <= 2:
+                    results['completed_tasks'].append(task)
+                    print(f"   ✅ Completed (simulated)")
+                else:
+                    results['failed_tasks'].append(task)
+                    print(f"   ⚠️  Needs manual intervention (simulated)")
         
-        results['metrics_after'] = self._capture_metrics()
+        # Capture final metrics
+        results['metrics_after'] = self._capture_real_metrics() if self.real_executor else self._capture_metrics()
         
         return results
     
     def _capture_metrics(self) -> Dict:
-        """Capture current metrics"""
+        """Capture current metrics (simulated)"""
         return {
             'timestamp': datetime.now().isoformat(),
             'tests_passing': 140,  # Simulated improvement
@@ -501,6 +895,13 @@ class UnifiedSprintManager:
             'critical_issues': 5,  # Simulated improvement
             'coverage': 69.7  # Simulated improvement
         }
+    
+    def _capture_real_metrics(self) -> Dict:
+        """Capture actual real metrics"""
+        if self.real_executor:
+            return self.real_executor.capture_real_metrics()
+        else:
+            return self._capture_metrics()
     
     def _review_sprint(self, sprint_plan: Dict, execution_results: Dict) -> Dict:
         """Review sprint results"""
@@ -566,6 +967,10 @@ class UnifiedSprintManager:
         # Update sprint with completion data
         sprint_plan['completed'] = datetime.now().isoformat()
         sprint_plan['review'] = review
+        
+        # Update MVP tracker if this was an MVP sprint
+        if self.mvp_tracker and 'mvp_week' in sprint_plan.get('focus', ''):
+            self._update_mvp_progress(sprint_plan, review)
         
         # Add to history
         self.history['sprints'].append({
@@ -673,6 +1078,56 @@ class UnifiedSprintManager:
             lines.append(f"- {step}")
         
         return '\n'.join(lines)
+    
+    def _update_mvp_progress(self, sprint_plan: Dict, review: Dict):
+        """Update MVP tracker with sprint progress"""
+        if not self.mvp_tracker:
+            return
+        
+        focus = sprint_plan.get('focus', '')
+        
+        # Determine which week was worked on
+        week_num = None
+        if 'mvp_week1' in focus:
+            week_num = 1
+        elif 'mvp_week2' in focus:
+            week_num = 2
+        elif 'mvp_week3' in focus:
+            week_num = 3
+        elif 'mvp_week4' in focus:
+            week_num = 4
+        
+        if week_num:
+            week_key = f'week{week_num}'
+            week_data = self.mvp_tracker['weekly_goals'].get(week_key, {})
+            
+            # Update week status
+            if review['completion_rate'] >= 80:
+                week_data['status'] = 'completed'
+                # Move to next week
+                if week_num < 4:
+                    self.mvp_tracker['mvp_goal']['current_week'] = week_num + 1
+            else:
+                week_data['status'] = 'in_progress'
+            
+            # Update completed tasks
+            week_data['completed_tasks'] = review.get('completed_tasks', [])
+            week_data['remaining_tasks'] = review.get('remaining_tasks', [])
+            
+            # Add to progress log
+            self.mvp_tracker.setdefault('progress_log', []).append({
+                'date': datetime.now().isoformat(),
+                'sprint': sprint_plan['name'],
+                'week': week_num,
+                'completion_rate': review['completion_rate'],
+                'tasks_done': len(review.get('completed_tasks', [])),
+                'improvements': review.get('metrics_improvement', [])
+            })
+            
+            # Save updated tracker
+            self._save_mvp_tracker()
+            
+            print(f"   ✅ MVP Week {week_num} progress updated")
 
 
 def main():
