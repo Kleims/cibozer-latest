@@ -45,7 +45,7 @@ Flask-Caching==2.1.0
 sentry-sdk[flask]==1.32.0
 
 # Development dependencies
-pytest==7.4.2
+pytest==8.4.1
 pytest-cov==4.1.0
 black==23.9.1
 flake8==6.1.0
