@@ -24,7 +24,7 @@ email-validator==2.0.0
 stripe==6.5.0
 
 # PDF generation
-reportlab==4.0.4
+reportlab==4.4.3
 Pillow==10.0.1
 
 # Video processing (optional, for actual video generation)
