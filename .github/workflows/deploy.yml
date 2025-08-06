@@ -99,7 +99,7 @@ jobs:
           safety check --json --output safety-deploy-report.json || true
       
       - name: Upload Pre-deployment Reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pre-deployment-reports
           path: |
