@@ -7,7 +7,11 @@ from app.extensions import db, limiter
 from app.utils.validators import validate_email, validate_password, sanitize_input
 from app.services.email_service import email_service
 from app.utils.security import generate_confirmation_token, confirm_token
-from app.services.monitoring_service import monitoring_service, monitor_security
+try:
+    from app.services.monitoring_service import monitoring_service, monitor_security
+except ImportError:
+    # Fallback to simple monitoring if psutil is not available
+    from app.services.monitoring_service_simple import monitoring_service, monitor_security
 
 auth_bp = Blueprint('auth', __name__)
 

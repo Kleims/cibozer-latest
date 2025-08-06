@@ -5,7 +5,7 @@ Implements application monitoring, metrics collection, and observability
 
 import os
 import time
-import psutil
+# import psutil  # Disabled for production deployment
 import json
 import traceback
 import logging
