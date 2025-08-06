@@ -12,6 +12,15 @@ from datetime import datetime, timedelta
 
 main_bp = Blueprint('main', __name__)
 
+@main_bp.route('/health')
+def health_check():
+    """Health check endpoint for Railway."""
+    return jsonify({
+        'status': 'healthy',
+        'service': 'cibozer',
+        'timestamp': datetime.utcnow().isoformat()
+    }), 200
+
 def calculate_user_stats(user_id):
     """Calculate comprehensive user statistics for dashboard."""
     from app.models import SavedMealPlan, UsageLog
