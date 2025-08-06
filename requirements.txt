@@ -38,7 +38,7 @@ requests==2.31.0
 
 # Production optimizations
 redis==4.6.0
-Flask-Limiter==3.5.0
+Flask-Limiter==3.11.0
 Flask-Caching==2.1.0
 
 # Error tracking and monitoring
