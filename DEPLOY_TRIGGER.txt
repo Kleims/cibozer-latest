@@ -1,0 +1,7 @@
+Deploy trigger: 2025-08-06 03:57:00
+This file forces Railway to rebuild from latest code.
+Includes:
+- psutil==5.9.5 in requirements.txt
+- Werkzeug==2.3.7 for compatibility
+- Health check endpoint at /health
+- Railway configuration in railway.toml
