@@ -51,6 +51,7 @@ tmp/
 videos/
 uploads/
 static/generated/
+cibozer_output/
 
 # Database
 *.db
